@@ -62,7 +62,6 @@ pub fn save_settings(state: State<DbState>, settings: AppSettings) -> Result<(),
     queries::set_setting(&conn, "close_to_tray", if settings.close_to_tray { "true" } else { "false" }).map_err(|e| e.to_string())?;
     queries::set_setting(&conn, "autostart", if settings.autostart { "true" } else { "false" }).map_err(|e| e.to_string())?;
 
-    // Apply autostart registry change on Windows
     #[cfg(windows)]
     {
         use winreg::{RegKey, enums::HKEY_CURRENT_USER};
@@ -114,4 +113,9 @@ pub fn export_library(state: State<DbState>) -> Result<String, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let games = crate::db::queries::get_all_games(&conn).map_err(|e| e.to_string())?;
     serde_json::to_string_pretty(&games).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn save_file(path: String, content: String) -> Result<(), String> {
+    std::fs::write(&path, content).map_err(|e| e.to_string())
 }

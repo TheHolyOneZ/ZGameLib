@@ -20,7 +20,6 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(DbState(Mutex::new(conn)))
         .setup(|app| {
-            // ── System tray ────────────────────────────────────────────────
             let show_item = MenuItem::with_id(app, "show", "Show ZGameLib", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
@@ -58,7 +57,6 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // ── Start minimized ────────────────────────────────────────────
             let start_min = {
                 let db = app.state::<DbState>();
                 let lock = db.0.lock();
@@ -123,6 +121,7 @@ pub fn run() {
             settings::save_settings,
             settings::export_library,
             settings::import_library,
+            settings::save_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
