@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUIStore } from "@/store/useUIStore";
 import { useGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
@@ -15,6 +16,7 @@ export default function AddGameModal() {
   const setOpen = useUIStore((s) => s.setAddGameOpen);
   const addToast = useUIStore((s) => s.addToast);
   const { create } = useGames();
+  const qc = useQueryClient();
 
   const [mode, setMode] = useState<Mode>("single");
   const [name, setName] = useState("");
@@ -78,7 +80,8 @@ export default function AddGameModal() {
           : "No new games found",
         result.added > 0 ? "success" : "info"
       );
-      window.location.reload();
+      qc.invalidateQueries({ queryKey: ["games"] });
+      close();
     } catch (e) {
       addToast(String(e), "error");
     } finally {

@@ -34,7 +34,11 @@ interface GameStore {
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   resetFilters: () => void;
 
-  filteredGames: () => Game[];
+  hiddenIds: string[];
+  showHidden: boolean;
+  hideGames: (ids: string[]) => void;
+  toggleShowHidden: () => void;
+  restoreAllHidden: () => void;
 }
 
 const defaultFilters: Filters = {
@@ -72,70 +76,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set((s) => ({ filters: { ...s.filters, [key]: value } })),
   resetFilters: () => set({ filters: defaultFilters }),
 
-  filteredGames: () => {
-    const { games, search, sortKey, sortAsc, filters } = get();
-    let result = [...games];
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((g) => g.name.toLowerCase().includes(q));
-    }
-
-    if (filters.platform !== "all") {
-      result = result.filter((g) => g.platform === filters.platform);
-    }
-
-    if (filters.status !== "all") {
-      result = result.filter((g) => g.status === filters.status);
-    }
-
-    if (filters.favoritesOnly) {
-      result = result.filter((g) => g.is_favorite);
-    }
-
-    if (filters.minRating > 0) {
-      result = result.filter((g) => g.rating !== null && g.rating >= filters.minRating);
-    }
-
-    if (filters.tags.length > 0) {
-      result = result.filter((g) =>
-        filters.tags.every((t) => g.tags.includes(t))
-      );
-    }
-
-    result.sort((a, b) => {
-      let av: number | string | null = null;
-      let bv: number | string | null = null;
-
-      switch (sortKey) {
-        case "name":
-          av = a.name.toLowerCase();
-          bv = b.name.toLowerCase();
-          break;
-        case "rating":
-          av = a.rating ?? -1;
-          bv = b.rating ?? -1;
-          break;
-        case "last_played":
-          av = a.last_played ?? "";
-          bv = b.last_played ?? "";
-          break;
-        case "date_added":
-          av = a.date_added;
-          bv = b.date_added;
-          break;
-        case "playtime_mins":
-          av = a.playtime_mins;
-          bv = b.playtime_mins;
-          break;
-      }
-
-      if (av === null || bv === null) return 0;
-      if (av < bv) return sortAsc ? -1 : 1;
-      if (av > bv) return sortAsc ? 1 : -1;
-      return 0;
-    });
-
-    return result;
-  },
+  hiddenIds: [],
+  showHidden: false,
+  hideGames: (ids) => set((s) => ({ hiddenIds: [...new Set([...s.hiddenIds, ...ids])] })),
+  toggleShowHidden: () => set((s) => ({ showHidden: !s.showHidden })),
+  restoreAllHidden: () => set({ hiddenIds: [], showHidden: false }),
 }));

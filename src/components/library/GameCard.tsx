@@ -58,8 +58,8 @@ function GameCard({ game }: { game: Game }) {
   });
   const showPlaytime = appSettings?.show_playtime_on_cards ?? true;
 
+  const customStatuses = useUIStore((s) => s.customStatuses);
   const isHighRated = game.rating !== null && game.rating >= 8;
-  const customStatuses = useUIStore.getState().customStatuses;
   const statusConfig = customStatuses.find((s) => s.key === game.status);
 
   return (

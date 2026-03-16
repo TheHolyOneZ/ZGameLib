@@ -104,9 +104,15 @@ export function useFilteredGames() {
   const sortKey = useGameStore((s) => s.sortKey);
   const sortAsc = useGameStore((s) => s.sortAsc);
   const filters = useGameStore((s) => s.filters);
+  const hiddenIds = useGameStore((s) => s.hiddenIds);
+  const showHidden = useGameStore((s) => s.showHidden);
 
   return useMemo(() => {
     let result = [...games];
+    if (!showHidden && hiddenIds.length > 0) {
+      const hiddenSet = new Set(hiddenIds);
+      result = result.filter((g) => !hiddenSet.has(g.id));
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -134,5 +140,5 @@ export function useFilteredGames() {
     });
 
     return result;
-  }, [games, search, sortKey, sortAsc, filters]);
+  }, [games, search, sortKey, sortAsc, filters, hiddenIds, showHidden]);
 }

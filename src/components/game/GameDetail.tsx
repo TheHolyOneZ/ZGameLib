@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
@@ -14,7 +14,8 @@ import Badge from "@/components/ui/Badge";
 import CoverSearchModal from "@/components/modals/CoverSearchModal";
 import {
   CloseIcon, HeartIcon, PlayIcon, FolderIcon, TrashIcon,
-  CheckIcon, TagIcon, ClockIcon, StarIcon, ImageIcon, SearchIcon
+  CheckIcon, TagIcon, ClockIcon, StarIcon, ImageIcon, SearchIcon,
+  CopyIcon, ExternalLinkIcon
 } from "@/components/ui/Icons";
 
 const COVER_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23111118'/%3E%3Cstop offset='100%25' stop-color='%230a0a0f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='300' height='400'/%3E%3Ccircle cx='150' cy='180' r='50' fill='none' stroke='%231a1a2e' stroke-width='2'/%3E%3Cpath d='M135 160 L135 200 L175 180Z' fill='%231a1a2e'/%3E%3C/svg%3E`;
@@ -39,6 +40,8 @@ export default function GameDetail() {
   const [activeTab, setActiveTab] = useState<"info" | "screenshots" | "mods">("info");
   const [screenshots, setScreenshots] = useState<string[] | null>(null);
   const [loadingShots, setLoadingShots] = useState(false);
+
+  const customStatuses = useUIStore((s) => s.customStatuses);
 
   const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0 };
   const coverUrl = useCover(game ?? dummyGame);
@@ -234,11 +237,26 @@ export default function GameDetail() {
                   </div>
                 )}
                 {!loadingShots && screenshots && screenshots.length > 0 && (
-                  <div className="columns-2 gap-2 space-y-2">
-                    {screenshots.map((path, i) => (
-                      <ScreenshotThumb key={i} path={path} />
-                    ))}
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[11px] text-slate-600">{screenshots.length} screenshot{screenshots.length !== 1 ? "s" : ""}</p>
+                      <button
+                        onClick={() => {
+                          const folder = screenshots[0].replace(/[\\/][^\\/]+$/, "");
+                          api.openUrl(folder).catch(() => {});
+                        }}
+                        className="btn-ghost text-[11px] py-1 px-2.5"
+                      >
+                        <FolderIcon size={11} />
+                        Open Folder
+                      </button>
+                    </div>
+                    <div className="columns-2 gap-2">
+                      {screenshots.map((path, i) => (
+                        <ScreenshotThumb key={i} path={path} />
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -350,7 +368,7 @@ export default function GameDetail() {
                   >
                     Unset
                   </motion.button>
-                  {useUIStore.getState().customStatuses.map((s) => (
+                  {customStatuses.map((s) => (
                     <motion.button
                       key={s.key}
                       whileTap={{ scale: 0.93 }}
@@ -466,20 +484,88 @@ export default function GameDetail() {
 
   function ScreenshotThumb({ path }: { path: string }) {
     const [enlarged, setEnlarged] = useState(false);
+    const [hovered, setHovered] = useState(false);
     const dataUrl = useScreenshotUrl(path);
+    const addToast = useUIStore((s) => s.addToast);
+
+    useEffect(() => {
+      if (!enlarged) return;
+      const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setEnlarged(false); };
+      window.addEventListener("keydown", handler);
+      return () => window.removeEventListener("keydown", handler);
+    }, [enlarged]);
+
+    const folderPath = path.replace(/[\\/][^\\/]+$/, "");
+
+    const copyPath = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      await navigator.clipboard.writeText(path);
+      addToast("Path copied", "success");
+    };
+
+    const openFile = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      api.openUrl(path).catch(() => {});
+    };
+
+    const openFolder = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      api.openUrl(folderPath).catch(() => {});
+    };
+
+    const exportScreenshot = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!dataUrl) return;
+      const a = document.createElement("a");
+      const fileName = path.split(/[\\/]/).pop() ?? "screenshot.jpg";
+      a.href = dataUrl;
+      a.download = fileName;
+      a.click();
+    };
+
     return (
       <>
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          onClick={() => setEnlarged(true)}
-          className="break-inside-avoid rounded-xl overflow-hidden cursor-pointer mb-2 border border-white/5 hover:border-accent-500/30 transition-colors"
+        <div
+          className="break-inside-avoid rounded-xl overflow-hidden mb-2 border border-white/5 hover:border-accent-500/30 transition-colors relative group"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
         >
-          {dataUrl ? (
-            <img src={dataUrl} alt="" className="w-full h-auto block" />
-          ) : (
-            <div className="w-full aspect-video bg-white/3 animate-pulse" />
-          )}
-        </motion.div>
+          <motion.div whileHover={{ scale: 1.02 }} onClick={() => setEnlarged(true)} className="cursor-zoom-in">
+            {dataUrl ? (
+              <img src={dataUrl} alt="" className="w-full h-auto block" />
+            ) : (
+              <div className="w-full aspect-video bg-white/3 animate-pulse" />
+            )}
+          </motion.div>
+          <AnimatePresence>
+            {hovered && dataUrl && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-1 p-1.5"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }}
+              >
+                <button onClick={copyPath} title="Copy path" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
+                  <CopyIcon size={11} />
+                </button>
+                <button onClick={openFile} title="Open file" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
+                  <ExternalLinkIcon size={11} />
+                </button>
+                <button onClick={openFolder} title="Open folder" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
+                  <FolderIcon size={11} />
+                </button>
+                <button onClick={exportScreenshot} title="Export / download" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
+                  <ImageIcon size={11} />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); setEnlarged(true); }} title="View fullscreen" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
+                  <SearchIcon size={11} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <AnimatePresence>
           {enlarged && dataUrl && (
             <motion.div
@@ -487,10 +573,29 @@ export default function GameDetail() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[60] flex items-center justify-center p-6"
-              style={{ background: "rgba(0,0,0,0.9)" }}
+              style={{ background: "rgba(0,0,0,0.92)" }}
               onClick={() => setEnlarged(false)}
             >
-              <img src={dataUrl} alt="" className="max-w-full max-h-full rounded-xl object-contain" />
+              <img src={dataUrl} alt="" className="max-w-full max-h-full rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
+              <button
+                onClick={() => setEnlarged(false)}
+                className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <CloseIcon size={16} />
+              </button>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/50 border border-white/10">
+                <button onClick={copyPath} title="Copy path" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-[11px]">
+                  <CopyIcon size={12} /> Copy path
+                </button>
+                <div className="w-px h-4 bg-white/10" />
+                <button onClick={openFolder} title="Open folder" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-[11px]">
+                  <FolderIcon size={12} /> Open folder
+                </button>
+                <div className="w-px h-4 bg-white/10" />
+                <button onClick={exportScreenshot} title="Export" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-[11px]">
+                  <ImageIcon size={12} /> Export
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -501,8 +606,12 @@ export default function GameDetail() {
 
 function useScreenshotUrl(path: string) {
   const [url, setUrl] = useState<string | null>(null);
-  if (url === null) {
-    api.readImageBase64(path).then(setUrl).catch(() => setUrl(""));
-  }
+  useEffect(() => {
+    let cancelled = false;
+    api.readImageBase64(path)
+      .then((data) => { if (!cancelled) setUrl(data); })
+      .catch(() => { if (!cancelled) setUrl(""); });
+    return () => { cancelled = true; };
+  }, [path]);
   return url || null;
 }

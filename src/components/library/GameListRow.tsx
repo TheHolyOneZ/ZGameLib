@@ -15,6 +15,7 @@ export default function GameListRow({ game }: { game: Game }) {
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const addToast = useUIStore((s) => s.addToast);
+  const customStatuses = useUIStore((s) => s.customStatuses);
   const { toggleFavorite } = useGames();
   const coverUrl = useCover(game);
 
@@ -48,7 +49,7 @@ export default function GameListRow({ game }: { game: Game }) {
             {game.platform}
           </Badge>
           {game.status !== "none" && (() => {
-            const sc = useUIStore.getState().customStatuses.find(s => s.key === game.status);
+            const sc = customStatuses.find(s => s.key === game.status);
             return sc ? (
               <span className="text-[10px] font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sc.color }} />

@@ -77,6 +77,7 @@ export default function Settings() {
     () => queryClient.getQueryData<AppSettings>(["settings"]) ?? null
   );
   const [editingStatus, setEditingStatus] = useState<number | null>(null);
+  const [editLabelValue, setEditLabelValue] = useState("");
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [newStatusColor, setNewStatusColor] = useState("#60a5fa");
   const [showAddStatus, setShowAddStatus] = useState(false);
@@ -412,7 +413,11 @@ export default function Settings() {
                     </div>
 
                     <button
-                      onClick={() => setEditingStatus(editingStatus === i ? null : i)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        if (editingStatus === i) { setEditingStatus(null); }
+                        else { setEditingStatus(i); setEditLabelValue(status.label); }
+                      }}
                       className="w-3.5 h-3.5 rounded-full border border-white/10 shrink-0 transition-transform hover:scale-125"
                       style={{ backgroundColor: status.color }}
                     />
@@ -420,16 +425,16 @@ export default function Settings() {
                     {editingStatus === i ? (
                       <input
                         autoFocus
-                        value={status.label}
-                        onChange={(e) => updateStatus(i, "label", e.target.value)}
-                        onBlur={() => setEditingStatus(null)}
-                        onKeyDown={(e) => e.key === "Enter" && setEditingStatus(null)}
+                        value={editLabelValue}
+                        onChange={(e) => setEditLabelValue(e.target.value)}
+                        onBlur={() => { updateStatus(i, "label", editLabelValue); setEditingStatus(null); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { updateStatus(i, "label", editLabelValue); setEditingStatus(null); } }}
                         className="input-glass flex-1 text-[12px] py-1"
                       />
                     ) : (
                       <span
                         className="flex-1 text-[13px] text-slate-300 cursor-text hover:text-white transition-colors"
-                        onClick={() => setEditingStatus(i)}
+                        onClick={() => { setEditingStatus(i); setEditLabelValue(status.label); }}
                       >
                         {status.label}
                       </span>
@@ -440,6 +445,7 @@ export default function Settings() {
                         {COLOR_PRESETS.map((c) => (
                           <button
                             key={c}
+                            onMouseDown={(e) => e.preventDefault()}
                             onClick={() => updateStatus(i, "color", c)}
                             className={cn(
                               "w-3.5 h-3.5 rounded-full transition-transform hover:scale-125",
@@ -589,7 +595,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v0.4.0</p>
+                  <p className="text-[11px] text-slate-600">v0.4.1</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}

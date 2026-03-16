@@ -22,6 +22,7 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fetchCache = useRef<Map<string, string>>(new Map());
 
   const search = async () => {
     if (!query.trim()) return;
@@ -40,16 +41,12 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
   const applyCover = async (candidate: CoverCandidate) => {
     setApplying(candidate.app_id);
     try {
-      // Download the cover URL to cache, then set as game cover
-      const data_uri = await api.fetchUrlAsBase64(candidate.cover_url);
-      if (!data_uri) throw new Error("Failed to download cover");
-
-      // Write to covers cache via set_game_cover using the URL approach
-      // We fetch as base64 data URI, then save via fetchUrlAsBase64 caches it,
-      // so we just call updateGame with cover_path set to the fetched data_uri inline
-      // Actually: download to covers dir and update DB
-      const newPath = await api.fetchUrlAsBase64(candidate.cover_url);
-      // fetchUrlAsBase64 returns a data URI — we store it directly
+      let newPath = fetchCache.current.get(candidate.cover_url);
+      if (!newPath) {
+        newPath = await api.fetchUrlAsBase64(candidate.cover_url);
+        if (!newPath) throw new Error("Failed to download cover");
+        fetchCache.current.set(candidate.cover_url, newPath);
+      }
       if (currentCoverPath) clearCoverCache(currentCoverPath);
       setCoverCache(gameId + "_search", newPath);
 

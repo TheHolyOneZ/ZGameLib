@@ -57,7 +57,7 @@ interface UIStore {
 export const useUIStore = create<UIStore>((set) => ({
   toasts: [],
   addToast: (message, type = "success") => {
-    const id = Math.random().toString(36).slice(2);
+    const id = crypto.randomUUID();
     set((s) => ({ toasts: [...s.toasts, { id, message, type }] }));
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
@@ -86,7 +86,7 @@ export const useUIStore = create<UIStore>((set) => ({
   logs: [],
   logPanelOpen: false,
   addLog: (level, message) => {
-    const id = Math.random().toString(36).slice(2);
+    const id = crypto.randomUUID();
     const now = new Date();
     const time = now.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
     set((s) => ({ logs: [...s.logs.slice(-499), { id, time, level, message }] }));

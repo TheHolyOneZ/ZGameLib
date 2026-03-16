@@ -1,13 +1,12 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useScan } from "@/hooks/useGames";
 import type { Platform } from "@/lib/types";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   GamepadIcon, LibraryIcon, HeartIcon, ClockIcon, ChartIcon,
-  SettingsIcon, PlusIcon, ScanIcon, SteamIcon, EpicIcon, CustomGameIcon,
+  SettingsIcon, SteamIcon, EpicIcon, CustomGameIcon,
   SparkleIcon, SpinIcon, GogIcon
 } from "@/components/ui/Icons";
 
@@ -18,9 +17,7 @@ export default function Sidebar() {
   const filters = useGameStore((s) => s.filters);
   const setFilter = useGameStore((s) => s.setFilter);
   const resetFilters = useGameStore((s) => s.resetFilters);
-  const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const customStatuses = useUIStore((s) => s.customStatuses);
-  const { scan, isScanning } = useScan();
 
   const platformCounts = [
     { key: "steam" as Platform, label: "Steam", icon: SteamIcon, count: games.filter((g) => g.platform === "steam").length },
@@ -96,7 +93,24 @@ export default function Sidebar() {
         {navItem("/settings", <SettingsIcon size={16} />, "Settings")}
       </div>
 
-      <div className="mt-6 mb-1">
+      <div className="glass rounded-xl p-3 mt-5 mx-1">
+        <div className="flex items-center gap-2 mb-2">
+          <SparkleIcon size={12} className="text-accent-400" />
+          <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Overview</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <span className="text-lg font-bold text-white">{games.length}</span>
+            <span className="block text-[10px] text-slate-600">Games</span>
+          </div>
+          <div>
+            <span className="text-lg font-bold text-accent-400">{games.filter(g => g.is_favorite).length}</span>
+            <span className="block text-[10px] text-slate-600">Favorites</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 mb-1">
         <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
           <span className="w-3 h-px bg-slate-800" />
           Platforms
@@ -186,50 +200,6 @@ export default function Sidebar() {
       </div>
 
       <div className="flex-1" />
-
-      <div className="glass rounded-xl p-3 mb-3 mx-1">
-        <div className="flex items-center gap-2 mb-2">
-          <SparkleIcon size={12} className="text-accent-400" />
-          <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Overview</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <span className="text-lg font-bold text-white">{games.length}</span>
-            <span className="block text-[10px] text-slate-600">Games</span>
-          </div>
-          <div>
-            <span className="text-lg font-bold text-accent-400">{games.filter(g => g.is_favorite).length}</span>
-            <span className="block text-[10px] text-slate-600">Favorites</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2 px-1">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setAddGameOpen(true)}
-          className="btn-primary justify-center"
-        >
-          <PlusIcon size={14} />
-          Add Game
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => scan()}
-          disabled={isScanning}
-          className="btn-ghost justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <motion.span
-            animate={isScanning ? { rotate: 360 } : {}}
-            transition={isScanning ? { duration: 1.5, repeat: Infinity, ease: "linear" } : {}}
-          >
-            <ScanIcon size={14} />
-          </motion.span>
-          {isScanning ? "Scanning..." : "Scan Games"}
-        </motion.button>
-      </div>
     </aside>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/tauri";
 import type { Game } from "@/lib/types";
 
@@ -45,31 +45,23 @@ export function useCover(game: Game): string | null {
     return cache.get(path) || null;
   });
 
+  const genRef = useRef(0);
+
   useEffect(() => {
     if (!path) { setSrc(null); return; }
     if (path.startsWith("data:")) { setSrc(path); return; }
     if (cache.has(path)) { setSrc(cache.get(path)!); return; }
 
-    let cancelled = false;
+    const gen = ++genRef.current;
     const isRemote = path.startsWith("http://") || path.startsWith("https://");
+    const fetcher = isRemote ? () => api.fetchUrlAsBase64(path) : () => api.readImageBase64(path);
 
-    if (isRemote) {
-      queueFetch(() => api.fetchUrlAsBase64(path), path)
-        .then((dataUri) => {
-          cache.set(path, dataUri);
-          if (!cancelled) setSrc(dataUri);
-        })
-        .catch(() => {});
-    } else {
-      queueFetch(() => api.readImageBase64(path), path)
-        .then((dataUri) => {
-          cache.set(path, dataUri);
-          if (!cancelled) setSrc(dataUri);
-        })
-        .catch(() => {});
-    }
-
-    return () => { cancelled = true; };
+    queueFetch(fetcher, path)
+      .then((dataUri) => {
+        cache.set(path, dataUri);
+        if (genRef.current === gen) setSrc(dataUri);
+      })
+      .catch(() => {});
   }, [path]);
 
   return src;
