@@ -4,11 +4,25 @@
 
 Track, organize, rate and launch every game you own — Steam, Epic Games, GOG and custom executables — all from one sleek app built with Tauri 2 + React.
 
-![ZGameLib Screenshot](https://zsync.eu/zgamelib/og-image.png)
+---
+
+## Website
+
+**[zsync.eu/zgamelib](https://zsync.eu/zgamelib/)** — latest downloads, release notes, and the main hub for ZGameLib.
+
+---
+
+## Preview
+
+> **Note:** This video was recorded on v0.3.0. The UI looks very similar but newer versions include improvements — cleaner layout, per-page search, better screenshot actions, and more.
+
+[![ZGameLib v0.3.0 Preview](https://img.youtube.com/vi/rlqUUqAPOxU/maxresdefault.jpg)](https://www.youtube.com/watch?v=rlqUUqAPOxU)
 
 ---
 
 ## Download
+
+Visit **[zsync.eu/zgamelib](https://zsync.eu/zgamelib/)** for the latest installers, or grab them directly:
 
 | Installer | Link |
 |-----------|------|
