@@ -4,7 +4,7 @@ import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useCover } from "@/hooks/useCover";
 import { api } from "@/lib/tauri";
-import { cn, PLATFORM_COLORS } from "@/lib/utils";
+import { cn, PLATFORM_COLORS, formatPlaytime } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 import { SpinIcon, PlayIcon, SearchIcon, SteamIcon, EpicIcon, GogIcon, CustomGameIcon, HeartIcon, LibraryIcon, SparkleIcon, CloseIcon, CheckIcon } from "@/components/ui/Icons";
 import Badge from "@/components/ui/Badge";
@@ -215,13 +215,6 @@ function CoverThumb({ game }: { game: Game }) {
   const [failed, setFailed] = useState(false);
   if (!url || failed) return <div className="w-full h-full bg-white/5 rounded" />;
   return <img src={url} alt="" className="w-full h-full object-cover rounded" onError={() => setFailed(true)} />;
-}
-
-function formatPlaytime(mins: number) {
-  if (mins < 60) return `${mins}m`;
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
 function WinnerCard({ game, onPlayAgain, onExclude }: {

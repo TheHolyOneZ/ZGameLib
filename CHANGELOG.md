@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.5.0] — 2026-03-17
+
+### Fixed
+- **UI no longer freezes during scan / bulk add / single add** — all scan commands (`scan_steam_games`, `scan_epic_games`, `scan_gog_games`, `scan_all_games`, `scan_folder_for_games`) are now `async` and run on `tokio::task::spawn_blocking`; this frees Tauri's command handler thread pool so navigation, settings, game detail, and all other interactions remain fully responsive while scans run in the background
+- **Bulk Add no longer blocks the screen** — the Add Game modal closes immediately when a bulk scan starts; the scan runs in the background with a toast on completion instead of holding the modal open with a blocking backdrop overlay
+- **Concurrent scan guard** — an `AtomicBool` (`SCAN_RUNNING`) prevents two folder scans from executing simultaneously; a second attempt returns an error immediately instead of corrupting state
+- **Scanner DB transactions** — all four scan functions (Steam, Epic, GOG, Custom) now wrap their DB writes in `BEGIN`/`COMMIT` transactions, preventing partial inserts on failure
+- **Top-rated cover images in Stats** — cover thumbnails now load correctly via the `useCover` hook instead of raw file paths (which Tauri's webview cannot display)
+
+### Added
+- **Loading beam** — a glowing accent-colored animated bar appears at the very top of the window during any background operation (scan, bulk add); uses the active theme's accent color with a soft glow, fades out smoothly when the operation completes
+- **`isBulkAdding` state** — new `useUIStore` field tracks background bulk-add operations separately from platform scans
+- **Executable health check** — game cards show an amber warning badge when the game's `.exe` file is missing or was moved; backed by a new `check_exe_health` Tauri command
+- **Date range filters** — filter the library by date added (from/to); new `dateAddedFrom` and `dateAddedTo` fields in the filter store
+- **Rating distribution chart** — horizontal bar chart on the Stats page showing how many games you rated at each score (1–10)
+- **Completion rate tracker** — circular SVG progress ring on the Stats page showing what percentage of your library is marked "Completed"
+- **Right-click context menu** — right-click any game card or list row to get a portal-rendered context menu with: Play, Open Folder, Toggle Favorite, Copy Name, View Details
+- **Loading skeleton** — a pulsing placeholder grid appears while the library is loading for the first time
+- **Toast progress bar** — toasts now show a shrinking progress bar at the bottom indicating time remaining before auto-dismiss
+- **Empty search state** — when filters return no results, a dedicated "No games match your filters" view appears with a one-click "Clear Filters" button
+- **Clickable stats** — every card, platform bar, and status tile on the Stats page is now clickable and navigates to the Library with the corresponding filter/sort pre-applied
+
+### Changed
+- **`DbState` now uses `Arc<Mutex<Connection>>`** — the database connection wrapper is `Arc`-wrapped so it can be safely cloned into background `tokio` tasks without blocking the Tauri IPC thread pool
+- Version bumped to **0.5.0**
+
+---
+
 ## [0.4.1] — 2026-03-16
 
 ### Fixed — Backlog (14 issues)

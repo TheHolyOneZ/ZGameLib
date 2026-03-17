@@ -10,7 +10,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-0.4.1-22c55e?style=flat-square" alt="v0.4.1"/>
+  <img src="https://img.shields.io/badge/Version-0.5.0-22c55e?style=flat-square" alt="v0.5.0"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -18,8 +18,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 <p>
   <a href="https://zsync.eu/zgamelib/"><strong>🌐 Website</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.4.1_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.4.1_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.5.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.5.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
   <a href="https://github.com/TheHolyOneZ/ZGameLib"><strong>GitHub</strong></a>
 </p>
 
@@ -43,8 +43,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| [ZGameLib_0.4.1_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.4.1_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
-| [ZGameLib_0.4.1_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.4.1_x64-setup.exe) | `.exe` | NSIS alternative installer |
+| [ZGameLib_0.5.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.5.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
+| [ZGameLib_0.5.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.5.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -121,6 +121,13 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 - Contextual to each page (Library, Favorites, Recently Played)
 - Live result counter
 - <kbd>/</kbd> hotkey focuses search from anywhere
+- "No games match" empty state with one-click **Clear Filters**
+- Date range filtering (date added from/to)
+
+**Context Menu & Health**
+- **Right-click** any game card or list row → Play · Open Folder · Favorite · Copy Name · View Details
+- **Exe health badge** — amber warning icon on cards when the executable is missing
+- Loading skeleton grid while library loads
 
 </td>
 </tr>
@@ -319,11 +326,15 @@ Can't decide what to play? Let the wheel decide.
 | Completed | Count with Completed status |
 | Rated | Count with any rating |
 
+All stat cards are **clickable** — each navigates to the Library with the relevant filter or sort pre-applied.
+
 </td>
 <td>
 
-- **Platform breakdown** — horizontal proportion bars: Steam · Epic · GOG · Custom
-- **Status breakdown** — pill badges per custom status with counts
+- **Platform breakdown** — horizontal proportion bars: Steam · Epic · GOG · Custom (clickable)
+- **Status breakdown** — pill badges per custom status with counts (clickable)
+- **Rating distribution** — horizontal bar chart showing game count per rating (1–10)
+- **Completion rate** — circular SVG progress ring (completed / total)
 - **Top 5 rated games** — ranked list with cover thumbnails and star display
 - Staggered entrance animations
 
@@ -859,8 +870,8 @@ Output directory: `src-tauri/target/release/bundle/`
 
 ```
 bundle/
-├── msi/   ZGameLib_0.4.1_x64_en-US.msi
-└── nsis/  ZGameLib_0.4.1_x64-setup.exe
+├── msi/   ZGameLib_0.5.0_x64_en-US.msi
+└── nsis/  ZGameLib_0.5.0_x64-setup.exe
 ```
 
 ### Frontend Only

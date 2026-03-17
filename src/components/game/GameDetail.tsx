@@ -6,7 +6,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { useGames } from "@/hooks/useGames";
 import { useCover, setCoverCache, clearCoverCache } from "@/hooks/useCover";
 import { api } from "@/lib/tauri";
-import { cn, formatPlaytime, formatDate, PLATFORM_COLORS } from "@/lib/utils";
+import { cn, formatPlaytime, formatDate, PLATFORM_COLORS, COVER_PLACEHOLDER } from "@/lib/utils";
 import StarRating from "@/components/ui/StarRating";
 import GameNotes from "./GameNotes";
 import ModLoaderPanel from "./ModLoaderPanel";
@@ -17,9 +17,6 @@ import {
   CheckIcon, TagIcon, ClockIcon, StarIcon, ImageIcon, SearchIcon,
   CopyIcon, ExternalLinkIcon
 } from "@/components/ui/Icons";
-
-const COVER_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23111118'/%3E%3Cstop offset='100%25' stop-color='%230a0a0f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='300' height='400'/%3E%3Ccircle cx='150' cy='180' r='50' fill='none' stroke='%231a1a2e' stroke-width='2'/%3E%3Cpath d='M135 160 L135 200 L175 180Z' fill='%231a1a2e'/%3E%3C/svg%3E`;
-
 
 export default function GameDetail() {
   const selectedGameId = useGameStore((s) => s.selectedGameId);
@@ -42,6 +39,13 @@ export default function GameDetail() {
   const [loadingShots, setLoadingShots] = useState(false);
 
   const customStatuses = useUIStore((s) => s.customStatuses);
+
+  // Reset tab and screenshots when switching games
+  useEffect(() => {
+    setActiveTab("info");
+    setScreenshots(null);
+    setLoadingShots(false);
+  }, [selectedGameId]);
 
   const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0 };
   const coverUrl = useCover(game ?? dummyGame);
@@ -372,7 +376,7 @@ export default function GameDetail() {
                     <motion.button
                       key={s.key}
                       whileTap={{ scale: 0.93 }}
-                      onClick={() => update({ id: game.id, status: s.key })}
+                      onClick={() => update({ id: game.id, status: s.key as import("@/lib/types").GameStatus })}
                       className={cn(
                         "px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-all duration-300 flex items-center gap-1.5",
                         game.status === s.key

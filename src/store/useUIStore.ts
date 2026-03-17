@@ -37,6 +37,9 @@ interface UIStore {
   isScanning: boolean;
   setScanning: (v: boolean) => void;
 
+  isBulkAdding: boolean;
+  setBulkAdding: (v: boolean) => void;
+
   confirmDialog: { open: boolean; title: string; onConfirm: () => void } | null;
   openConfirm: (title: string, onConfirm: () => void) => void;
   closeConfirm: () => void;
@@ -74,6 +77,9 @@ export const useUIStore = create<UIStore>((set) => ({
 
   isScanning: false,
   setScanning: (v) => set({ isScanning: v }),
+
+  isBulkAdding: false,
+  setBulkAdding: (v) => set({ isBulkAdding: v }),
 
   confirmDialog: null,
   openConfirm: (title, onConfirm) =>

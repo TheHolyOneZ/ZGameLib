@@ -50,7 +50,6 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
       if (currentCoverPath) clearCoverCache(currentCoverPath);
       setCoverCache(gameId + "_search", newPath);
 
-      // Update game record in DB via update_game cover_path = data URI
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("update_game", {
         payload: { id: gameId, cover_path: newPath }
@@ -88,7 +87,6 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
           boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgb(var(--accent-500) /0.1)",
         }}
       >
-        {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <SearchIcon size={16} className="text-accent-400 shrink-0" />
           <h2 className="text-[14px] font-semibold text-white flex-1">Search Cover</h2>
@@ -97,7 +95,6 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
           </button>
         </div>
 
-        {/* Search bar */}
         <div className="px-5 py-3 flex gap-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <div className="relative flex-1">
             <SearchIcon size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
@@ -125,7 +122,6 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
           </motion.button>
         </div>
 
-        {/* Results */}
         <div className="flex-1 overflow-y-auto p-4">
           {results.length === 0 && !loading && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -154,11 +150,9 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
                   )}
                 >
                   <CoverImage url={r.cover_url} name={r.name} />
-                  {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-end p-2">
                     <p className="text-[10px] text-white font-medium text-center leading-tight line-clamp-2">{r.name}</p>
                   </div>
-                  {/* Applying spinner */}
                   {applying === r.app_id && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                       <motion.div
@@ -174,7 +168,6 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
           </div>
         </div>
 
-        {/* Footer hint */}
         {results.length > 0 && (
           <div className="px-5 py-2.5 text-[10px] text-slate-700 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
             <CheckIcon size={10} className="inline mr-1 text-slate-700" />

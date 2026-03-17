@@ -23,7 +23,8 @@ export default function AddGameModal() {
   const [exePath, setExePath] = useState("");
   const [platform] = useState<Platform>("custom");
   const [bulkFolder, setBulkFolder] = useState("");
-  const [isBulkScanning, setIsBulkScanning] = useState(false);
+  const isBulkAdding = useUIStore((s) => s.isBulkAdding);
+  const setBulkAdding = useUIStore((s) => s.setBulkAdding);
 
   const close = () => {
     setOpen(false);
@@ -69,24 +70,25 @@ export default function AddGameModal() {
     close();
   };
 
-  const handleSubmitBulk = async () => {
-    if (!bulkFolder) return;
-    setIsBulkScanning(true);
-    try {
-      const result = await api.scanFolder(bulkFolder);
-      addToast(
-        result.added > 0
-          ? `Found ${result.added} new game${result.added !== 1 ? "s" : ""}`
-          : "No new games found",
-        result.added > 0 ? "success" : "info"
-      );
-      qc.invalidateQueries({ queryKey: ["games"] });
-      close();
-    } catch (e) {
-      addToast(String(e), "error");
-    } finally {
-      setIsBulkScanning(false);
-    }
+  const handleSubmitBulk = () => {
+    if (!bulkFolder || isBulkAdding) return;
+    const folder = bulkFolder;
+    close();
+    setBulkAdding(true);
+    addToast("Bulk scan started — working in the background", "info");
+    api
+      .scanFolder(folder)
+      .then((result) => {
+        addToast(
+          result.added > 0
+            ? `Bulk scan done — ${result.added} new game${result.added !== 1 ? "s" : ""} found`
+            : "Bulk scan done — no new games found",
+          result.added > 0 ? "success" : "info"
+        );
+        qc.invalidateQueries({ queryKey: ["games"] });
+      })
+      .catch((e) => addToast(String(e), "error"))
+      .finally(() => setBulkAdding(false));
   };
 
   return (
@@ -115,7 +117,6 @@ export default function AddGameModal() {
                 borderColor: "rgb(var(--accent-500) /0.12)",
               }}
             >
-              {/* Header */}
               <div className="flex items-center justify-between p-6 pb-4">
                 <div className="flex items-center gap-3">
                   <div
@@ -139,7 +140,6 @@ export default function AddGameModal() {
                 </motion.button>
               </div>
 
-              {/* Mode Toggle */}
               <div className="px-6 mb-4">
                 <div className="flex rounded-xl glass overflow-hidden p-1 gap-1">
                   {(["single", "bulk"] as Mode[]).map((m) => (
@@ -169,7 +169,6 @@ export default function AddGameModal() {
                 </div>
               </div>
 
-              {/* Content */}
               <AnimatePresence initial={false}>
                 {mode === "single" ? (
                   <motion.form
@@ -287,25 +286,11 @@ export default function AddGameModal() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={handleSubmitBulk}
-                        disabled={!bulkFolder || isBulkScanning}
+                        disabled={!bulkFolder || isBulkAdding}
                         className="btn-primary flex-1 justify-center disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        {isBulkScanning ? (
-                          <>
-                            <motion.span
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                            >
-                              <ScanIcon size={13} />
-                            </motion.span>
-                            Scanning...
-                          </>
-                        ) : (
-                          <>
-                            <ScanIcon size={13} />
-                            Scan & Add
-                          </>
-                        )}
+                        <ScanIcon size={13} />
+                        Scan & Add
                       </motion.button>
                     </div>
                   </motion.div>

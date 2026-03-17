@@ -8,6 +8,7 @@ export const api = {
   updateGame: (payload: UpdateGamePayload) => invoke<Game>("update_game", { payload }),
   deleteGame: (id: string) => invoke<void>("delete_game", { id }),
   toggleFavorite: (id: string) => invoke<boolean>("toggle_favorite", { id }),
+  checkExeHealth: (id: string) => invoke<boolean>("check_exe_health", { id }),
 
   getNotes: (gameId: string) => invoke<Note[]>("get_notes", { gameId }),
   createNote: (gameId: string, content: string) => invoke<Note>("create_note", { gameId, content }),

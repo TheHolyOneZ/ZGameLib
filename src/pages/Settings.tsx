@@ -595,7 +595,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v0.4.1</p>
+                  <p className="text-[11px] text-slate-600">v0.5.0</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}

@@ -27,7 +27,6 @@ export default function LogPanel() {
   const clearLogs = useUIStore((s) => s.clearLogs);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Listen to Tauri scan-log events
   useEffect(() => {
     const promise = listen<{ level: string; message: string }>("scan-log", (event) => {
       const validLevels = ["info", "ok", "warn", "error"];
@@ -39,7 +38,6 @@ export default function LogPanel() {
     return () => { promise.then((unlisten) => unlisten()); };
   }, [addLog]);
 
-  // Auto-scroll to bottom when new logs arrive and panel is open
   useEffect(() => {
     if (isOpen) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,7 +60,6 @@ export default function LogPanel() {
             boxShadow: "-24px 0 60px rgba(0,0,0,0.6)",
           }}
         >
-          {/* Header */}
           <div
             className="flex items-center justify-between px-5 py-4 shrink-0"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
@@ -91,7 +88,6 @@ export default function LogPanel() {
             </div>
           </div>
 
-          {/* Legend */}
           <div
             className="flex items-center gap-4 px-5 py-2 shrink-0"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}
@@ -106,7 +102,6 @@ export default function LogPanel() {
             ))}
           </div>
 
-          {/* Log entries */}
           <div className="flex-1 overflow-y-auto p-4 space-y-px">
             {logs.length === 0 ? (
               <div className="flex items-center justify-center h-full">

@@ -14,6 +14,7 @@ import AddGameModal from "@/components/modals/AddGameModal";
 import GameDetail from "@/components/game/GameDetail";
 import ConfirmModal from "@/components/modals/ConfirmModal";
 import LogPanel from "@/components/ui/LogPanel";
+import LoadingBeam from "@/components/ui/LoadingBeam";
 import ModsPromoPanel from "@/components/game/ModsPromoPanel";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
@@ -217,6 +218,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <LoadingBeam />
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Topbar />

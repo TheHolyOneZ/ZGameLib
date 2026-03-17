@@ -123,6 +123,8 @@ export function useFilteredGames() {
     if (filters.favoritesOnly) result = result.filter((g) => g.is_favorite);
     if (filters.minRating > 0) result = result.filter((g) => g.rating !== null && g.rating >= filters.minRating);
     if (filters.tags.length > 0) result = result.filter((g) => filters.tags.every((t) => g.tags.includes(t)));
+    if (filters.dateAddedFrom) result = result.filter((g) => g.date_added >= filters.dateAddedFrom!);
+    if (filters.dateAddedTo) result = result.filter((g) => g.date_added <= filters.dateAddedTo!);
 
     result.sort((a, b) => {
       let av: number | string = "";

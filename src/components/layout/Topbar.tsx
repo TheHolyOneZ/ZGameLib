@@ -36,7 +36,6 @@ export default function Topbar() {
 
   return (
     <div className="flex items-center justify-end gap-2 px-4 py-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-      {/* Log */}
       <motion.button
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
@@ -52,7 +51,6 @@ export default function Topbar() {
 
       <div className="w-px h-5 bg-white/6 shrink-0" />
 
-      {/* Remove Duplicates */}
       <motion.button
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.93 }}
@@ -63,7 +61,6 @@ export default function Topbar() {
         <LayersIcon size={14} />
       </motion.button>
 
-      {/* Scan + Add Game */}
       <div className="flex items-center gap-1.5 shrink-0">
         <motion.button
           whileHover={{ scale: 1.02 }}

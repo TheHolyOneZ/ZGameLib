@@ -2,6 +2,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SuccessIcon, ErrorIcon, InfoIcon, CloseIcon } from "@/components/ui/Icons";
 import { useUIStore } from "@/store/useUIStore";
 
+const TOAST_DURATION = 3500;
+
 export default function ToastContainer() {
   const { toasts, removeToast } = useUIStore();
 
@@ -15,7 +17,7 @@ export default function ToastContainer() {
             animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 30, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="glass-strong pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl min-w-[300px] max-w-[400px]"
+            className="glass-strong pointer-events-auto flex flex-col rounded-2xl min-w-[300px] max-w-[400px] overflow-hidden"
             style={{
               borderColor:
                 t.type === "success"
@@ -31,21 +33,37 @@ export default function ToastContainer() {
                   : "0 8px 24px rgba(0,0,0,0.3)",
             }}
           >
-            <div className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
-              t.type === "success" ? "bg-accent-500/15" : t.type === "error" ? "bg-red-500/15" : "bg-blue-500/15"
-            }`}>
-              {t.type === "success" && <SuccessIcon size={16} className="text-accent-400" />}
-              {t.type === "error" && <ErrorIcon size={16} className="text-red-400" />}
-              {t.type === "info" && <InfoIcon size={16} className="text-blue-400" />}
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <div className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
+                t.type === "success" ? "bg-accent-500/15" : t.type === "error" ? "bg-red-500/15" : "bg-blue-500/15"
+              }`}>
+                {t.type === "success" && <SuccessIcon size={16} className="text-accent-400" />}
+                {t.type === "error" && <ErrorIcon size={16} className="text-red-400" />}
+                {t.type === "info" && <InfoIcon size={16} className="text-blue-400" />}
+              </div>
+              <span className="text-[13px] text-slate-200 flex-1 leading-snug">{t.message}</span>
+              <motion.button
+                whileTap={{ scale: 0.8 }}
+                onClick={() => removeToast(t.id)}
+                className="text-slate-600 hover:text-slate-300 transition-colors p-1"
+              >
+                <CloseIcon size={12} />
+              </motion.button>
             </div>
-            <span className="text-[13px] text-slate-200 flex-1 leading-snug">{t.message}</span>
-            <motion.button
-              whileTap={{ scale: 0.8 }}
-              onClick={() => removeToast(t.id)}
-              className="text-slate-600 hover:text-slate-300 transition-colors p-1"
-            >
-              <CloseIcon size={12} />
-            </motion.button>
+            <motion.div
+              initial={{ scaleX: 1 }}
+              animate={{ scaleX: 0 }}
+              transition={{ duration: TOAST_DURATION / 1000, ease: "linear" }}
+              className="h-[2px] origin-left"
+              style={{
+                background:
+                  t.type === "success"
+                    ? "rgb(var(--accent-400))"
+                    : t.type === "error"
+                    ? "rgb(239 68 68)"
+                    : "rgb(96 165 250)",
+              }}
+            />
           </motion.div>
         ))}
       </AnimatePresence>

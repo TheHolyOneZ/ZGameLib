@@ -7,10 +7,7 @@
     box-sizing: border-box;
   }
 
-  /* ── Accent color tokens ─────────────────────────────────────────────── */
-  /* Space-separated RGB so Tailwind <alpha-value> and rgb() / 0.x work  */
   :root {
-    /* Default: Purple */
     --accent-200: 221 214 254;
     --accent-300: 196 181 253;
     --accent-400: 167 139 250;
@@ -20,7 +17,6 @@
     --accent-800: 91 33 182;
     --accent-900: 76 29 149;
 
-    /* Theme surface colors */
     --bg-base: 7 6 11;
     --sidebar-bg: 12 10 18;
   }
@@ -38,7 +34,6 @@
     user-select: none;
   }
 
-  /* Premium thin scrollbar */
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
@@ -64,7 +59,34 @@
 }
 
 @layer components {
-  /* Glass effects with layered depth */
+  .loading-beam-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 9999;
+    overflow: hidden;
+    background: rgb(var(--accent-900) / 0.25);
+  }
+
+  .loading-beam {
+    width: 45%;
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(var(--accent-400)) 30%,
+      rgb(var(--accent-300)) 50%,
+      rgb(var(--accent-400)) 70%,
+      transparent 100%
+    );
+    box-shadow:
+      0 0 16px rgb(var(--accent-400) / 0.6),
+      0 0 40px rgb(var(--accent-500) / 0.3);
+  }
+
   .glass {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(24px) saturate(180%);
@@ -95,7 +117,6 @@
     border-right: 1px solid rgba(255, 255, 255, 0.04);
   }
 
-  /* Glow effects */
   .glow-purple {
     box-shadow: 0 0 40px rgb(var(--accent-500) / 0.35), 0 0 80px rgb(var(--accent-500) / 0.1);
   }
@@ -106,7 +127,6 @@
     box-shadow: inset 0 0 30px rgb(var(--accent-500) / 0.08);
   }
 
-  /* Buttons */
   .btn-primary {
     @apply font-medium px-5 py-2.5 rounded-xl text-sm
            transition-all duration-300 ease-out flex items-center gap-2 cursor-pointer
@@ -152,7 +172,6 @@
     box-shadow: 0 0 16px rgb(var(--accent-500) / 0.15);
   }
 
-  /* Inputs */
   .input-glass {
     @apply text-slate-100 placeholder-slate-600 rounded-xl px-4 py-2.5 text-sm
            outline-none transition-all duration-300 ease-out w-full;
@@ -165,7 +184,6 @@
     background: rgba(255, 255, 255, 0.05);
   }
 
-  /* Card lift animation */
   .card-lift {
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
@@ -176,7 +194,6 @@
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgb(var(--accent-500) / 0.12);
   }
 
-  /* Shine effect for cards */
   .card-shine {
     position: relative;
     overflow: hidden;
@@ -202,7 +219,6 @@
     transform: translateX(150%);
   }
 
-  /* Animated gradient border */
   .border-gradient {
     position: relative;
   }
@@ -230,7 +246,6 @@
     opacity: 1;
   }
 
-  /* Pulse dot for active states */
   .pulse-dot {
     position: relative;
   }
@@ -253,7 +268,6 @@
   }
 }
 
-/* Multi-layer background */
 body::before {
   content: '';
   position: fixed;
@@ -280,11 +294,9 @@ body::after {
   z-index: 1;
 }
 
-/* ── AMOLED theme ── pure black backgrounds ─────────────────────────────── */
 [data-theme="amoled"] {
   --bg-base: 0 0 0;
   --sidebar-bg: 0 0 0;
-  /* Same purple accent as default */
 }
 [data-theme="amoled"] body::after {
   opacity: 0.5;
@@ -306,7 +318,6 @@ body::after {
   border-color: rgba(255, 255, 255, 0.05);
 }
 
-/* ── Nord theme ── Frost blue accent ────────────────────────────────────── */
 [data-theme="nord"] {
   --accent-200: 180 222 235;
   --accent-300: 163 210 225;
@@ -344,7 +355,6 @@ body::after {
   border-color: rgba(76, 86, 106, 0.4);
 }
 
-/* ── Catppuccin Mocha theme ── Mauve/Lavender accent ────────────────────── */
 [data-theme="catppuccin"] {
   --accent-200: 220 200 255;
   --accent-300: 210 186 252;
@@ -385,7 +395,6 @@ body::after {
   border-color: rgba(69, 71, 90, 0.4);
 }
 
-/* ── Dracula theme ── Pink/Red accent (reddish) ─────────────────────────── */
 [data-theme="dracula"] {
   --accent-200: 255 200 225;
   --accent-300: 255 175 215;
@@ -426,7 +435,6 @@ body::after {
   border-color: rgba(98, 114, 164, 0.4);
 }
 
-/* ── Gruvbox theme ── Warm orange accent ────────────────────────────────── */
 [data-theme="gruvbox"] {
   --accent-200: 254 200 140;
   --accent-300: 254 175 100;
@@ -467,7 +475,6 @@ body::after {
   border-color: rgba(80, 73, 69, 0.4);
 }
 
-/* ── Tokyo Night theme ── Blue/Cyan accent ──────────────────────────────── */
 [data-theme="tokyonight"] {
   --accent-200: 180 210 255;
   --accent-300: 158 194 255;
@@ -505,11 +512,15 @@ body::after {
   border-color: rgba(56, 60, 80, 0.4);
 }
 
-/* ── Smooth page transitions ─────────────────────────────────────────────── */
 .page-enter {
   animation: pageIn 0.35s ease-out;
 }
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ctx-menu-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

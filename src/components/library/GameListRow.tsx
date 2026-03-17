@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { cn, formatPlaytime, PLATFORM_COLORS } from "@/lib/utils";
+import { cn, formatPlaytime, PLATFORM_COLORS, COVER_PLACEHOLDER } from "@/lib/utils";
 import { useUIStore } from "@/store/useUIStore";
 import { useCover } from "@/hooks/useCover";
 import type { Game } from "@/lib/types";
@@ -7,9 +7,8 @@ import { useGameStore } from "@/store/useGameStore";
 import { useGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import Badge from "@/components/ui/Badge";
+import GameContextMenu from "@/components/ui/GameContextMenu";
 import { HeartIcon, PlayIcon, FolderIcon, StarIcon } from "@/components/ui/Icons";
-
-const COVER_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='80' viewBox='0 0 60 80'%3E%3Crect fill='%23111118' width='60' height='80' rx='4'/%3E%3Ccircle cx='30' cy='36' r='12' fill='none' stroke='%231a1a2e' stroke-width='1.5'/%3E%3Cpath d='M26 32 L26 40 L36 36Z' fill='%231a1a2e'/%3E%3C/svg%3E`;
 
 export default function GameListRow({ game }: { game: Game }) {
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
@@ -20,6 +19,7 @@ export default function GameListRow({ game }: { game: Game }) {
   const coverUrl = useCover(game);
 
   return (
+    <GameContextMenu game={game}>
     <motion.div
       layout
       initial={{ opacity: 0, x: -8 }}
@@ -28,7 +28,6 @@ export default function GameListRow({ game }: { game: Game }) {
       onClick={() => { setSelectedGameId(game.id); setDetailOpen(true); }}
       className="group flex items-center gap-4 px-4 py-2.5 cursor-pointer rounded-xl border border-transparent hover:border-accent-500/15 transition-all duration-300 hover:bg-white/[0.02]"
     >
-      {/* Cover */}
       <div className="w-10 h-14 rounded-lg overflow-hidden shrink-0 border border-white/[0.04]">
         <img
           src={coverUrl || COVER_PLACEHOLDER}
@@ -118,5 +117,6 @@ export default function GameListRow({ game }: { game: Game }) {
         </motion.button>
       </div>
     </motion.div>
+    </GameContextMenu>
   );
 }

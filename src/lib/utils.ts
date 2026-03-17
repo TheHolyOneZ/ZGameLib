@@ -60,6 +60,8 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   custom: "Custom",
 };
 
+export const COVER_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23111118'/%3E%3Cstop offset='100%25' stop-color='%230a0a0f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='300' height='400'/%3E%3Ccircle cx='150' cy='180' r='40' fill='none' stroke='%231a1a2e' stroke-width='2'/%3E%3Cpath d='M140 170 L140 190 L165 180Z' fill='%231a1a2e'/%3E%3C/svg%3E`;
+
 export const PLATFORM_COLORS: Record<Platform, string> = {
   steam: "bg-sky-900/50 text-sky-300 border-sky-700/50",
   epic: "bg-slate-800/60 text-slate-300 border-slate-600/50",

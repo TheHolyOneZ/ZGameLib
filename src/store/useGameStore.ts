@@ -7,6 +7,8 @@ interface Filters {
   favoritesOnly: boolean;
   minRating: number;
   tags: string[];
+  dateAddedFrom: string | null;
+  dateAddedTo: string | null;
 }
 
 interface GameStore {
@@ -47,6 +49,8 @@ const defaultFilters: Filters = {
   favoritesOnly: false,
   minRating: 0,
   tags: [],
+  dateAddedFrom: null,
+  dateAddedTo: null,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({

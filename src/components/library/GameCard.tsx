@@ -1,7 +1,7 @@
 import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { cn, PLATFORM_COLORS, formatPlaytime } from "@/lib/utils";
+import { cn, PLATFORM_COLORS, formatPlaytime, COVER_PLACEHOLDER } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
@@ -9,9 +9,8 @@ import { useGames } from "@/hooks/useGames";
 import { useCover } from "@/hooks/useCover";
 import { api } from "@/lib/tauri";
 import Badge from "@/components/ui/Badge";
-import { HeartIcon, PlayIcon, FolderIcon, StarIcon, FireIcon, SettingsIcon } from "@/components/ui/Icons";
-
-const COVER_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23111118'/%3E%3Cstop offset='100%25' stop-color='%230a0a0f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='300' height='400'/%3E%3Ccircle cx='150' cy='180' r='40' fill='none' stroke='%231a1a2e' stroke-width='2'/%3E%3Cpath d='M140 170 L140 190 L165 180Z' fill='%231a1a2e'/%3E%3C/svg%3E`;
+import GameContextMenu from "@/components/ui/GameContextMenu";
+import { HeartIcon, PlayIcon, FolderIcon, StarIcon, FireIcon, SettingsIcon, AlertIcon } from "@/components/ui/Icons";
 
 function GameCard({ game }: { game: Game }) {
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
@@ -58,11 +57,20 @@ function GameCard({ game }: { game: Game }) {
   });
   const showPlaytime = appSettings?.show_playtime_on_cards ?? true;
 
+  const { data: exeExists } = useQuery({
+    queryKey: ["exe-health", game.id],
+    queryFn: () => api.checkExeHealth(game.id),
+    staleTime: 10 * 60 * 1000,
+    enabled: !!game.exe_path,
+  });
+  const exeMissing = game.exe_path && exeExists === false;
+
   const customStatuses = useUIStore((s) => s.customStatuses);
   const isHighRated = game.rating !== null && game.rating >= 8;
   const statusConfig = customStatuses.find((s) => s.key === game.status);
 
   return (
+    <GameContextMenu game={game}>
     <motion.div
       onClick={openDetail}
       className="group relative cursor-pointer rounded-2xl overflow-hidden card-lift card-shine border border-white/[0.04] hover:border-accent-500/30"
@@ -110,10 +118,15 @@ function GameCard({ game }: { game: Game }) {
           </motion.button>
         </div>
 
-        <div className="absolute top-2.5 left-2.5">
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
           <Badge className={PLATFORM_COLORS[game.platform]}>
             {game.platform === "steam" ? "Steam" : game.platform === "epic" ? "Epic" : game.platform === "gog" ? "GOG" : "Custom"}
           </Badge>
+          {exeMissing && (
+            <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center" title="Executable not found">
+              <AlertIcon size={12} className="text-amber-400" />
+            </div>
+          )}
         </div>
 
         {game.is_favorite && (
@@ -166,6 +179,7 @@ function GameCard({ game }: { game: Game }) {
         </div>
       </div>
     </motion.div>
+    </GameContextMenu>
   );
 }
 

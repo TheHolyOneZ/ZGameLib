@@ -178,7 +178,7 @@ export default function Sidebar() {
               <button
                 key={s.key}
                 onClick={() => {
-                  setFilter("status", filters.status === s.key ? "all" : s.key);
+                  setFilter("status", filters.status === s.key ? "all" : s.key as import("@/lib/types").GameStatus);
                   if (location.pathname !== "/") navigate("/");
                 }}
                 className={cn(
