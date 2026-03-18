@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.7.0] — 2026-03-18
+
+### Fixed
+- **Tiny settings labels** — all `text-[10px]` instances in Settings replaced with `text-xs` for readable, consistent label sizing throughout the settings page
+- **Invalid platform/status saved silently** — `update_game` now validates `platform` (must be `steam`, `epic`, `gog`, or `custom`) and `status` (must be `none`, `backlog`, `playing`, `completed`, `dropped`, or `on_hold`) and returns a descriptive error instead of persisting garbage values
+- **Import library accepts bad data** — `import_library` now validates each game before inserting: skips entries with empty or >255 char names, ratings outside 0–10, and unrecognised platform strings
+- **Launcher threads run forever** — background process-polling threads for Steam/Epic/GOG/custom now have a hard 86 400-second (24-hour) cap; previously a game that never launched would leave a thread running indefinitely
+- **Batch status dropdown invisible on dark background** — the floating `BatchActionBar` status select now forces a dark background (`bg-[#1a1825]`) with matching dark option elements so the text is readable on all platforms
+- **Batch rating input shows number spinners** — the rating field in the batch action bar no longer renders browser-native up/down spinners; uses CSS to suppress them on all engines
+- **Batch rating not clamped** — entering a value outside 1–10 in the batch rating field is now rejected on every keystroke; the input clamps to `[1, 10]` immediately
+- **Export missing sessions and notes** — `export_library` previously only exported games; the JSON export now uses a v2 `FullExport` envelope (`{ version, games, sessions, notes }`) so all play history and notes are preserved; `import_library` detects v1 (plain array) vs v2 automatically and restores sessions and notes, skipping any whose `game_id` no longer exists
+- **Playtime not recorded for short sessions** — three root causes fixed: GOG/custom process polling interval reduced from 30 s to 5 s; Steam/Epic `game_start` timer now begins only after the target PID is found (not at launch time, which inflated playtime by up to 3 minutes); sessions ≥ 30 seconds are now saved (previous threshold was > 0 minutes, silently dropping any session under 1 minute)
+- **Game card action buttons invisible on light covers** — overlay buttons changed from `bg-black/40` to `bg-black/70` with an explicit `border border-white/10 shadow-lg`, ensuring they are always legible regardless of cover brightness
+- **Fire icon appears squished** — `FireIcon` completely redrawn as a proper three-layer SVG flame; size on game cards raised from 12 px to 18 px, and on list rows from 10 px to 15 px
+- **Spin wheel inner hub dominates the empty wheel** — removed the large dark center circle entirely; pie slices now extend from the exact center point, giving the wheel a clean look even with a single entry
+- **Spin wheel empty state spinner icon** — removed the decorative rotating icon from the empty state overlay; the empty state now shows text only
+- **Spin winner card pushes "Spin the Wheel" button upward** — the right panel is now split into a fixed top section (wheel + button, `shrink-0`) and a separate scrollable bottom section (winner card + history); the button never moves regardless of how much content appears below it
+- **Directory traversal in cover file copy** — `set_game_cover` now rejects symlinks (via `symlink_metadata`), validates the file extension against an allowlist (`jpg`, `jpeg`, `png`, `webp`), and checks magic bytes before copying; previously any file path including sensitive system files could be copied into the app data directory
+- **N+1 query pattern in scanner** — Steam, Epic, and GOG scan loops previously fired one `SELECT` per discovered game to check for duplicates; each scanner now bulk-fetches all existing IDs into a `HashMap`/`HashSet` before the loop and does in-memory lookups, reducing scan overhead from O(n) queries to a single query per platform
+- **Playtime chart renders as a solid block** — the "Last 12 Weeks" chart used `preserveAspectRatio="none"` on its SVG, which stretched all bars to fill the full container width and merged them into an indistinguishable block; replaced with a div-based flexbox chart where bars grow from the bottom, labels show every other week, and a Framer Motion `scaleY` entrance animation staggers each bar in
+
+### Added
+- **Command palette** (`Ctrl+K`) — centered overlay with a fuzzy search that matches any game by name; results show cover thumbnail and platform badge; keyboard navigation (↑ ↓ Enter Escape); also surfaces six quick actions (Add Game, Library, Favorites, Stats, Spin, Settings); `Ctrl+K` again or Escape closes it
+- **Batch multi-select** — hold-click the checkbox that appears on any game card (top-left, visible on hover) or list row to build a selection; a floating `BatchActionBar` slides up from the bottom showing the selection count, a status dropdown, a rating input, an "add tag" field, and a Delete button; all changes apply to every selected game in one transaction; × clears the selection
+- **Weekly playtime chart** — new "Playtime — Last 12 Weeks" SVG bar chart on the Stats page; each bar represents one ISO week; bars animate in on mount; hovering a bar shows the exact playtime and week label in a tooltip; data comes from the `sessions` table
+- **Lowest Rated section** — Stats page shows a ranked list of up to 5 games rated ≤ 4 with their scores highlighted in red
+- **Most Neglected section** — Stats page shows up to 5 games with zero recorded playtime, sorted by how long they have been in the library, with a "Added X days ago" label
+- **Screenshot lightbox navigation** — left / right chevron buttons let you page through all screenshots without closing the lightbox; an "X / Y" counter in the top-right corner tracks position; `ArrowLeft` / `ArrowRight` keyboard support added; navigation wraps around at both ends
+- **Playtime reminder on startup** — if Playtime Reminders is enabled in settings, the app checks on launch for the game you have not played in the longest time (minimum 30-day threshold); emits a toast-style notification with the game name and number of days since last session
+- **Window position and size memory** — the app saves the window's last position (`window_x`, `window_y`) and size (`window_width`, `window_height`) to the database on close and restores them exactly on next launch; only restores if coordinates are on-screen (≥ 0)
+- **Playtime Reminders toggle** — new toggle in Settings → Behavior; persisted as `playtime_reminders` in the settings table; defaults to enabled
+- **"Game Started" play button confirmation** — after clicking Play in the game detail panel, the button transitions to a green "Game Started" state with a checkmark for 3 seconds using `AnimatePresence`, giving clear visual feedback that the launch command was sent
+
+### Changed
+- **Sidebar active link** now has a clear left-edge accent bar (`border-l-2 border-accent-500`) plus a subtle background fill and bold white text; previously only the text color changed on the active route
+- **Fire icon on high-rated games** now pulses with a Framer Motion breathing animation (scale 1 → 1.2 → 1, 2-second loop) on both game cards and list rows
+- **Game card hover overlay** buttons now stagger in (opacity 0→1, y 10→0) with a 50 ms per-button delay instead of appearing all at once
+- **Rating buttons on game cards** moved above the game title (previously rendered below the title, partially obscured by the status badge)
+- **Spin wheel clock tick marks** removed from the static overlay SVG; the outer ring and pointer triangle are kept; the wheel looks cleaner with no decorative minute-hand lines
+- Version bumped to **0.7.0**
+
+
+
+
+
+
+
+---
+
 ## [0.6.0] — 2026-03-17
 
 ### Fixed

@@ -15,6 +15,7 @@ import GameDetail from "@/components/game/GameDetail";
 import ConfirmModal from "@/components/modals/ConfirmModal";
 import LogPanel from "@/components/ui/LogPanel";
 import LoadingBeam from "@/components/ui/LoadingBeam";
+import CommandPalette from "@/components/ui/CommandPalette";
 import ModsPromoPanel from "@/components/game/ModsPromoPanel";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
@@ -208,6 +209,13 @@ function AppBehavior() {
     return () => { promise.then((f) => f()); };
   }, []);
 
+  useEffect(() => {
+    const promise = listen<string>("playtime-reminder", (event) => {
+      useUIStore.getState().addToast(event.payload, "info");
+    });
+    return () => { promise.then((f) => f()); };
+  }, []);
+
   return null;
 }
 
@@ -219,9 +227,15 @@ export default function Layout() {
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const selectedGameId = useGameStore((s) => s.selectedGameId);
+  const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+        return;
+      }
       const tag = (document.activeElement as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (e.key === "?") { setShowShortcuts((v) => !v); return; }
@@ -241,7 +255,7 @@ export default function Layout() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [selectedGameId, showShortcuts, setDetailOpen, setAddGameOpen]);
+  }, [selectedGameId, showShortcuts, setDetailOpen, setAddGameOpen, setCommandPaletteOpen]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -258,6 +272,7 @@ export default function Layout() {
       </div>
       <GameDetail />
       <AddGameModal />
+      <CommandPalette />
       <AppBehavior />
       <ConfirmModal />
       <LogPanel />

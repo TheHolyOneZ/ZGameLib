@@ -43,8 +43,10 @@ export default function GameDetail() {
   const [sessions, setSessions] = useState<Session[] | null>(null);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [coverLightbox, setCoverLightbox] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const customStatuses = useUIStore((s) => s.customStatuses);
@@ -62,8 +64,21 @@ export default function GameDetail() {
     setSessions(null);
     setLoadingSessions(false);
     setDescExpanded(false);
+    setLightboxIndex(null);
     if (selectedGameId) qc.invalidateQueries({ queryKey: ["games"] });
   }, [selectedGameId, qc]);
+
+  useEffect(() => {
+    if (lightboxIndex === null || !screenshots) return;
+    const len = screenshots.length;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") setLightboxIndex((i) => i !== null ? (i - 1 + len) % len : null);
+      else if (e.key === "ArrowRight") setLightboxIndex((i) => i !== null ? (i + 1) % len : null);
+      else if (e.key === "Escape") setLightboxIndex(null);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxIndex, screenshots]);
 
   const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, is_pinned: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0, deleted_at: null, custom_fields: {} as Record<string, string>, hltb_main_mins: null, hltb_extra_mins: null };
   const coverUrl = useCover(game ?? dummyGame);
@@ -96,6 +111,8 @@ export default function GameDetail() {
       if (game.platform === "steam" && game.steam_app_id) await api.launchSteamGame(game.steam_app_id, game.id);
       else if (game.platform === "epic" && game.epic_app_name) await api.launchEpicGame(game.epic_app_name, game.id);
       else await api.launchGame(game.id);
+      setGameStarted(true);
+      setTimeout(() => setGameStarted(false), 3000);
     } catch (e) { addToast(String(e), "error"); }
   };
 
@@ -339,9 +356,48 @@ export default function GameDetail() {
                     </div>
                     <div className="columns-2 gap-2">
                       {screenshots.map((path, i) => (
-                        <ScreenshotThumb key={i} path={path} />
+                        <ScreenshotThumb key={i} path={path} onOpen={() => setLightboxIndex(i)} />
                       ))}
                     </div>
+                    <AnimatePresence>
+                      {lightboxIndex !== null && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-[60] flex items-center justify-center p-6"
+                          style={{ background: "rgba(0,0,0,0.92)" }}
+                          onClick={() => setLightboxIndex(null)}
+                        >
+                          <span
+                            className="absolute top-4 right-4 text-[11px] text-slate-500 font-mono"
+                          >
+                            {lightboxIndex + 1} / {screenshots.length}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => i !== null ? (i - 1 + screenshots.length) % screenshots.length : null); }}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-white font-bold text-lg"
+                            style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
+                          >
+                            {"<"}
+                          </button>
+                          <ScreenshotLightboxImg path={screenshots[lightboxIndex]} onClick={(e) => e.stopPropagation()} />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => i !== null ? (i + 1) % screenshots.length : null); }}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-white font-bold text-lg"
+                            style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
+                          >
+                            {">"}
+                          </button>
+                          <button
+                            onClick={() => setLightboxIndex(null)}
+                            className="absolute top-4 left-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+                          >
+                            <CloseIcon size={16} />
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </>
                 )}
               </div>
@@ -463,11 +519,22 @@ export default function GameDetail() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handlePlay}
-                  className="btn-primary flex-1 justify-center py-3"
-                  style={{ boxShadow: "0 0 25px rgb(var(--accent-500) /0.2)" }}
+                  className={cn("btn-primary flex-1 justify-center py-3 transition-all", gameStarted && "bg-green-600 hover:bg-green-500")}
+                  style={{ boxShadow: gameStarted ? "0 0 25px rgba(34,197,94,0.3)" : "0 0 25px rgb(var(--accent-500) /0.2)" }}
                 >
-                  <PlayIcon size={14} />
-                  Play
+                  <AnimatePresence mode="wait" initial={false}>
+                    {gameStarted ? (
+                      <motion.span key="started" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex items-center gap-1.5">
+                        <CheckIcon size={14} />
+                        Game Started
+                      </motion.span>
+                    ) : (
+                      <motion.span key="play" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex items-center gap-1.5">
+                        <PlayIcon size={14} />
+                        Play
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.92 }}
@@ -702,18 +769,10 @@ export default function GameDetail() {
     </>
   );
 
-  function ScreenshotThumb({ path }: { path: string }) {
-    const [enlarged, setEnlarged] = useState(false);
+  function ScreenshotThumb({ path, onOpen }: { path: string; onOpen?: () => void }) {
     const [hovered, setHovered] = useState(false);
     const dataUrl = useScreenshotUrl(path);
     const addToast = useUIStore((s) => s.addToast);
-
-    useEffect(() => {
-      if (!enlarged) return;
-      const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setEnlarged(false); };
-      window.addEventListener("keydown", handler);
-      return () => window.removeEventListener("keydown", handler);
-    }, [enlarged]);
 
     const folderPath = path.replace(/[\\/][^\\/]+$/, "");
 
@@ -750,7 +809,7 @@ export default function GameDetail() {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          <motion.div whileHover={{ scale: 1.02 }} onClick={() => setEnlarged(true)} className="cursor-zoom-in">
+          <motion.div whileHover={{ scale: 1.02 }} onClick={() => onOpen?.()} className="cursor-zoom-in">
             {dataUrl ? (
               <img src={dataUrl} alt="" className="w-full h-auto block" />
             ) : (
@@ -779,49 +838,33 @@ export default function GameDetail() {
                 <button onClick={exportScreenshot} title="Export / download" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
                   <ImageIcon size={11} />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); setEnlarged(true); }} title="View fullscreen" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); onOpen?.(); }} title="View fullscreen" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
                   <SearchIcon size={11} />
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        <AnimatePresence>
-          {enlarged && dataUrl && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[60] flex items-center justify-center p-6"
-              style={{ background: "rgba(0,0,0,0.92)" }}
-              onClick={() => setEnlarged(false)}
-            >
-              <img src={dataUrl} alt="" className="max-w-full max-h-full rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
-              <button
-                onClick={() => setEnlarged(false)}
-                className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-              >
-                <CloseIcon size={16} />
-              </button>
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/50 border border-white/10">
-                <button onClick={copyPath} title="Copy path" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-[11px]">
-                  <CopyIcon size={12} /> Copy path
-                </button>
-                <div className="w-px h-4 bg-white/10" />
-                <button onClick={openFolder} title="Open folder" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-[11px]">
-                  <FolderIcon size={12} /> Open folder
-                </button>
-                <div className="w-px h-4 bg-white/10" />
-                <button onClick={exportScreenshot} title="Export" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-[11px]">
-                  <ImageIcon size={12} /> Export
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </>
     );
   }
+}
+
+function ScreenshotLightboxImg({ path, onClick }: { path: string; onClick: (e: React.MouseEvent) => void }) {
+  const dataUrl = useScreenshotUrl(path);
+  if (!dataUrl) return <div className="w-64 h-40 animate-pulse bg-white/5 rounded-xl" />;
+  return (
+    <motion.img
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+      transition={{ type: "spring", stiffness: 350, damping: 28 }}
+      src={dataUrl}
+      alt=""
+      className="max-w-full max-h-full rounded-xl object-contain"
+      onClick={onClick}
+    />
+  );
 }
 
 function useScreenshotUrl(path: string) {

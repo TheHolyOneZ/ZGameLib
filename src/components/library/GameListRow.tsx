@@ -9,7 +9,7 @@ import { api } from "@/lib/tauri";
 import Badge from "@/components/ui/Badge";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 import GameContextMenu from "@/components/ui/GameContextMenu";
-import { HeartIcon, PlayIcon, FolderIcon, StarIcon } from "@/components/ui/Icons";
+import { HeartIcon, PlayIcon, FolderIcon, StarIcon, FireIcon, CheckIcon } from "@/components/ui/Icons";
 
 export default function GameListRow({ game }: { game: Game }) {
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
@@ -18,6 +18,9 @@ export default function GameListRow({ game }: { game: Game }) {
   const customStatuses = useUIStore((s) => s.customStatuses);
   const { toggleFavorite } = useGames();
   const coverUrl = useCover(game);
+  const selectedIds = useGameStore((s) => s.selectedIds);
+  const toggleSelected = useGameStore((s) => s.toggleSelected);
+  const isSelected = selectedIds.includes(game.id);
 
   return (
     <GameContextMenu game={game}>
@@ -27,8 +30,16 @@ export default function GameListRow({ game }: { game: Game }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 8 }}
       onClick={() => { setSelectedGameId(game.id); setDetailOpen(true); }}
-      className="group flex items-center gap-4 px-4 py-2.5 cursor-pointer rounded-xl border border-transparent hover:border-accent-500/15 transition-all duration-300 hover:bg-white/[0.02]"
+      className={cn("group flex items-center gap-4 px-4 py-2.5 cursor-pointer rounded-xl border transition-all duration-300 hover:bg-white/[0.02]", isSelected ? "border-accent-500/40 bg-accent-500/5" : "border-transparent hover:border-accent-500/15")}
     >
+      <div
+        className={cn("shrink-0 flex items-center justify-center w-5 h-5 transition-opacity", isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
+        onClick={(e) => { e.stopPropagation(); toggleSelected(game.id); }}
+      >
+        <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors", isSelected ? "bg-accent-500 border-accent-500" : "border-white/30 bg-black/40")}>
+          {isSelected && <CheckIcon size={10} className="text-white" />}
+        </div>
+      </div>
       <div className="w-10 h-14 rounded-lg overflow-hidden shrink-0 border border-white/[0.04]">
         <img
           src={coverUrl || COVER_PLACEHOLDER}
@@ -70,6 +81,14 @@ export default function GameListRow({ game }: { game: Game }) {
       <div className="flex items-center gap-1 w-14 justify-end shrink-0">
         {game.rating !== null ? (
           <>
+            {game.rating >= 8 && (
+              <motion.span
+                animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <FireIcon size={15} className="text-amber-400" />
+              </motion.span>
+            )}
             <StarIcon size={10} filled className="text-accent-400" />
             <span className="text-[12px] text-slate-300 font-medium tabular-nums">{game.rating}</span>
           </>

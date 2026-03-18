@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { cn, formatPlaytime, COVER_PLACEHOLDER } from "@/lib/utils";
@@ -10,7 +10,7 @@ import { useCover } from "@/hooks/useCover";
 import { api } from "@/lib/tauri";
 import GameContextMenu from "@/components/ui/GameContextMenu";
 import PlatformBadge from "@/components/ui/PlatformBadge";
-import { HeartIcon, PlayIcon, FolderIcon, StarIcon, FireIcon, SettingsIcon, AlertIcon } from "@/components/ui/Icons";
+import { HeartIcon, PlayIcon, FolderIcon, StarIcon, FireIcon, SettingsIcon, AlertIcon, CheckIcon } from "@/components/ui/Icons";
 
 function GameCard({ game }: { game: Game }) {
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
@@ -19,6 +19,10 @@ function GameCard({ game }: { game: Game }) {
   const { toggleFavorite, update } = useGames();
   const coverUrl = useCover(game);
   const [imgFailed, setImgFailed] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const selectedIds = useGameStore((s) => s.selectedIds);
+  const toggleSelected = useGameStore((s) => s.toggleSelected);
+  const isSelected = selectedIds.includes(game.id);
 
   const openDetail = () => {
     setSelectedGameId(game.id);
@@ -76,7 +80,9 @@ function GameCard({ game }: { game: Game }) {
       tabIndex={0}
       role="button"
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(); } }}
-      className="group relative cursor-pointer rounded-2xl overflow-hidden card-lift card-shine border border-white/[0.04] hover:border-accent-500/30"
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      className={cn("group relative cursor-pointer rounded-2xl overflow-hidden card-lift card-shine border hover:border-accent-500/30", isSelected ? "border-accent-500 ring-2 ring-accent-500" : "border-white/[0.04]")}
       style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-bg-elevated">
@@ -94,34 +100,39 @@ function GameCard({ game }: { game: Game }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
         <div className="absolute inset-0 bg-gradient-to-br from-accent-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1.5 translate-x-12 group-hover:translate-x-0 transition-transform duration-300 ease-out">
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={handleFav}
-            className={cn(
-              "w-8 h-8 rounded-xl glass-strong flex items-center justify-center transition-all duration-200",
-              game.is_favorite ? "text-pink-400 bg-pink-500/20 border-pink-500/30" : "text-slate-400 hover:text-pink-400"
-            )}
-          >
-            <HeartIcon size={13} filled={game.is_favorite} />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={handlePlay}
-            className="w-8 h-8 rounded-xl glass-strong flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors"
-          >
-            <PlayIcon size={12} />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={handleFolder}
-            className="w-8 h-8 rounded-xl glass-strong flex items-center justify-center text-slate-400 hover:text-accent-400 transition-colors"
-          >
-            <FolderIcon size={12} />
-          </motion.button>
+        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1.5">
+          {[
+            { onClick: handleFav, icon: <HeartIcon size={13} filled={game.is_favorite} />, className: cn("w-8 h-8 rounded-xl bg-black/70 border border-white/10 flex items-center justify-center transition-all duration-200 shadow-lg", game.is_favorite ? "text-pink-400" : "text-slate-300 hover:text-pink-400") },
+            { onClick: handlePlay, icon: <PlayIcon size={12} />, className: "w-8 h-8 rounded-xl bg-black/70 border border-white/10 flex items-center justify-center text-slate-300 hover:text-cyan-400 transition-colors shadow-lg" },
+            { onClick: handleFolder, icon: <FolderIcon size={12} />, className: "w-8 h-8 rounded-xl bg-black/70 border border-white/10 flex items-center justify-center text-slate-300 hover:text-accent-400 transition-colors shadow-lg" },
+          ].map((btn, idx) => (
+            <motion.button
+              key={idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={hovered ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              transition={{ delay: idx * 0.05, duration: 0.15 }}
+              whileTap={{ scale: 0.85 }}
+              onClick={btn.onClick}
+              className={btn.className}
+            >
+              {btn.icon}
+            </motion.button>
+          ))}
         </div>
 
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+          <div
+            className="z-10"
+            onClick={(e) => { e.stopPropagation(); toggleSelected(game.id); }}
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: hovered || isSelected ? 1 : 0 }}
+              className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors", isSelected ? "bg-accent-500 border-accent-500" : "border-white/30 bg-black/40")}
+            >
+              {isSelected && <CheckIcon size={10} className="text-white" />}
+            </motion.div>
+          </div>
           <PlatformBadge platform={game.platform} />
           {exeMissing && (
             <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center" title="Executable not found">
@@ -136,11 +147,28 @@ function GameCard({ game }: { game: Game }) {
           </div>
         )}
 
-        <div
-          className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center px-2 pb-2 gap-0.5">
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          {game.rating !== null && (
+            <div className="flex items-center gap-1.5 mb-1">
+              {isHighRated && (
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <FireIcon size={18} className="text-amber-400" />
+                </motion.span>
+              )}
+              <div className="flex items-center gap-0.5">
+                <StarIcon size={10} filled className="text-accent-400" />
+                <span className="text-[11px] font-bold text-white tabular-nums">{game.rating}</span>
+              </div>
+            </div>
+          )}
+
+          <div
+            className="flex items-center mb-1.5 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             {[1,2,3,4,5,6,7,8,9,10].map((n) => (
               <button
                 key={n}
@@ -149,25 +177,13 @@ function GameCard({ game }: { game: Game }) {
                   "flex-1 h-4 rounded-sm text-[8px] font-bold transition-all",
                   game.rating === n
                     ? "bg-accent-500 text-white"
-                    : "text-slate-600 hover:text-white hover:bg-accent-500/40 bg-black/40"
+                    : "text-slate-400 hover:text-white hover:bg-accent-500/50 bg-black/60"
                 )}
               >
                 {n}
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-3">
-          {game.rating !== null && (
-            <div className="flex items-center gap-1.5 mb-1">
-              {isHighRated && <FireIcon size={12} className="text-amber-400" />}
-              <div className="flex items-center gap-0.5">
-                <StarIcon size={10} filled className="text-accent-400" />
-                <span className="text-[11px] font-bold text-white tabular-nums">{game.rating}</span>
-              </div>
-            </div>
-          )}
 
           <div className="flex items-end justify-between gap-2">
             <div className="flex-1 min-w-0">

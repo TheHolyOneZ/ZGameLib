@@ -23,8 +23,7 @@ const SEG_PALETTE = [
 const SIZE = 420;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
-const R = 182;
-const INNER_R = 46;
+const R = 186;
 
 function polar(angleDeg: number, radius = R) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -34,10 +33,8 @@ function polar(angleDeg: number, radius = R) {
 function segmentPath(startDeg: number, endDeg: number): string {
   const s = polar(startDeg);
   const e = polar(endDeg);
-  const si = polar(startDeg, INNER_R);
-  const ei = polar(endDeg, INNER_R);
   const large = endDeg - startDeg > 180 ? 1 : 0;
-  return `M${si.x},${si.y} L${s.x},${s.y} A${R},${R},0,${large},1,${e.x},${e.y} L${ei.x},${ei.y} A${INNER_R},${INNER_R},0,${large},0,${si.x},${si.y} Z`;
+  return `M${CX},${CY} L${s.x},${s.y} A${R},${R},0,${large},1,${e.x},${e.y} Z`;
 }
 
 function Wheel({ pool, rotation, isSpinning }: {
@@ -87,11 +84,10 @@ function Wheel({ pool, rotation, isSpinning }: {
             const [c1, c2] = SEG_PALETTE[i % SEG_PALETTE.length];
             const start = i * segAngle;
             const mid = start + segAngle / 2;
-            const s = polar(mid, INNER_R);
             const e = polar(mid, R);
             return (
-              <linearGradient key={i} id={`seg-${i}`} x1={s.x} y1={s.y} x2={e.x} y2={e.y} gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor={c2} />
+              <linearGradient key={i} id={`seg-${i}`} x1={CX} y1={CY} x2={e.x} y2={e.y} gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor={c2} stopOpacity="0.7" />
                 <stop offset="100%" stopColor={c1} />
               </linearGradient>
             );
@@ -106,10 +102,7 @@ function Wheel({ pool, rotation, isSpinning }: {
         </defs>
 
         {n === 0 && (
-          <>
-            <circle cx={CX} cy={CY} r={R} fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="8 4" />
-            <circle cx={CX} cy={CY} r={INNER_R} fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-          </>
+          <circle cx={CX} cy={CY} r={R} fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.06)" strokeWidth="1.5" strokeDasharray="6 5" />
         )}
 
         {pool.map((game, i) => {
@@ -139,57 +132,28 @@ function Wheel({ pool, rotation, isSpinning }: {
       </motion.svg>
 
       <svg width={SIZE} height={SIZE} className="absolute inset-0 z-20 pointer-events-none">
-        <circle cx={CX} cy={CY} r={R + 4} fill="none" stroke="rgb(var(--accent-500) /0.2)" strokeWidth="1.5" />
-        <circle cx={CX} cy={CY} r={R + 12} fill="none" stroke="rgb(var(--accent-500) /0.07)" strokeWidth="1" />
-
-        {Array.from({ length: 60 }).map((_, i) => {
-          const a = (i / 60) * 360;
-          const isMajor = i % 5 === 0;
-          const inner = polar(a, R + 5);
-          const outer = polar(a, R + (isMajor ? 16 : 10));
-          return (
-            <line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y}
-              stroke={isMajor ? "rgb(var(--accent-500) /0.45)" : "rgb(var(--accent-500) /0.15)"}
-              strokeWidth={isMajor ? "2" : "1"} strokeLinecap="round" />
-          );
-        })}
-
         <defs>
           <linearGradient id="pointerGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgb(var(--accent-300))" />
-            <stop offset="100%" stopColor="rgb(var(--accent-600))" />
+            <stop offset="0%" stopColor="white" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="rgb(var(--accent-500))" />
           </linearGradient>
-          <filter id="pointerGlow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id="pointerGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
 
+        <circle cx={CX} cy={CY} r={R + 3} fill="none" stroke="rgb(var(--accent-500) /0.3)" strokeWidth="2" />
+
         <polygon
-          points={`${CX},${CY - R - 8} ${CX - 11},${CY - R + 18} ${CX + 11},${CY - R + 18}`}
+          points={`${CX - 11},${CY - R - 4} ${CX + 11},${CY - R - 4} ${CX},${CY - R + 20}`}
           fill="url(#pointerGrad)"
-          filter="drop-shadow(0 2px 10px rgb(var(--accent-500) /0.9))"
+          filter="drop-shadow(0 0 10px rgb(var(--accent-400) /0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))"
         />
         <polygon
-          points={`${CX},${CY - R - 8} ${CX - 11},${CY - R + 18} ${CX + 11},${CY - R + 18}`}
-          fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1"
+          points={`${CX - 11},${CY - R - 4} ${CX + 11},${CY - R - 4} ${CX},${CY - R + 20}`}
+          fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="0.75"
         />
-
-        <circle cx={CX} cy={CY} r={INNER_R + 3} fill="none" stroke="rgb(var(--accent-500) /0.35)" strokeWidth="1.5" />
-        <circle cx={CX} cy={CY} r={INNER_R} fill="rgb(7,6,11)" />
-        <circle cx={CX} cy={CY} r={INNER_R - 4} fill="none" stroke="rgb(var(--accent-500) /0.15)" strokeWidth="1" />
-        <circle cx={CX} cy={CY} r={6} fill="rgb(var(--accent-500))" opacity="0.8" />
-
-        <text x={CX} y={CY - 12} textAnchor="middle" dominantBaseline="middle"
-          fontSize="9" fontWeight="800" fill="rgb(var(--accent-400) /0.8)"
-          style={{ fontFamily: "inherit", letterSpacing: "0.05em" }}>
-          ZGAME
-        </text>
-        <text x={CX} y={CY + 2} textAnchor="middle" dominantBaseline="middle"
-          fontSize="7" fontWeight="600" fill="rgb(var(--accent-500) /0.4)"
-          style={{ fontFamily: "inherit", letterSpacing: "0.12em" }}>
-          SPIN
-        </text>
       </svg>
     </div>
   );
@@ -605,90 +569,91 @@ export default function Spin() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-6 overflow-auto relative">
+        <div className="flex-1 flex flex-col overflow-hidden relative">
           {showConfetti && <Confetti />}
 
-          <div className="relative">
-            <Wheel pool={pool} rotation={rotation} isSpinning={isSpinning} />
+          <div className="flex flex-col items-center gap-6 pt-6 pb-4 shrink-0">
+            <div className="relative">
+              <Wheel pool={pool} rotation={rotation} isSpinning={isSpinning} />
 
-            {pool.length === 0 && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-                  <SpinIcon size={36} className="text-slate-800" />
-                </motion.div>
-                <p className="text-[13px] text-slate-600 font-medium mt-4">No games selected</p>
-                <p className="text-[11px] text-slate-700 mt-1">Pick games from the left panel</p>
-              </div>
-            )}
-            {pool.length === 1 && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                <p className="text-[12px] text-slate-600">Add at least 2 games to spin</p>
-              </div>
-            )}
-          </div>
+              {pool.length === 0 && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none z-30">
+                  <p className="text-[14px] text-slate-400 font-semibold">No games selected</p>
+                  <p className="text-[12px] text-slate-600 mt-1">Pick games from the left panel</p>
+                </div>
+              )}
+              {pool.length === 1 && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none z-30">
+                  <p className="text-[13px] text-slate-500 font-medium">Add at least 2 games to spin</p>
+                </div>
+              )}
+            </div>
 
-          <motion.button
-            whileHover={!isSpinning && pool.length >= 2 ? { scale: 1.06, y: -2 } : {}}
-            whileTap={!isSpinning && pool.length >= 2 ? { scale: 0.96 } : {}}
-            onClick={handleSpin}
-            disabled={isSpinning || pool.length < 2}
-            className={cn(
-              "relative px-12 py-4 rounded-2xl text-[15px] font-bold transition-all overflow-hidden",
-              pool.length >= 2 && !isSpinning ? "text-white cursor-pointer" : "text-slate-600 cursor-not-allowed"
-            )}
-            style={pool.length >= 2 && !isSpinning ? {
-              background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)), rgb(var(--accent-600)))",
-              backgroundSize: "200% 100%",
-              boxShadow: "0 0 50px rgb(var(--accent-600) /0.4), 0 8px 32px rgba(0,0,0,0.3)",
-            } : {
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            {pool.length >= 2 && !isSpinning && (
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
-              />
-            )}
-            <span className="relative flex items-center gap-3">
-              <motion.span
-                animate={isSpinning ? { rotate: 360 } : {}}
-                transition={isSpinning ? { duration: 0.6, repeat: Infinity, ease: "linear" } : {}}
-              >
-                <SpinIcon size={18} />
-              </motion.span>
-              {isSpinning ? "Spinning..." : "Spin the Wheel"}
-            </span>
-          </motion.button>
-
-          <div className="w-full max-w-lg flex flex-col gap-3">
-            <AnimatePresence mode="wait">
-              {winner && (
-                <WinnerCard
-                  key={winner.id}
-                  game={winner}
-                  onPlayAgain={() => { setWinner(null); setTimeout(handleSpin, 100); }}
-                  onExclude={handleExcludeWinner}
+            <motion.button
+              whileHover={!isSpinning && pool.length >= 2 ? { scale: 1.06, y: -2 } : {}}
+              whileTap={!isSpinning && pool.length >= 2 ? { scale: 0.96 } : {}}
+              onClick={handleSpin}
+              disabled={isSpinning || pool.length < 2}
+              className={cn(
+                "relative px-12 py-4 rounded-2xl text-[15px] font-bold transition-all overflow-hidden",
+                pool.length >= 2 && !isSpinning ? "text-white cursor-pointer" : "text-slate-600 cursor-not-allowed"
+              )}
+              style={pool.length >= 2 && !isSpinning ? {
+                background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)), rgb(var(--accent-600)))",
+                backgroundSize: "200% 100%",
+                boxShadow: "0 0 50px rgb(var(--accent-600) /0.4), 0 8px 32px rgba(0,0,0,0.3)",
+              } : {
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {pool.length >= 2 && !isSpinning && (
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                  animate={{ x: ["-100%", "200%"] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
                 />
               )}
-            </AnimatePresence>
+              <span className="relative flex items-center gap-3">
+                <motion.span
+                  animate={isSpinning ? { rotate: 360 } : {}}
+                  transition={isSpinning ? { duration: 0.6, repeat: Infinity, ease: "linear" } : {}}
+                >
+                  <SpinIcon size={18} />
+                </motion.span>
+                {isSpinning ? "Spinning..." : "Spin the Wheel"}
+              </span>
+            </motion.button>
+          </div>
 
-            {history.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col gap-1.5"
-              >
-                <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.14em] px-1">Recent spins</p>
-                <div className="flex flex-col gap-1">
-                  {history.slice(0, 5).map((h, i) => (
-                    <HistoryRow key={`${h.game.id}-${i}`} game={h.game} time={h.time} />
-                  ))}
-                </div>
-              </motion.div>
-            )}
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="flex flex-col items-center gap-3 w-full max-w-lg mx-auto">
+              <AnimatePresence mode="wait">
+                {winner && (
+                  <WinnerCard
+                    key={winner.id}
+                    game={winner}
+                    onPlayAgain={() => { setWinner(null); setTimeout(handleSpin, 100); }}
+                    onExclude={handleExcludeWinner}
+                  />
+                )}
+              </AnimatePresence>
+
+              {history.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col gap-1.5 w-full"
+                >
+                  <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.14em] px-1">Recent spins</p>
+                  <div className="flex flex-col gap-1">
+                    {history.slice(0, 5).map((h, i) => (
+                      <HistoryRow key={`${h.game.id}-${i}`} game={h.game} time={h.time} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </div>
         </div>
       </div>

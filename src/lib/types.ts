@@ -98,6 +98,7 @@ export interface AppSettings {
   start_minimized: boolean;
   close_to_tray: boolean;
   autostart: boolean;
+  playtime_reminders: boolean;
 }
 
 export interface ImportResult {
@@ -121,6 +122,11 @@ export interface UpdateInfo {
   notes: string;
   url: string;
   published: string;
+}
+
+export interface WeeklyPlaytime {
+  week: string;
+  mins: number;
 }
 
 export type SortKey = "name" | "rating" | "last_played" | "date_added" | "playtime_mins" | "sort_order";

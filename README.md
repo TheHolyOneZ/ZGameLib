@@ -10,7 +10,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-0.6.0-22c55e?style=flat-square" alt="v0.6.0"/>
+  <img src="https://img.shields.io/badge/Version-0.7.0-22c55e?style=flat-square" alt="v0.7.0"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -18,8 +18,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 <p>
   <a href="https://zsync.eu/zgamelib/"><strong>🌐 Website</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.6.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.6.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
   <a href="https://github.com/TheHolyOneZ/ZGameLib"><strong>GitHub</strong></a>
 </p>
 
@@ -43,8 +43,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| [ZGameLib_0.6.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.6.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
-| [ZGameLib_0.6.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.6.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
+| [ZGameLib_0.7.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
+| [ZGameLib_0.7.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -133,6 +133,17 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 - **Exe health badge** — amber warning icon on cards when the executable is missing
 - Loading skeleton grid while library loads
 
+**Command Palette** (`Ctrl+K`)
+- Centered overlay with fuzzy search across all game names
+- Results show cover thumbnail and platform badge; keyboard navigation (↑ ↓ Enter Escape)
+- Six built-in quick actions: Add Game · Library · Favorites · Stats · Spin · Settings
+
+**Batch Multi-Select**
+- Checkbox appears top-left on game cards (visible on hover or when selected) and in list rows
+- Select multiple games; a **BatchActionBar** slides up from the bottom
+- Apply a status, set a rating (clamped 1–10), or add a tag to all selected games at once
+- Delete all selected games with one click; × clears the selection
+
 **Weekly Playtime Goal**
 - Set a weekly playtime target in hours at the top of the Library page
 - Animated progress bar with current week's playtime
@@ -213,7 +224,7 @@ A slide-in drawer (500 px wide) that opens without navigating away from your lib
 **Screenshots Tab** *(label shows count, e.g. "Screenshots (6)")*
 - Fetches all Steam screenshots for the game
 - Masonry grid layout
-- Full-screen lightbox
+- Full-screen lightbox with left / right navigation, "X / Y" counter, and `ArrowLeft` / `ArrowRight` keyboard support
 - Per-screenshot actions: Copy Path · Open File · Open Folder · Export
 
 **History Tab** *(label shows count, e.g. "History (3)")*
@@ -348,6 +359,9 @@ All stat cards are **clickable** — each navigates to the Library with the rele
 - **Rating distribution** — horizontal bar chart showing game count per rating (1–10)
 - **Completion rate** — circular SVG progress ring (completed / total)
 - **Top 5 rated games** — ranked list with cover thumbnails and star display
+- **Playtime — Last 12 Weeks** — bar chart grouped by ISO week; bars grow from bottom with staggered entrance animation; hover for exact hours; weeks labeled every other column to avoid crowding
+- **Lowest Rated** — up to 5 games with a rating ≤ 4, scores highlighted in red
+- **Most Neglected** — up to 5 games with zero recorded playtime, sorted by time in library, with "Added X days ago" label
 - Staggered entrance animations
 
 </td>
@@ -415,6 +429,8 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 - **Close to tray** — ✕ hides the window rather than exiting
 - **Launch on Windows startup** — writes `HKEY_CURRENT_USER\...\Run\ZGameLib` via the Windows registry
 - **Start minimized** — launches directly to tray without showing the window
+- **Window position memory** — window position and size are saved on close and restored exactly on next launch
+- **Playtime reminder** — on startup, a notification is shown if your longest-neglected game (≥ 30 days since last play) is detected; can be toggled off in Settings → Behavior
 
 ---
 
@@ -443,8 +459,9 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 | <kbd>/</kbd> | Focus the search bar on any page |
 | <kbd>N</kbd> | Open the Add Game modal |
 | <kbd>F</kbd> | Toggle favorite on the currently open game |
-| <kbd>Escape</kbd> | Close the detail panel or any overlay |
+| <kbd>Escape</kbd> | Close the detail panel, command palette, or any overlay |
 | <kbd>?</kbd> | Show / hide the keyboard shortcuts help overlay |
+| <kbd>Ctrl</kbd> + <kbd>K</kbd> | Open the command palette (fuzzy game search + 6 quick actions) |
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Save a new note in the notes editor |
 
 ---
@@ -595,7 +612,7 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 games: Game[]
 selectedGameId: string | null
 search: string
-sortKey: 'name' | 'rating' | 'last_played' | 'date_added' | 'playtime_mins'
+sortKey: 'name' | 'rating' | 'last_played' | 'date_added' | 'playtime_mins' | 'sort_order'
 sortAsc: boolean
 viewMode: 'grid' | 'list'
 filters: {
@@ -607,12 +624,14 @@ filters: {
 }
 hiddenIds: string[]   // duplicate-hidden game IDs
 showHidden: boolean   // toggle visibility of hidden games
+selectedIds: string[] // batch multi-select
 
 // Actions
 setGames · updateGame · removeGame · addGame
 setSelectedGameId · setSearch · setSortKey · setSortAsc
 setViewMode · setFilter · resetFilters
 hideGames · toggleShowHidden · restoreAllHidden
+toggleSelected · clearSelected
 ```
 
 </details>
@@ -631,6 +650,7 @@ customStatuses: StatusConfig[]      // user-defined status list
 logs: LogEntry[]                    // max 500 entries, levels: info | ok | warn | error
 logPanelOpen: boolean
 pendingUpdate: Update | null
+isCommandPaletteOpen: boolean       // Ctrl+K overlay
 
 // Actions
 addToast · removeToast
@@ -639,6 +659,7 @@ openConfirm · closeConfirm
 setCustomStatuses
 addLog · clearLogs · setLogPanelOpen
 setPendingUpdate
+setCommandPaletteOpen
 ```
 
 </details>
@@ -716,6 +737,7 @@ Index: `game_id`
 | `start_minimized` | `true` \| `false` | `false` | Launch to tray silently |
 | `close_to_tray` | `true` \| `false` | `true` | ✕ hides rather than exits |
 | `autostart` | `true` \| `false` | `false` | Register in Windows startup |
+| `playtime_reminders` | `true` \| `false` | `true` | Show neglected-game reminder on startup |
 
 ---
 
@@ -808,8 +830,9 @@ ZGameLib/
 │   │   │
 │   │   ├── library/
 │   │   │   ├── GameCard.tsx        # 3:4 cover, overlay Play/Fav/Folder, platform badge, 🔥 on ≥8
-│   │   │   ├── GameGrid.tsx        # Responsive CSS grid, handles both view modes
+│   │   │   ├── GameGrid.tsx        # Responsive CSS grid, handles both view modes + BatchActionBar
 │   │   │   ├── GameListRow.tsx     # Compact row: thumbnail, name+status, tags, playtime, rating
+│   │   │   ├── BatchActionBar.tsx  # Floating bottom bar for batch status/rating/tag/delete actions
 │   │   │   ├── PinnedRow.tsx       # Horizontal strip of pinned games shown above the main grid
 │   │   │   └── RecentlyPlayed.tsx  # Horizontal scrollable carousel (max 12 games)
 │   │   │
@@ -829,6 +852,7 @@ ZGameLib/
 │   │       ├── StarRating.tsx      # Interactive 10-star rating widget
 │   │       ├── Icons.tsx           # 40+ custom SVG icons
 │   │       ├── GameContextMenu.tsx # Right-click portal menu: Play, Folder, Fav, Pin, Copy, Details
+│   │       ├── CommandPalette.tsx  # Ctrl+K overlay: fuzzy game search + 6 quick actions
 │   │       ├── Toast.tsx           # Bottom-right toasts (3.5 s auto-dismiss, max visible)
 │   │       ├── LogPanel.tsx        # Right-side scan log (max 500 entries, auto-scroll)
 │   │       ├── EmptyState.tsx      # Centered placeholder with action button
@@ -915,8 +939,8 @@ Output directory: `src-tauri/target/release/bundle/`
 
 ```
 bundle/
-├── msi/   ZGameLib_0.6.0_x64_en-US.msi
-└── nsis/  ZGameLib_0.6.0_x64-setup.exe
+├── msi/   ZGameLib_0.7.0_x64_en-US.msi
+└── nsis/  ZGameLib_0.7.0_x64-setup.exe
 
 ```
 

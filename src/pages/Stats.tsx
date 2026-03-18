@@ -1,10 +1,13 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useGameStore } from "@/store/useGameStore";
 import { formatPlaytime } from "@/lib/utils";
 import type { Platform, GameStatus, Game } from "@/lib/types";
 import { TrophyIcon, StarIcon, HeartIcon, GamepadIcon, ClockIcon, ChartIcon } from "@/components/ui/Icons";
 import { useCover } from "@/hooks/useCover";
+import { api } from "@/lib/tauri";
 
 const PLATFORM_COLORS_HEX: Record<Platform, string> = {
   steam: "#38bdf8",
@@ -58,6 +61,13 @@ function StatCard({ icon, label, value, sub, delay, onClick }: { icon: React.Rea
 export default function Stats() {
   const games = useGameStore((s) => s.games);
   const navigate = useNavigate();
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+
+  const { data: weeklyPlaytime = [] } = useQuery({
+    queryKey: ["weekly-playtime"],
+    queryFn: () => api.getWeeklyPlaytime(),
+    staleTime: 5 * 60 * 1000,
+  });
   const { resetFilters, setFilter, setSortKey, setSortAsc } = useGameStore.getState();
 
   const goToLibrary = (setup?: () => void) => () => {
@@ -94,6 +104,16 @@ export default function Stats() {
   const topRated = [...games]
     .filter((g) => g.rating !== null)
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    .slice(0, 5);
+
+  const lowestRated = [...games]
+    .filter((g) => g.rating !== null && (g.rating ?? 0) <= 4)
+    .sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0))
+    .slice(0, 5);
+
+  const neglected = [...games]
+    .filter((g) => g.playtime_mins === 0 && g.date_added && (Date.now() - new Date(g.date_added).getTime()) > 90 * 24 * 60 * 60 * 1000)
+    .sort((a, b) => new Date(a.date_added).getTime() - new Date(b.date_added).getTime())
     .slice(0, 5);
 
   const ratingDistribution: { rating: number; count: number }[] = [];
@@ -237,8 +257,81 @@ export default function Stats() {
         </div>
       </motion.div>
 
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.62 }} className="mb-8">
+        <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-4 flex items-center gap-1.5">
+          <span className="w-3 h-px bg-slate-800" />
+          Playtime — Last 12 Weeks
+          <span className="flex-1 h-px bg-slate-800" />
+        </p>
+        {weeklyPlaytime.length === 0 ? (
+          <div className="glass rounded-2xl p-6 flex items-center justify-center">
+            <span className="text-[12px] text-slate-700">No sessions yet</span>
+          </div>
+        ) : (
+          <div className="glass rounded-2xl p-4">
+            {(() => {
+              const maxMins = Math.max(...weeklyPlaytime.map((w) => w.mins), 1);
+              return (
+                <div>
+                  <div className="flex items-end gap-1 h-24 mb-2">
+                    {weeklyPlaytime.map((w, i) => {
+                      const pct = Math.max(3, (w.mins / maxMins) * 100);
+                      const hours = Math.round(w.mins / 60 * 10) / 10;
+                      return (
+                        <div
+                          key={w.week}
+                          className="flex-1 flex flex-col justify-end relative cursor-default"
+                          onMouseEnter={() => setHoveredBar(i)}
+                          onMouseLeave={() => setHoveredBar(null)}
+                        >
+                          <AnimatePresence>
+                            {hoveredBar === i && w.mins > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute -top-7 left-1/2 -translate-x-1/2 bg-bg-elevated border border-white/10 rounded-md px-1.5 py-0.5 text-[9px] text-slate-200 whitespace-nowrap z-10 pointer-events-none shadow-lg"
+                              >
+                                {hours}h
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <motion.div
+                            initial={{ scaleY: 0 }}
+                            animate={{ scaleY: 1 }}
+                            transition={{ delay: i * 0.03, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                            style={{
+                              height: `${pct}%`,
+                              originY: "bottom",
+                              background: w.mins > 0
+                                ? "linear-gradient(to bottom, rgb(var(--accent-500)), rgba(var(--accent-800), 0.4))"
+                                : undefined,
+                              opacity: hoveredBar === i ? 1 : 0.7,
+                            }}
+                            className={`w-full rounded-sm transition-opacity ${w.mins === 0 ? "bg-white/5" : ""}`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-1">
+                    {weeklyPlaytime.map((w, i) => (
+                      <div key={w.week} className="flex-1 text-center overflow-hidden">
+                        <span className="text-[8px] text-slate-700">
+                          {i % 2 === 0 ? w.week.replace(/^\d{4}-/, "W") : ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </motion.div>
+
       {topRated.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }} className="mb-8">
           <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-4 flex items-center gap-1.5">
             <span className="w-3 h-px bg-slate-800" />
             Top Rated
@@ -251,7 +344,8 @@ export default function Stats() {
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.75 + i * 0.08 }}
-                className="flex items-center gap-4 glass rounded-xl px-4 py-3 hover:border-accent-500/15 transition-all duration-300 group"
+                className="flex items-center gap-4 glass rounded-xl px-4 py-3 hover:border-accent-500/15 transition-all duration-300 group cursor-pointer"
+                onClick={goToLibrary()}
               >
                 <span className="text-[13px] text-slate-700 w-5 text-right font-bold tabular-nums group-hover:text-accent-400 transition-colors">
                   {i + 1}
@@ -264,6 +358,68 @@ export default function Stats() {
                   <StarIcon size={12} filled className="text-accent-400" />
                   <span className="text-[14px] font-bold text-accent-300 tabular-nums">{g.rating}</span>
                 </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {lowestRated.length > 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mb-8">
+          <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-4 flex items-center gap-1.5">
+            <span className="w-3 h-px bg-slate-800" />
+            Lowest Rated
+            <span className="flex-1 h-px bg-slate-800" />
+          </p>
+          <div className="flex flex-col gap-2">
+            {lowestRated.map((g, i) => (
+              <motion.div
+                key={g.id}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.75 + i * 0.08 }}
+                className="flex items-center gap-4 glass rounded-xl px-4 py-3 hover:border-red-500/15 transition-all duration-300 group"
+              >
+                <span className="text-[13px] text-slate-700 w-5 text-right font-bold tabular-nums group-hover:text-red-400 transition-colors">
+                  {i + 1}
+                </span>
+                <div className="w-9 h-12 rounded-lg overflow-hidden border border-white/[0.04] shrink-0">
+                  <TopRatedCover game={g} />
+                </div>
+                <span className="flex-1 text-[13px] text-slate-200 truncate font-medium">{g.name}</span>
+                <span className="text-[13px] font-bold text-red-400 tabular-nums">Rated {g.rating}/10</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {neglected.length > 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }} className="mb-8">
+          <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-4 flex items-center gap-1.5">
+            <span className="w-3 h-px bg-slate-800" />
+            Most Neglected
+            <span className="flex-1 h-px bg-slate-800" />
+          </p>
+          <div className="flex flex-col gap-2">
+            {neglected.map((g, i) => (
+              <motion.div
+                key={g.id}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 + i * 0.08 }}
+                className="flex items-center gap-4 glass rounded-xl px-4 py-3 hover:border-accent-500/15 transition-all duration-300 group"
+              >
+                <span className="text-[13px] text-slate-700 w-5 text-right font-bold tabular-nums group-hover:text-accent-400 transition-colors">
+                  {i + 1}
+                </span>
+                <div className="w-9 h-12 rounded-lg overflow-hidden border border-white/[0.04] shrink-0">
+                  <TopRatedCover game={g} />
+                </div>
+                <span className="flex-1 text-[13px] text-slate-200 truncate font-medium">{g.name}</span>
+                <span className="text-[12px] text-slate-500 tabular-nums">
+                  Added {Math.floor((Date.now() - new Date(g.date_added).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                </span>
               </motion.div>
             ))}
           </div>

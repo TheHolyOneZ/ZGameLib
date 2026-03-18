@@ -58,6 +58,10 @@ interface GameStore {
 
   searchScope: "name" | "all";
   setSearchScope: (scope: "name" | "all") => void;
+
+  selectedIds: string[];
+  toggleSelected: (id: string) => void;
+  clearSelected: () => void;
 }
 
 const defaultFilters: Filters = {
@@ -122,4 +126,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   searchScope: "name",
   setSearchScope: (searchScope) => set({ searchScope }),
+
+  selectedIds: [],
+  toggleSelected: (id) => set((s) => ({
+    selectedIds: s.selectedIds.includes(id)
+      ? s.selectedIds.filter((x) => x !== id)
+      : [...s.selectedIds, id],
+  })),
+  clearSelected: () => set({ selectedIds: [] }),
 }));

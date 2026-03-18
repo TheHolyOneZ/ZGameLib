@@ -83,18 +83,18 @@ function TrashedGameRow({ game, onRestore, onDelete }: { game: Game; onRestore: 
       />
       <div className="flex-1 min-w-0">
         <p className="text-[12px] text-slate-300 truncate font-medium">{game.name}</p>
-        <p className="text-[10px] text-slate-600">{game.platform}</p>
+        <p className="text-xs text-slate-600">{game.platform}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={onRestore}
-          className="px-2 py-1 rounded-lg text-[10px] font-medium text-accent-300 hover:bg-accent-500/10 transition-colors"
+          className="px-2 py-1 rounded-lg text-xs font-medium text-accent-300 hover:bg-accent-500/10 transition-colors"
         >
           Restore
         </button>
         <button
           onClick={onDelete}
-          className="px-2 py-1 rounded-lg text-[10px] font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+          className="px-2 py-1 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
         >
           Delete
         </button>
@@ -352,7 +352,7 @@ export default function Settings() {
           <Section title="General" icon={<SparkleIcon size={13} />} delay={0.04}>
             <div className="flex flex-col gap-5">
               <div className="w-48">
-                <label className="text-[10px] text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2">
+                <label className="text-xs text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2">
                   Default View
                 </label>
                 <select
@@ -365,7 +365,7 @@ export default function Settings() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-3">
+                <label className="text-xs text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-3">
                   Theme
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -405,7 +405,7 @@ export default function Settings() {
           <Section title="Appearance" icon={<SparkleIcon size={13} />} delay={0.06}>
             <div className="flex flex-col gap-5">
               <div>
-                <label className="text-[10px] text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2.5">
+                <label className="text-xs text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2.5">
                   Grid Columns
                 </label>
                 <div className="flex gap-2">
@@ -462,6 +462,16 @@ export default function Settings() {
                   onChange={(v) => setSettings({ ...settings, minimize_on_launch: v })}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] text-slate-300">Playtime Reminders</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">Notify when you haven't played a game in 30 days</p>
+                </div>
+                <Toggle
+                  value={settings.playtime_reminders}
+                  onChange={(v) => setSettings({ ...settings, playtime_reminders: v })}
+                />
+              </div>
             </div>
           </Section>
 
@@ -503,7 +513,7 @@ export default function Settings() {
           <Section title="Platform Paths" icon={<GamepadIcon size={13} />} delay={0.14}>
             <div className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2">
+                <label className="text-xs text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2">
                   Steam Path Override
                 </label>
                 <input
@@ -514,7 +524,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2">
+                <label className="text-xs text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2">
                   Epic Path Override
                 </label>
                 <input
@@ -815,7 +825,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v0.6.0</p>
+                  <p className="text-[11px] text-slate-600">v0.7.0</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}

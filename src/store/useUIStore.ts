@@ -55,6 +55,9 @@ interface UIStore {
 
   pendingUpdate: Update | null;
   setPendingUpdate: (u: Update | null) => void;
+
+  isCommandPaletteOpen: boolean;
+  setCommandPaletteOpen: (v: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -102,4 +105,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   pendingUpdate: null,
   setPendingUpdate: (u) => set({ pendingUpdate: u }),
+
+  isCommandPaletteOpen: false,
+  setCommandPaletteOpen: (v) => set({ isCommandPaletteOpen: v }),
 }));

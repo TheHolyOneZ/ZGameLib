@@ -49,23 +49,13 @@ export default function Sidebar() {
         onClick={() => { resetFilters(); navigate(path); }}
         title={collapsed ? label : undefined}
         className={cn(
-          "w-full flex items-center rounded-xl text-[13px] font-medium transition-all duration-300 relative group",
+          "w-full flex items-center rounded-xl text-[13px] transition-all duration-200 relative group",
           collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5",
-          isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
+          isActive
+            ? "border-l-2 border-accent-500 bg-accent-500/10 text-white font-medium"
+            : "border-l-2 border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]"
         )}
       >
-        {isActive && (
-          <motion.div
-            layoutId="nav-active"
-            className="absolute inset-0 rounded-xl"
-            style={{
-              background: "linear-gradient(135deg, rgb(var(--accent-500) /0.15) 0%, rgb(var(--accent-800) /0.1) 100%)",
-              border: "1px solid rgb(var(--accent-500) /0.2)",
-              boxShadow: "0 0 20px rgb(var(--accent-500) /0.08), inset 0 0 20px rgb(var(--accent-500) /0.03)",
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-          />
-        )}
         <span className="relative z-10 flex items-center gap-3">
           {icon}
           <AnimatePresence initial={false}>
@@ -82,13 +72,6 @@ export default function Sidebar() {
             )}
           </AnimatePresence>
         </span>
-        {isActive && !collapsed && (
-          <motion.div
-            layoutId="nav-dot"
-            className="absolute -left-3 top-0 bottom-0 w-[3px] rounded-r-full bg-accent-500"
-            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-          />
-        )}
       </button>
     );
   };

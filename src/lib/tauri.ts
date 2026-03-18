@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData } from "./types";
+import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime } from "./types";
 
 export const api = {
   getAllGames: () => invoke<Game[]>("get_all_games"),
@@ -62,4 +62,7 @@ export const api = {
 
   reorderGames: (ids: string[]) => invoke<void>("reorder_games", { ids }),
   fetchHltbData: (gameId: string, gameName: string) => invoke<HltbData | null>("fetch_hltb_data", { gameId, gameName }),
+  getWeeklyPlaytime: () => invoke<WeeklyPlaytime[]>("get_weekly_playtime"),
+  batchUpdateGames: (ids: string[], status?: string, rating?: number, tagsToAdd?: string[]) =>
+    invoke<void>("batch_update_games", { ids, status, rating, tagsToAdd }),
 };

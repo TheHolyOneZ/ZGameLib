@@ -314,9 +314,10 @@ export function TrophyIcon({ size = 16, className }: IconProps) {
 
 export function FireIcon({ size = 16, className }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C12 2 8 8 8 13C8 16.5 9.79 19 12 20C14.21 19 16 16.5 16 13C16 8 12 2 12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-      <path d="M12 10C12 10 10 13 10 15C10 17 10.89 18 12 18.5C13.11 18 14 17 14 15C14 13 12 10 12 10Z" fill="currentColor" opacity="0.3"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C11.2 4.2 9 7 9 11C9 14.2 10.1 16.8 12 18.5C13.9 16.8 15 14.2 15 11C15 7 12.8 4.2 12 2Z" fill="currentColor"/>
+      <path d="M8.5 9C7.5 10.5 7 12 7 13.5C7 17 9.1 20 12 21C14.9 20 17 17 17 13.5C17 12 16.5 10.5 15.5 9C15 11 13.8 13 12 14C10.2 13 9 11 8.5 9Z" fill="currentColor"/>
+      <path d="M12 14C11 15 10.5 16.5 10.5 18C10.5 19.4 11.1 20.4 12 21C12.9 20.4 13.5 19.4 13.5 18C13.5 16.5 13 15 12 14Z" fill="currentColor" opacity="0.5"/>
     </svg>
   );
 }
