@@ -7,7 +7,7 @@ import { api } from "@/lib/tauri";
 import { applyThemeFromSettings } from "@/lib/theme";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useScan } from "@/hooks/useGames";
+import { useScan, usePullUninstalled } from "@/hooks/useGames";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import ToastContainer from "@/components/ui/Toast";
@@ -181,7 +181,9 @@ function AppBehavior() {
     staleTime: 5 * 60 * 1000,
   });
   const { scan } = useScan();
+  const { pullUninstalled } = usePullUninstalled();
   const hasAutoScanned = useRef(false);
+  const hasAutoPulled = useRef(false);
 
   useEffect(() => {
     if (data?.theme) {
@@ -194,7 +196,11 @@ function AppBehavior() {
       hasAutoScanned.current = true;
       scan();
     }
-  }, [data?.auto_scan, scan]);
+    if (data?.include_uninstalled_steam && !hasAutoPulled.current) {
+      hasAutoPulled.current = true;
+      pullUninstalled();
+    }
+  }, [data?.auto_scan, data?.include_uninstalled_steam, scan, pullUninstalled]);
 
   useEffect(() => {
     import("@tauri-apps/plugin-updater").then(({ check }) =>
@@ -203,9 +209,9 @@ function AppBehavior() {
   }, []);
 
   useEffect(() => {
-    const promise = listen<string>("game-session-ended", async (event) => {
-      const game = await api.getGame(event.payload);
-      if (game) useGameStore.getState().updateGame(game);
+    const promise = listen<string>("game-session-ended", async () => {
+      const games = await api.getAllGames();
+      if (games) useGameStore.getState().setGames(games);
     });
     return () => { promise.then((f) => f()); };
   }, []);

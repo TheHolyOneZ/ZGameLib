@@ -56,6 +56,9 @@ export default function GameListRow({ game }: { game: Game }) {
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           <PlatformBadge platform={game.platform} />
+          {game.not_installed && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-slate-800/80 border border-slate-600/40 text-slate-400">Not Installed</span>
+          )}
           {game.status !== "none" && (() => {
             const sc = customStatuses.find(s => s.key === game.status);
             return sc ? (

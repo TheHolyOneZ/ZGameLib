@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Game, SortKey, ViewMode, GameStatus, Platform } from "@/lib/types";
+import type { Game, SortKey, ViewMode, GameStatus, Platform, FilterRule, FilterLogic } from "@/lib/types";
 
 interface Filters {
   platform: Platform | "all";
@@ -10,6 +10,7 @@ interface Filters {
   dateAddedFrom: string | null;
   dateAddedTo: string | null;
   hasCover: boolean | null;
+  notInstalledOnly: boolean;
 }
 
 export interface SavedFilter {
@@ -19,6 +20,8 @@ export interface SavedFilter {
 }
 
 const SAVED_FILTERS_KEY = "zgamelib-saved-filters";
+const FILTER_RULES_KEY = "zgamelib-filter-rules";
+const FILTER_LOGIC_KEY = "zgamelib-filter-logic";
 
 interface GameStore {
   games: Game[];
@@ -62,6 +65,14 @@ interface GameStore {
   selectedIds: string[];
   toggleSelected: (id: string) => void;
   clearSelected: () => void;
+
+  filterRules: FilterRule[];
+  filterLogic: FilterLogic;
+  addFilterRule: () => void;
+  removeFilterRule: (id: string) => void;
+  updateFilterRule: (id: string, field: keyof FilterRule, value: string) => void;
+  setFilterLogic: (logic: FilterLogic) => void;
+  clearFilterRules: () => void;
 }
 
 const defaultFilters: Filters = {
@@ -73,6 +84,7 @@ const defaultFilters: Filters = {
   dateAddedFrom: null,
   dateAddedTo: null,
   hasCover: null,
+  notInstalledOnly: false,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -134,4 +146,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
       : [...s.selectedIds, id],
   })),
   clearSelected: () => set({ selectedIds: [] }),
+
+  filterRules: (() => {
+    try { return JSON.parse(localStorage.getItem(FILTER_RULES_KEY) ?? "[]") as import("@/lib/types").FilterRule[]; } catch { return []; }
+  })(),
+  filterLogic: (() => {
+    try { return (localStorage.getItem(FILTER_LOGIC_KEY) ?? "and") as import("@/lib/types").FilterLogic; } catch { return "and"; }
+  })(),
+  addFilterRule: () => set((s) => {
+    const next = [...s.filterRules, { id: crypto.randomUUID(), field: "platform" as import("@/lib/types").FilterField, operator: "=" as import("@/lib/types").FilterOperator, value: "" }];
+    try { localStorage.setItem(FILTER_RULES_KEY, JSON.stringify(next)); } catch {}
+    return { filterRules: next };
+  }),
+  removeFilterRule: (id) => set((s) => {
+    const next = s.filterRules.filter((r) => r.id !== id);
+    try { localStorage.setItem(FILTER_RULES_KEY, JSON.stringify(next)); } catch {}
+    return { filterRules: next };
+  }),
+  updateFilterRule: (id, field, value) => set((s) => {
+    const next = s.filterRules.map((r) => r.id === id ? { ...r, [field]: value } : r);
+    try { localStorage.setItem(FILTER_RULES_KEY, JSON.stringify(next)); } catch {}
+    return { filterRules: next };
+  }),
+  setFilterLogic: (filterLogic) => {
+    try { localStorage.setItem(FILTER_LOGIC_KEY, filterLogic); } catch {}
+    set({ filterLogic });
+  },
+  clearFilterRules: () => {
+    try { localStorage.setItem(FILTER_RULES_KEY, "[]"); } catch {}
+    set({ filterRules: [] });
+  },
 }));

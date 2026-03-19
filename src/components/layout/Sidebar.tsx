@@ -8,8 +8,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   GamepadIcon, LibraryIcon, HeartIcon, ClockIcon, ChartIcon,
   SettingsIcon, SteamIcon, EpicIcon, CustomGameIcon,
-  SparkleIcon, SpinIcon, GogIcon, ChevronLeftIcon, ImageIcon,
+  SparkleIcon, SpinIcon, GogIcon, ChevronLeftIcon, ImageIcon, DownloadIcon,
 } from "@/components/ui/Icons";
+import FilterBuilder from "@/components/library/FilterBuilder";
 
 function FolderIcon({ size = 16, className }: { size?: number; className?: string }) {
   return (
@@ -29,6 +30,8 @@ export default function Sidebar() {
   const setFilter = useGameStore((s) => s.setFilter);
   const resetFilters = useGameStore((s) => s.resetFilters);
   const customStatuses = useUIStore((s) => s.customStatuses);
+  const filterRules = useGameStore((s) => s.filterRules);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const settingsDirty = useUIStore((s) => s.settingsDirty);
   const setSettingsUnsavedNav = useUIStore((s) => s.setSettingsUnsavedNav);
@@ -284,6 +287,71 @@ export default function Sidebar() {
                   </span>
                 </button>
               </div>
+            </div>
+
+            {games.some((g) => g.not_installed) && (
+              <div className="mt-3 mb-1">
+                <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-slate-800" />
+                  Installation
+                  <span className="flex-1 h-px bg-slate-800" />
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={() => { setFilter("notInstalledOnly", !filters.notInstalledOnly); if (location.pathname !== "/") guardedNavigate("/"); }}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
+                      filters.notInstalledOnly
+                        ? "text-accent-300 bg-accent-500/10 border-accent-500/20"
+                        : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border-transparent"
+                    )}
+                  >
+                    <DownloadIcon size={14} />
+                    <span className="flex-1 text-left">Not Installed</span>
+                    <span className="text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md text-slate-500 bg-white/4">
+                      {games.filter((g) => g.not_installed).length}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 mb-1">
+              <button
+                onClick={() => setAdvancedOpen((v) => !v)}
+                className="w-full"
+              >
+                <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-slate-800" />
+                  Advanced
+                  {filterRules.length > 0 && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-500 ml-0.5" />
+                  )}
+                  <span className="flex-1 h-px bg-slate-800" />
+                  <motion.span
+                    animate={{ rotate: advancedOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-slate-600"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </motion.span>
+                </p>
+              </button>
+              <AnimatePresence initial={false}>
+                {advancedOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <FilterBuilder />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

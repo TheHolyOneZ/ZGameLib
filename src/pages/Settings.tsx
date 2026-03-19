@@ -128,6 +128,7 @@ export default function Settings() {
   const [newStatusColor, setNewStatusColor] = useState("#60a5fa");
   const [showAddStatus, setShowAddStatus] = useState(false);
   const [checkStatus, setCheckStatus] = useState<"idle" | "checking" | "up-to-date" | "available">("idle");
+  const [steamSyncing, setSteamSyncing] = useState(false);
   const [trashedGames, setTrashedGames] = useState<Game[]>([]);
   const [trashLoaded, setTrashLoaded] = useState(false);
   const [fetchingCovers, setFetchingCovers] = useState(false);
@@ -753,6 +754,17 @@ export default function Settings() {
                   Grid Columns
                 </label>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => setSettings({ ...settings, grid_columns: 0 })}
+                    className={cn(
+                      "px-3 h-11 rounded-xl text-[12px] font-bold transition-all duration-200 border",
+                      settings.grid_columns === 0
+                        ? "text-white border-accent-500/50 bg-accent-600/25"
+                        : "text-slate-500 border-white/6 bg-white/3 hover:text-slate-300 hover:bg-white/6"
+                    )}
+                  >
+                    Auto
+                  </button>
                   {[3, 4, 5, 6].map((n) => (
                     <button
                       key={n}
@@ -781,6 +793,51 @@ export default function Settings() {
                   onChange={(v) => setSettings({ ...settings, show_playtime_on_cards: v })}
                 />
               </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-[13px] text-slate-300">Pagination</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Split the library into pages instead of one long scroll</p>
+                  </div>
+                  <Toggle
+                    value={settings.pagination_enabled}
+                    onChange={(v) => setSettings({ ...settings, pagination_enabled: v })}
+                  />
+                </div>
+                <AnimatePresence>
+                  {settings.pagination_enabled && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-1">
+                        <label className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold block mb-2">
+                          Games per page
+                        </label>
+                        <div className="flex gap-2 flex-wrap">
+                          {[12, 24, 36, 48, 60, 100].map((n) => (
+                            <button
+                              key={n}
+                              onClick={() => setSettings({ ...settings, pagination_page_size: n })}
+                              className={cn(
+                                "px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 border",
+                                settings.pagination_page_size === n
+                                  ? "border-accent-500/50 bg-accent-600/20 text-white"
+                                  : "border-white/6 bg-white/3 text-slate-400 hover:text-slate-200 hover:border-white/12"
+                              )}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </Section>
 
@@ -794,6 +851,16 @@ export default function Settings() {
                 <Toggle
                   value={settings.auto_scan}
                   onChange={(v) => setSettings({ ...settings, auto_scan: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] text-slate-300">Pull uninstalled Steam games on startup</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">Automatically import owned but uninstalled Steam games (requires Steam API Key & SteamID64)</p>
+                </div>
+                <Toggle
+                  value={settings.include_uninstalled_steam}
+                  onChange={(v) => setSettings({ ...settings, include_uninstalled_steam: v })}
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -814,6 +881,16 @@ export default function Settings() {
                 <Toggle
                   value={settings.playtime_reminders}
                   onChange={(v) => setSettings({ ...settings, playtime_reminders: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] text-slate-300">Exclude idle time from playtime</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">Automatically deduct time when the game isn't in focus for 5+ minutes</p>
+                </div>
+                <Toggle
+                  value={settings.exclude_idle_time}
+                  onChange={(v) => setSettings({ ...settings, exclude_idle_time: v })}
                 />
               </div>
             </div>
@@ -1090,6 +1167,72 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
+
+              <div className="pt-4 border-t border-white/[0.04]">
+                <p className="text-[11px] font-semibold text-slate-400 mb-1">Steam Playtime Sync</p>
+                <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+                  Pull your official Steam playtime into ZGameLib. Only increases local values — it never overwrites hours tracked here. Requires a free Steam Web API key and your SteamID64.
+                </p>
+                <div className="flex flex-col gap-3 mb-3">
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold block mb-1.5">Steam Web API Key</label>
+                    <input
+                      type="text"
+                      value={settings.steam_api_key ?? ""}
+                      onChange={(e) => setSettings({ ...settings, steam_api_key: e.target.value || null })}
+                      placeholder="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                      className="input-glass text-[12px] font-mono"
+                    />
+                    <p className="text-[10px] text-slate-600 mt-1.5 leading-relaxed">
+                      A free key tied to your Steam account. To get one: go to{" "}
+                      <span className="text-accent-400 select-all">store.steampowered.com/dev/apikey</span>
+                      , log in, and enter any name (e.g. "ZGameLib") as the domain. The key is a 32-character string.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold block mb-1.5">SteamID64</label>
+                    <input
+                      type="text"
+                      value={settings.steam_id_64 ?? ""}
+                      onChange={(e) => setSettings({ ...settings, steam_id_64: e.target.value || null })}
+                      placeholder="76561198XXXXXXXXX"
+                      className="input-glass text-[12px] font-mono"
+                    />
+                    <p className="text-[10px] text-slate-600 mt-1.5 leading-relaxed">
+                      Your unique 17-digit Steam account ID — not your username or vanity URL. To find it: go to{" "}
+                      <span className="text-accent-400 select-all">steamidfinder.com</span>
+                      , enter your Steam profile URL or username, and copy the SteamID64 value.
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={steamSyncing || !settings.steam_api_key || !settings.steam_id_64}
+                  onClick={async () => {
+                    if (!settings.steam_api_key || !settings.steam_id_64) return;
+                    setSteamSyncing(true);
+                    try {
+                      const result = await api.syncSteamPlaytime(settings.steam_api_key, settings.steam_id_64);
+                      addToast(`${result.updated} games updated, ${result.skipped} skipped`, "success");
+                    } catch (e) {
+                      addToast(String(e), "error");
+                    } finally {
+                      setSteamSyncing(false);
+                    }
+                  }}
+                  className="btn-ghost w-full justify-center text-[12px] disabled:opacity-50"
+                >
+                  {steamSyncing ? (
+                    <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+                      <SparkleIcon size={13} />
+                    </motion.span>
+                  ) : (
+                    <SparkleIcon size={13} />
+                  )}
+                  {steamSyncing ? "Syncing…" : "Sync Steam Playtime"}
+                </motion.button>
+              </div>
             </div>
           </Section>
 
@@ -1219,7 +1362,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v0.8.0</p>
+                  <p className="text-[11px] text-slate-600">v0.9.0</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}
@@ -1258,6 +1401,26 @@ export default function Settings() {
                     <DownloadIcon size={13} />
                   )}
                   {checkStatus === "checking" ? "Checking…" : checkStatus === "available" ? "Update ready — see banner" : checkStatus === "up-to-date" ? "Up to date" : "Check for Updates"}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    try {
+                      const lines = await api.getLogContents();
+                      await navigator.clipboard.writeText(lines.join('\n'));
+                      addToast("Logs copied to clipboard", "success");
+                    } catch {
+                      addToast("Failed to copy logs", "error");
+                    }
+                  }}
+                  className="btn-ghost w-full justify-center text-[12px]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Copy Logs
                 </motion.button>
               </div>
             </Section>

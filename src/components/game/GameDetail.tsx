@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
@@ -232,6 +233,18 @@ export default function GameDetail() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxIndex, screenshots]);
+
+  useEffect(() => {
+    const gameId = game?.id;
+    if (!gameId) return;
+    const promise = listen<string>("game-session-ended", async (event) => {
+      if (event.payload === gameId && sessions !== null) {
+        const data = await api.getSessions(gameId).catch(() => null);
+        if (data) setSessions(data);
+      }
+    });
+    return () => { promise.then((f) => f()); };
+  }, [game?.id, sessions]);
 
   const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, is_pinned: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0, deleted_at: null, custom_fields: {} as Record<string, string>, hltb_main_mins: null, hltb_extra_mins: null, genre: null, developer: null, publisher: null, release_year: null };
   const coverUrl = useCover(game ?? dummyGame);

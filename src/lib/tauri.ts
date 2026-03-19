@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry } from "./types";
+import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult } from "./types";
 
 export const api = {
   getAllGames: () => invoke<Game[]>("get_all_games"),
@@ -80,4 +80,8 @@ export const api = {
   removeGameFromCollection: (collectionId: string, gameId: string) => invoke<void>("remove_game_from_collection", { collectionId, gameId }),
   getCollectionsForGame: (gameId: string) => invoke<Collection[]>("get_collections_for_game", { gameId }),
   updateCollectionDescription: (id: string, description: string | null) => invoke<void>("update_collection_description", { id, description }),
+
+  syncSteamPlaytime: (apiKey: string, steamId: string) => invoke<SteamSyncResult>("sync_steam_playtime", { apiKey, steamId }),
+  pullUninstalledSteamGames: (apiKey: string, steamId: string) => invoke<PullUninstalledResult>("pull_uninstalled_steam_games", { apiKey, steamId }),
+  getLogContents: () => invoke<string[]>("get_log_contents"),
 };

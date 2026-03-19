@@ -134,7 +134,12 @@ function GameCard({ game }: { game: Game }) {
             </motion.div>
           </div>
           <PlatformBadge platform={game.platform} />
-          {exeMissing && (
+          {game.not_installed && (
+            <div className="px-1.5 py-0.5 rounded-lg bg-slate-900/80 border border-slate-500/40 flex items-center gap-1" title="Not installed — click to install via Steam">
+              <span className="text-[9px] font-semibold text-slate-300 uppercase tracking-wide leading-none">Not Installed</span>
+            </div>
+          )}
+          {exeMissing && !game.not_installed && (
             <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center" title="Executable not found">
               <AlertIcon size={12} className="text-amber-400" />
             </div>

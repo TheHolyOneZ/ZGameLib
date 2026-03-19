@@ -1,5 +1,125 @@
 # Changelog
 
+## [0.9.0] — 2026-03-20
+
+### Added
+
+#### Uninstalled Steam Games (F-017)
+- **Pull Uninstalled Steam Games** — import all owned but uninstalled Steam games into the library via Steam Web API (`IPlayerService/GetOwnedGames`)
+- **"Not Installed" badge** shown on game cards (top-left, next to platform badge) and in list-view rows for any uninstalled game
+- **Install via ZGameLib** — clicking launch/play on a "Not Installed" Steam game opens Steam's install dialog (`steam://install/{appId}`) instead of running the game
+- **Scan Games dropdown** in the top bar — replaces the single Scan button with a split button/dropdown: "Scan Installed Games" (existing behavior) and "Pull Uninstalled Steam Games"
+- **Sidebar filter** — "Not Installed" section appears in the sidebar when any uninstalled games are present, with a count badge; clicking it filters the library to show only uninstalled games
+- **Auto-pull on startup** toggle in Settings → Behavior — "Pull uninstalled Steam games on startup"; requires Steam API Key and SteamID64 to be configured
+- **Scanner auto-detects installs** — when a Steam scan runs and finds a game previously marked as "Not Installed", it automatically marks it as installed and populates the `exe_path` and `install_dir`
+- **Database migration** — new `not_installed` column (INTEGER, default 0) added to `games` table via schema migration
+- **Settings key** — `include_uninstalled_steam` (default `false`) persisted in app settings
+
+#### Library Pagination (F-042)
+- **Pagination toggle** in Settings → Appearance — off by default; when enabled the library splits into pages instead of one continuous scroll
+- **Page size selector** — choose 12, 24, 36, 48, 60, or 100 games per page; selector only visible when pagination is on
+- **Pagination bar** — prev/next arrows with numbered page buttons; smart ellipsis condensing for large page counts (e.g. `1 … 4 5 6 … 20`); current page highlighted with accent gradient; appears below the grid in all view modes (grid, list, manual sort order)
+- Page resets to 1 automatically when search, filters, page size, or toggle change
+- New settings keys: `pagination_enabled` (default `false`), `pagination_page_size` (default `24`, clamped 6–200)
+
+#### Steam Playtime Sync (F-013)
+- **Steam Playtime Sync** in Settings → Integrations — enter your Steam API Key and SteamID64 to sync playtime from Steam; only increases local values, never decreases
+- **Sync button** shows updated/skipped count in a toast
+
+#### Idle Detection (F-014)
+- **Exclude idle time from playtime** toggle in Settings → Behavior (default: on) — deducts time when the game isn't in focus for 5+ consecutive minutes; brief alt-tabs are ignored
+
+#### Advanced Filter Builder (F-016)
+- **Advanced filter section** in the sidebar — under a collapsible "Advanced" toggle below the Cover Art section
+- **Filter rules** with field/operator/value — supports platform, status, rating, playtime, tags, date_added, is_favorite, has_cover
+- **AND / OR logic toggle** between rules
+- **Add Rule** and **Clear All** buttons; each rule has a remove button
+
+#### Game Tracking Overhaul (I-046)
+- **Directory-based process tracking** — all launchers (Steam, Epic, direct exe) now watch the game's `install_dir` for any running process instead of tracking a single spawned PID; handles multi-process games that previously recorded 0 playtime
+- **Launcher stub support** — games that start via a stub launcher no longer lose their session when the stub exits; the tracker maintains a grace window between process deaths so the real game process is picked up seamlessly
+- **install_dir fallback** — `launch_game` now fetches `install_dir` from the database; if unset, derives it from the exe's parent directory; falls back to single-PID tracking only when no directory is resolvable
+- **Directory-based idle detection** — `exclude_idle_time` now checks whether the foreground window belongs to any process in the game directory, not just the originally spawned PID
+- **ToolHelp process enumeration** — replaced all `tasklist` subprocess calls with `CreateToolhelp32Snapshot` + `QueryFullProcessImageNameW`; process scans are now ~10× faster and create no console flicker
+- **Steam / Epic install_dir tracking** — Steam and Epic launch paths use the game's stored `install_dir` for directory tracking with a 300-second startup window; falls back to exe-name scanning only when install_dir is unavailable
+- **Parallel process tracking prevention** — direct launches now register in `ActivePids` alongside Steam/Epic, preventing duplicate session threads if the user clicks play twice before the tracking thread starts
+
+#### Auto Grid Columns (I-042)
+- **"Auto" option** for grid columns in Settings → Appearance — uses `repeat(auto-fill, minmax(180px, 1fr))` to fill the available space automatically
+
+#### Persistent Error Log (I-045)
+- **Copy Logs** button in Settings → About — copies the last 200 error log lines to the clipboard; errors are written to `%APPDATA%\zgamelib\logs\app.log` with rotation at 1 MB (keeps last 3 files)
+
+### Changed
+- Version bumped to **0.9.0**
+
+---
+
+## [0.8.0] — 2026-03-19
+
+### Added
+
+#### Collections (F-020)
+- **Collections page** — create, rename, delete, and describe collections; grid/list view toggle; search bar to filter by name
+- **Collection description** — click-to-edit description/notes field per collection; stored in `collections.description` (backwards-compatible `ALTER TABLE`)
+- **Collection detail view** — click a collection to see its games with search and grid/list toggle
+- **Right-click context menu on collections** — rename / delete directly from the collections page
+- **Game context menu → Collections submenu** — right-click any game anywhere → hover Collections → submenu shows all collections with checkmarks; click to add or remove; a game can belong to multiple collections simultaneously
+- **Remove from Collection** — when viewing a collection's game list, right-click a game → orange "Remove from Collection" option
+- **Batch operations → Add to Collection** — select multiple games → `+ Collection` button in the `BatchActionBar` → pick a collection to add all selected games at once
+- **Full export v3** — export now includes `collections` and `collection_games` arrays; import is fully backwards-compatible (`#[serde(default)]`); old v1/v2 exports still import correctly
+
+#### IGDB Metadata (F-006)
+- **Settings → Integrations** — IGDB Client ID and Client Secret fields with a clear 6-step setup guide: create a Twitch Developer app at `dev.twitch.tv/console`, set OAuth Redirect URL to `http://localhost`, set Category to **Other**, copy Client ID and Client Secret
+- **Fetch IGDB button** in Game Detail — fetches genre, developer, publisher, and release year for the open game; populates description if empty
+- **IGDB metadata card** in Game Detail Info tab — shown when any IGDB field is present; modern 2×2 flex-wrap grid with custom SVG icons (gamepad · code · building · calendar) for each field; adapts to any panel width
+- **(i) info button** in metadata card header — hover or click reveals: *"Data sourced from IGDB by game name. If another title shares a similar name, the wrong match may have been returned"*
+- **Clear IGDB data button** (trash icon) in metadata card header — removes all IGDB fields and sets an `igdb_skipped` flag on the game
+- **`igdb_skipped` flag** (`ALTER TABLE games ADD COLUMN igdb_skipped INTEGER`) — persisted in SQLite; once set, the bulk scan silently skips the game and the individual fetch button shows a confirmation dialog before proceeding
+- **Bulk IGDB scan button** (sparkle icon) in library Topbar — fetches IGDB data for every game that has none and is not flagged; spins while running with a live `X/Y` counter badge; reloads the game list on completion; if no credentials are configured shows an error toast pointing to Settings → Integrations
+
+#### Notes — Markdown Preview (I-026)
+- Notes in Game Detail now have a per-note **preview/edit toggle** (eye and pencil SVG icons)
+- Preview renders full Markdown using `react-markdown` + `rehype-sanitize` with prose styling
+
+#### Tags — Undo Deletion (I-012)
+- Removing a tag in Game Detail now starts a **5-second countdown** instead of deleting immediately — tag shows strikethrough at 45% opacity with a `↩` undo indicator
+- Click the pending tag to cancel the deletion; after 5 seconds the removal is committed
+
+#### Statistics — Library Growth Chart (F-036)
+- **Library Growth** section on the Stats page — stacked bar chart showing how many games were added per calendar month, bars colored by platform using the existing `PLATFORM_COLORS_HEX` palette, legend at the bottom; data comes from the new `get_library_growth` backend command
+
+#### Custom Theme Creator (F-041)
+- **Create Theme** button in Settings → General → Theme — opens an inline editor to build a fully custom theme from scratch
+- **Accent color picker** — native color input plus 14 preset swatches; HSL shade generation auto-derives all 8 accent levels (200–900) with a live shade strip preview
+- **Background and sidebar color pickers** — 10 dark preset swatches; sidebar auto-derived from background with manual override
+- **Live preview** — the entire app updates in real time as colors are adjusted; a miniature sidebar+content mockup is also shown in the editor
+- **Save, edit, delete** — custom themes appear alongside built-in themes with hover controls (pencil to edit, trash to delete); stored in the `custom_themes` settings key as JSON
+- **Theme utility module** (`src/lib/theme.ts`) — shared HSL math, shade generation, and CSS variable injection used by both Settings and Layout
+
+#### Unsaved Settings Guard (I-029)
+- **Dirty detection** — Settings page tracks whether any field has changed since the last save using a JSON snapshot comparison
+- **Navigation interception** — Sidebar and Command Palette check the dirty flag before navigating away from Settings; if unsaved changes exist, navigation is blocked and a modal appears
+- **Unsaved Changes modal** — glass-morphism dialog with accent-colored info icon, spring animation, and two options: **Discard** (reverts to saved state and navigates) or **Save & Leave** (persists changes then navigates)
+
+### Fixed
+- **Collections submenu click closes context menu** — root cause: `CollectionsSubmenu` was rendered via `createPortal` to `document.body`, which placed it outside `menuRef`'s DOM tree; the outside-click `mousedown` handler detected submenu clicks as "outside" and closed the menu before the button registered. Fix: restore `createPortal` (needed so `fixed` positioning works correctly outside the `backdrop-filter` parent), add `data-ctx-submenu="true"` attribute to the portaled div, and update the handler to check `target.closest("[data-ctx-submenu]")` before closing
+- **Collections submenu not appearing on hover** — root cause: `CollectionsSubmenu` was a `fixed` child of the main menu div which uses `backdrop-filter` (via `glass-strong`); `backdrop-filter` creates a new CSS containing block for `fixed` children, so the submenu's viewport coordinates were applied relative to the parent, placing it off-screen. Fix: restored `createPortal` so the submenu renders outside the backdrop-filter ancestor
+- **IGDB metadata card swallowed / not resizing** — removed `overflow-hidden` from the card wrapper (was clipping the tooltip and preventing content growth); replaced `grid grid-cols-2` with `flex flex-wrap` with percentage widths so cells reflow gracefully at any panel width; added `break-words` to values
+
+### Changed
+- Version bumped to **0.8.0**
+- **Database additions** (all backwards-compatible `ALTER TABLE`):
+  - `games.genre TEXT`
+  - `games.developer TEXT`
+  - `games.publisher TEXT`
+  - `games.release_year INTEGER`
+  - `games.igdb_skipped INTEGER NOT NULL DEFAULT 0`
+  - New table `collections (id, name, created_at, description)`
+  - New table `collection_games (collection_id, game_id)` with cascade delete
+  - New setting `custom_themes` — JSON array of user-created themes (id, name, accent, bg, sidebar)
+
+
 ## [0.7.0] — 2026-03-18
 
 ### Fixed

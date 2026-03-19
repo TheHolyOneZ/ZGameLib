@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import type { UpdateGamePayload, CreateGamePayload } from "@/lib/types";
+import type { UpdateGamePayload, CreateGamePayload, FilterRule, FilterLogic } from "@/lib/types";
 
 export function useGames() {
   const setGames = useGameStore((s) => s.setGames);
@@ -108,6 +108,87 @@ export function useScan() {
   return { scan: scanMutation.mutate, isScanning: scanMutation.isPending };
 }
 
+export function usePullUninstalled() {
+  const addToast = useUIStore((s) => s.addToast);
+  const qc = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const settings = await api.getSettings();
+      const apiKey = settings.steam_api_key;
+      const steamId = settings.steam_id_64;
+      if (!apiKey || !steamId) throw new Error("Steam API Key and SteamID64 must be set in Settings to pull uninstalled games.");
+      return api.pullUninstalledSteamGames(apiKey, steamId);
+    },
+    onSuccess: (result) => {
+      addToast(
+        result.added > 0
+          ? `Pulled ${result.added} uninstalled Steam game${result.added !== 1 ? "s" : ""}`
+          : "No new uninstalled Steam games found",
+        result.added > 0 ? "success" : "info"
+      );
+      qc.invalidateQueries({ queryKey: ["games"] });
+    },
+    onError: (e) => addToast(String(e), "error"),
+  });
+
+  return { pullUninstalled: mutation.mutate, isPulling: mutation.isPending };
+}
+
+function matchesRule(game: import("@/lib/types").Game, rule: FilterRule): boolean {
+  switch (rule.field) {
+    case "platform":
+      if (rule.operator === "=") return game.platform === rule.value;
+      if (rule.operator === "!=") return game.platform !== rule.value;
+      return true;
+    case "status":
+      if (rule.operator === "=") return game.status === rule.value;
+      if (rule.operator === "!=") return game.status !== rule.value;
+      return true;
+    case "rating": {
+      const rating = game.rating ?? -1;
+      const val = parseFloat(rule.value);
+      if (isNaN(val)) return true;
+      if (rule.operator === "=") return rating === val;
+      if (rule.operator === "!=") return rating !== val;
+      if (rule.operator === ">=") return rating >= val;
+      if (rule.operator === "<=") return rating <= val;
+      return true;
+    }
+    case "playtime": {
+      const val = parseFloat(rule.value);
+      if (isNaN(val)) return true;
+      if (rule.operator === ">=") return game.playtime_mins >= val;
+      if (rule.operator === "<=") return game.playtime_mins <= val;
+      return true;
+    }
+    case "tags":
+      if (rule.operator === "contains") return game.tags.includes(rule.value);
+      if (rule.operator === "not_contains") return !game.tags.includes(rule.value);
+      return true;
+    case "date_added":
+      if (rule.operator === ">=") return game.date_added >= rule.value;
+      if (rule.operator === "<=") return game.date_added <= rule.value;
+      return true;
+    case "is_favorite":
+      if (rule.operator === "=") return game.is_favorite === (rule.value === "true");
+      if (rule.operator === "!=") return game.is_favorite !== (rule.value === "true");
+      return true;
+    case "has_cover": {
+      const hasCover = game.cover_path !== null;
+      if (rule.operator === "=") return hasCover === (rule.value === "true");
+      if (rule.operator === "!=") return hasCover !== (rule.value === "true");
+      return true;
+    }
+    case "not_installed":
+      if (rule.operator === "=") return game.not_installed === (rule.value === "true");
+      if (rule.operator === "!=") return game.not_installed !== (rule.value === "true");
+      return true;
+    default:
+      return true;
+  }
+}
+
 export function useFilteredGames() {
   const games = useGameStore((s) => s.games);
   const search = useGameStore((s) => s.search);
@@ -117,6 +198,8 @@ export function useFilteredGames() {
   const filters = useGameStore((s) => s.filters);
   const hiddenIds = useGameStore((s) => s.hiddenIds);
   const showHidden = useGameStore((s) => s.showHidden);
+  const filterRules = useGameStore((s) => s.filterRules);
+  const filterLogic = useGameStore((s) => s.filterLogic);
 
   return useMemo(() => {
     let result = [...games];
@@ -145,6 +228,17 @@ export function useFilteredGames() {
     if (filters.dateAddedTo) result = result.filter((g) => g.date_added <= filters.dateAddedTo!);
     if (filters.hasCover === true) result = result.filter((g) => g.cover_path !== null);
     if (filters.hasCover === false) result = result.filter((g) => g.cover_path === null);
+    if (filters.notInstalledOnly) result = result.filter((g) => g.not_installed);
+
+    if (filterRules.length > 0) {
+      result = result.filter((g) => {
+        if (filterLogic === "and") {
+          return filterRules.every((rule) => matchesRule(g, rule));
+        } else {
+          return filterRules.some((rule) => matchesRule(g, rule));
+        }
+      });
+    }
 
     result.sort((a, b) => {
       let av: number | string = "";
@@ -163,5 +257,5 @@ export function useFilteredGames() {
     });
 
     return result;
-  }, [games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden]);
+  }, [games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic]);
 }

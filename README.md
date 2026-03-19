@@ -10,7 +10,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-0.8.0-22c55e?style=flat-square" alt="v0.8.0"/>
+  <img src="https://img.shields.io/badge/Version-0.9.0-22c55e?style=flat-square" alt="v0.9.0"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -18,8 +18,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 <p>
   <a href="https://zsync.eu/zgamelib/"><strong>🌐 Website</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.9.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.9.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
   <a href="https://github.com/TheHolyOneZ/ZGameLib"><strong>GitHub</strong></a>
 </p>
 
@@ -29,11 +29,11 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 ## Preview
 
-> Recorded on v0.7.0. Newer versions include per-page search, mod loader, cleaner layout, and more improvements.
+> Recorded on v0.3.0. Newer versions include per-page search, mod loader, cleaner layout, and more improvements.
 
 <div align="center">
 
-[![ZGameLib Preview](https://img.youtube.com/vi/4L1U4SOJrQg/maxresdefault.jpg)](https://www.youtube.com/watch?v=4L1U4SOJrQg)
+[![ZGameLib Preview](https://img.youtube.com/vi/rlqUUqAPOxU/maxresdefault.jpg)](https://www.youtube.com/watch?v=rlqUUqAPOxU)
 
 </div>
 
@@ -43,8 +43,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| [ZGameLib_0.8.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
-| [ZGameLib_0.8.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
+| [ZGameLib_0.9.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.9.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
+| [ZGameLib_0.9.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.9.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -88,6 +88,14 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 - Optional **auto-scan on startup**
 - Detects new games and skips existing ones
 
+**Uninstalled Steam Games**
+- **Pull Uninstalled** — imports your entire owned Steam library, including games not yet installed, via the Steam Web API
+- Uninstalled games display a **"Not Installed"** badge on cards and list rows
+- Clicking launch on an uninstalled Steam game opens Steam's **install dialog** (`steam://install/{appId}`) directly
+- Scanner **auto-promotes** to installed when the game is detected after download (updates `exe_path` and `install_dir`)
+- **Sidebar filter** — "Not Installed" section shows count and lets you filter to only uninstalled games
+- Optional **auto-pull on startup** toggle in Settings → Behavior
+
 **Duplicate Management**
 - **Remove Duplicates** button collapses entries sharing the same name
 - Non-destructive — hidden, not deleted
@@ -105,7 +113,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 <td width="50%" valign="top">
 
 **Views & Sorting**
-- **Grid view** — configurable 3–6 columns
+- **Grid view** — configurable 3–6 columns or **Auto** (fills available space with `minmax(180px, 1fr)`)
 - **Dense list view** — compact rows with all info
 - Sort by: name · rating · last played · date added · playtime · **custom order**
 - Ascending / descending toggle
@@ -119,6 +127,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 - Minimum rating slider
 - Tag-based filtering
 - Date range filtering (date added from/to)
+- **Advanced Filter Builder** — collapsible "Advanced" section in the sidebar; add unlimited filter rules with field / operator / value dropdowns; AND / OR logic toggle between rules; rules persist across sessions; fields: platform · status · rating · playtime · tags · date_added · is_favorite · has_cover · not_installed
 
 **Per-Page Search Bar**
 - Contextual to each page (Library, Favorites, Recently Played)
@@ -178,7 +187,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 **🟦 Steam**
 - Launches via `steam://run/{appId}`
 - Full Steam Overlay support
-- Polls `tasklist` up to **120 seconds** for process detection
+- Directory-based process tracking with 300-second startup window
 
 </td>
 <td width="33%" valign="top">
@@ -187,7 +196,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 - Launches via Epic URI with `silent=true`
 - Epic Online Services (EOS) auth works correctly
 - Essential for EOS games like Fortnite
-- Polls up to **180 seconds** for process
+- Directory-based process tracking with 300-second startup window
 
 </td>
 <td width="33%" valign="top">
@@ -202,11 +211,14 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 </table>
 
 **Playtime Tracking**
-- A background thread monitors the launched process
-- Records elapsed minutes when the process exits
+- A background thread watches the game's install directory for running processes via `CreateToolhelp32Snapshot` + `QueryFullProcessImageNameW` — no console flicker, ~10× faster than subprocess polling
+- Multi-process games (launcher stub → real exe) are handled with an adaptive grace window: 300 s for the initial launcher handoff, then 30 s once the real game is confirmed running
+- Records elapsed minutes and saves a session row when the game exits; fires a `game-session-ended` event to the frontend so playtime updates instantly without a manual refresh
 - Updates `last_played` timestamp on launch
-- Fires a `game-session-ended` event to the frontend on exit
+- Falls back to single-PID tracking when no install directory is resolvable
 - **Minimize on launch** — ZGameLib hides to tray with a 400 ms delay (for window focus handoff), then auto-restores when the game exits
+- **Idle detection** — polls `GetForegroundWindow` every 30 s; if the game window loses focus for 5+ consecutive minutes, that idle period is excluded from the session total; brief alt-tabs are ignored; can be toggled off in Settings → Behavior
+- **Steam Playtime Sync** — enter your Steam API Key and SteamID64 in Settings → Integrations; sync only increases local values, never decreases
 
 ---
 
@@ -721,6 +733,7 @@ setCommandPaletteOpen
 | `publisher` | TEXT | | IGDB publisher company name |
 | `release_year` | INTEGER | | IGDB first release year |
 | `igdb_skipped` | INTEGER | NOT NULL DEFAULT 0 | 1 when user cleared IGDB data — prompts confirmation before re-fetch |
+| `not_installed` | INTEGER | NOT NULL DEFAULT 0 | 1 for games owned but not installed (e.g. pulled from Steam library) |
 
 Indexes: `platform` · `is_favorite` · `status` · `last_played`
 
@@ -772,8 +785,10 @@ Index: `game_id`
 |-----|--------|---------|-------------|
 | `theme` | `dark` \| `amoled` \| `nord` \| `catppuccin` \| `dracula` \| `gruvbox` \| `tokyonight` \| `custom-{id}` | `dark` | UI theme |
 | `custom_themes` | JSON array | `[]` | User-created themes (id, name, accent, bg, sidebar) |
+| `pagination_enabled` | `true` \| `false` | `false` | Split library into pages |
+| `pagination_page_size` | `6`–`200` | `24` | Games per page when pagination is on |
 | `default_view` | `grid` \| `list` | `grid` | Default library view |
-| `grid_columns` | `3`–`6` | `4` | Grid column count |
+| `grid_columns` | `0` (auto) \| `3`–`6` | `4` | Grid column count; 0 = auto-fill |
 | `steam_path` | path string | auto | Steam install override |
 | `epic_path` | path string | auto | Epic manifests path override |
 | `custom_statuses` | JSON array | built-ins | User-defined status list |
@@ -784,6 +799,10 @@ Index: `game_id`
 | `close_to_tray` | `true` \| `false` | `true` | ✕ hides rather than exits |
 | `autostart` | `true` \| `false` | `false` | Register in Windows startup |
 | `playtime_reminders` | `true` \| `false` | `true` | Show neglected-game reminder on startup |
+| `steam_api_key` | string | `null` | Steam Web API key for playtime sync and uninstalled games |
+| `steam_id_64` | string | `null` | Steam user SteamID64 for playtime sync and uninstalled games |
+| `exclude_idle_time` | `true` \| `false` | `true` | Deduct idle periods ≥5 min from session playtime |
+| `include_uninstalled_steam` | `true` \| `false` | `false` | Pull owned but uninstalled Steam games on startup |
 
 ---
 
@@ -834,6 +853,7 @@ Walks up to **6 directory levels deep** looking for executables using this prior
 |---------|---------|-------------|
 | Steam CDN | Portrait cover art for Steam games | Auto on scan |
 | Steam SearchApps API | Cover search by name (Epic / GOG / Custom) | Auto + Cover Search modal |
+| Steam Web API (`IPlayerService/GetOwnedGames`) | Playtime sync — updates local mins if Steam value is higher; Pull Uninstalled — imports owned but uninstalled games with `not_installed=true` | User clicks Sync or Pull Uninstalled in Settings / Topbar |
 | GOG Product API | Cover art + metadata for GOG games | Auto on scan |
 | GitHub Releases API | Latest BepInEx x64 ZIP download | User clicks Install BepInEx |
 | GitHub Releases API | Latest MelonLoader x64 ZIP download | User clicks Install MelonLoader |
@@ -881,6 +901,7 @@ ZGameLib/
 │   │   │   ├── GameListRow.tsx     # Compact row: thumbnail, name+status, tags, playtime, rating
 │   │   │   ├── BatchActionBar.tsx  # Floating bottom bar for batch status/rating/tag/delete actions
 │   │   │   ├── PinnedRow.tsx       # Horizontal strip of pinned games shown above the main grid
+│   │   │   ├── FilterBuilder.tsx   # Advanced filter builder: unlimited rules, AND/OR logic, 8 fields
 │   │   │   └── RecentlyPlayed.tsx  # Horizontal scrollable carousel (max 12 games)
 │   │   │
 │   │   ├── game/
@@ -934,7 +955,8 @@ ZGameLib/
         │   ├── scanner.rs          # Steam/Epic/GOG/custom scan, cover fetch, bulk cover auto-fetch
         │   ├── launcher.rs         # Process spawn, playtime + session tracking, minimize/restore
         │   ├── modloader.rs        # BepInEx + MelonLoader install/uninstall + mod management
-        │   └── settings.rs         # get/save settings, export/import library, update check
+        │   ├── settings.rs         # get/save settings, export/import library, update check, Steam sync
+        │   └── logger.rs           # Static in-memory error buffer + rotating file log (1 MB / 3 files)
         │
         └── db/
             ├── schema.rs           # CREATE TABLE + CREATE INDEX statements
@@ -986,8 +1008,8 @@ Output directory: `src-tauri/target/release/bundle/`
 
 ```
 bundle/
-├── msi/   ZGameLib_0.8.0_x64_en-US.msi
-└── nsis/  ZGameLib_0.8.0_x64-setup.exe
+├── msi/   ZGameLib_0.9.0_x64_en-US.msi
+└── nsis/  ZGameLib_0.9.0_x64-setup.exe
 ```
 
 ### Frontend Only

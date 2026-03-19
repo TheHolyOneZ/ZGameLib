@@ -29,6 +29,7 @@ export interface Game {
   publisher: string | null;
   release_year: number | null;
   igdb_skipped: boolean;
+  not_installed: boolean;
 }
 
 export interface Collection {
@@ -127,6 +128,17 @@ export interface AppSettings {
   igdb_client_id: string | null;
   igdb_client_secret: string | null;
   custom_themes: string;
+  pagination_enabled: boolean;
+  pagination_page_size: number;
+  steam_api_key: string | null;
+  steam_id_64: string | null;
+  exclude_idle_time: boolean;
+  include_uninstalled_steam: boolean;
+}
+
+export interface PullUninstalledResult {
+  added: number;
+  skipped: number;
 }
 
 export interface CustomTheme {
@@ -172,6 +184,21 @@ export interface LibraryGrowthEntry {
   gog: number;
   custom: number;
 }
+
+export interface SteamSyncResult {
+  updated: number;
+  skipped: number;
+}
+
+export type FilterField = "platform" | "status" | "rating" | "playtime" | "tags" | "date_added" | "is_favorite" | "has_cover" | "not_installed";
+export type FilterOperator = "=" | "!=" | ">=" | "<=" | "contains" | "not_contains";
+export interface FilterRule {
+  id: string;
+  field: FilterField;
+  operator: FilterOperator;
+  value: string;
+}
+export type FilterLogic = "and" | "or";
 
 export type SortKey = "name" | "rating" | "last_played" | "date_added" | "playtime_mins" | "sort_order";
 export type ViewMode = "grid" | "list";

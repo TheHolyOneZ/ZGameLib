@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, Reorder } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { useFilteredGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
@@ -20,7 +21,7 @@ function SkeletonGrid({ columns }: { columns: number }) {
   return (
     <div
       className="p-6 grid gap-4"
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: columns === 0 ? "repeat(auto-fill, minmax(180px, 1fr))" : `repeat(${columns}, minmax(0, 1fr))` }}
     >
       {Array.from({ length: 8 }).map((_, i) => (
         <div
@@ -28,6 +29,72 @@ function SkeletonGrid({ columns }: { columns: number }) {
           className="aspect-[3/4] rounded-2xl glass-strong animate-pulse"
         />
       ))}
+    </div>
+  );
+}
+
+function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
+  const pages: (number | "…")[] = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (page > 3) pages.push("…");
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+    if (page < totalPages - 2) pages.push("…");
+    pages.push(totalPages);
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-6 px-4">
+      <motion.button
+        whileTap={{ scale: 0.92 }}
+        onClick={() => onPage(page - 1)}
+        disabled={page === 1}
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-white transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </motion.button>
+
+      {pages.map((p, i) =>
+        p === "…" ? (
+          <span key={`ellipsis-${i}`} className="w-8 text-center text-[12px] text-slate-600">…</span>
+        ) : (
+          <motion.button
+            key={p}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => onPage(p as number)}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-[12px] font-medium transition-all duration-150"
+            style={
+              p === page
+                ? {
+                    background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-700)))",
+                    border: "1px solid rgba(var(--accent-400), 0.3)",
+                    color: "white",
+                    boxShadow: "0 0 16px rgba(var(--accent-500), 0.25)",
+                  }
+                : {
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    color: "#94a3b8",
+                  }
+            }
+          >
+            {p}
+          </motion.button>
+        )
+      )}
+
+      <motion.button
+        whileTap={{ scale: 0.92 }}
+        onClick={() => onPage(page + 1)}
+        disabled={page === totalPages}
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-white transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </motion.button>
     </div>
   );
 }
@@ -49,6 +116,12 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     staleTime: 5 * 60 * 1000,
   });
   const gridColumns = appSettings?.grid_columns ?? 4;
+  const paginationEnabled = appSettings?.pagination_enabled ?? false;
+  const pageSize = appSettings?.pagination_page_size ?? 24;
+
+  const [page, setPage] = useState(1);
+
+  useEffect(() => { setPage(1); }, [search, filters, paginationEnabled, pageSize]);
 
   if (isLoading && games.length === 0) {
     return <SkeletonGrid columns={gridColumns} />;
@@ -103,6 +176,10 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     );
   }
 
+  const totalPages = paginationEnabled ? Math.max(1, Math.ceil(games.length / pageSize)) : 1;
+  const safePage = Math.min(page, totalPages);
+  const visibleGames = paginationEnabled ? games.slice((safePage - 1) * pageSize, safePage * pageSize) : games;
+
   if (sortKey === "sort_order") {
     return (
       <Reorder.Group
@@ -117,11 +194,14 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
         }}
         className="flex flex-col gap-0.5 p-4"
       >
-        {games.map((g) => (
+        {visibleGames.map((g) => (
           <Reorder.Item key={g.id} value={g} className="list-none">
             <GameListRow game={g} />
           </Reorder.Item>
         ))}
+        {paginationEnabled && totalPages > 1 && (
+          <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
+        )}
       </Reorder.Group>
     );
   }
@@ -141,11 +221,14 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
             <div className="w-24" />
           </div>
           <AnimatePresence mode="popLayout">
-            {games.map((g) => (
+            {visibleGames.map((g) => (
               <GameListRow key={g.id} game={g} />
             ))}
           </AnimatePresence>
         </div>
+        {paginationEnabled && totalPages > 1 && (
+          <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
+        )}
         <BatchActionBar />
       </>
     );
@@ -155,9 +238,9 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     <>
       <div
         className="p-6 grid gap-4"
-        style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: gridColumns === 0 ? "repeat(auto-fill, minmax(180px, 1fr))" : `repeat(${gridColumns}, minmax(0, 1fr))` }}
       >
-        {games.map((g) => (
+        {visibleGames.map((g) => (
           <motion.div
             key={g.id}
             variants={itemVariants}
@@ -168,6 +251,9 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
           </motion.div>
         ))}
       </div>
+      {paginationEnabled && totalPages > 1 && (
+        <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
+      )}
       <BatchActionBar />
     </>
   );
