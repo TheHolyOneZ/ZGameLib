@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { api } from "@/lib/tauri";
 import { useUIStore } from "@/store/useUIStore";
 import { useCover } from "@/hooks/useCover";
-import type { AppSettings, StatusConfig, Game } from "@/lib/types";
+import type { AppSettings, StatusConfig, Game, CustomTheme } from "@/lib/types";
 import { COVER_PLACEHOLDER } from "@/lib/utils";
 import {
   DownloadIcon, SettingsIcon, CheckIcon, PlusIcon, TrashIcon,
@@ -67,9 +67,18 @@ function Section({ title, icon, delay = 0, children }: {
   );
 }
 
-function applyTheme(theme: string) {
-  document.documentElement.setAttribute("data-theme", theme);
-}
+import { applyTheme, applyCustomThemeVars, clearCustomThemeVars, generateShades, darkenHex } from "@/lib/theme";
+
+const ACCENT_PRESETS = [
+  "#7c3aed", "#3b82f6", "#06b6d4", "#10b981", "#f59e0b",
+  "#ef4444", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316",
+  "#6366f1", "#84cc16", "#e11d48", "#0ea5e9",
+];
+
+const BG_PRESETS = [
+  "#07060b", "#000000", "#0a0a0f", "#0f172a", "#1a1a2e",
+  "#1e1e2e", "#2e3440", "#282a36", "#282828", "#1a1b26",
+];
 
 function TrashedGameRow({ game, onRestore, onDelete }: { game: Game; onRestore: () => void; onDelete: () => void }) {
   const coverUrl = useCover(game);
@@ -106,11 +115,13 @@ function TrashedGameRow({ game, onRestore, onDelete }: { game: Game; onRestore: 
 export default function Settings() {
   const addToast = useUIStore((s) => s.addToast);
   const setCustomStatuses = useUIStore((s) => s.setCustomStatuses);
+  const setSettingsDirty = useUIStore((s) => s.setSettingsDirty);
+  const settingsUnsavedNav = useUIStore((s) => s.settingsUnsavedNav);
+  const setSettingsUnsavedNav = useUIStore((s) => s.setSettingsUnsavedNav);
   const queryClient = useQueryClient();
+  const cachedSettings = queryClient.getQueryData<AppSettings>(["settings"]);
 
-  const [settings, setSettings] = useState<AppSettings | null>(
-    () => queryClient.getQueryData<AppSettings>(["settings"]) ?? null
-  );
+  const [settings, setSettings] = useState<AppSettings | null>(cachedSettings ?? null);
   const [editingStatus, setEditingStatus] = useState<number | null>(null);
   const [editLabelValue, setEditLabelValue] = useState("");
   const [newStatusLabel, setNewStatusLabel] = useState("");
@@ -120,7 +131,85 @@ export default function Settings() {
   const [trashedGames, setTrashedGames] = useState<Game[]>([]);
   const [trashLoaded, setTrashLoaded] = useState(false);
   const [fetchingCovers, setFetchingCovers] = useState(false);
+  const [themeEditorOpen, setThemeEditorOpen] = useState(false);
+  const [editingTheme, setEditingTheme] = useState<CustomTheme | null>(null);
+  const [themeName, setThemeName] = useState("");
+  const [themeAccent, setThemeAccent] = useState("#7c3aed");
+  const [themeBg, setThemeBg] = useState("#07060b");
+  const [themeSidebar, setThemeSidebar] = useState("#0c0a12");
+  const savedSnapshot = useRef<string>(cachedSettings ? JSON.stringify(cachedSettings) : "");
   const filteredGames = useFilteredGames();
+
+  const customThemes: CustomTheme[] = (() => {
+    try { return settings?.custom_themes ? JSON.parse(settings.custom_themes) : []; }
+    catch { return []; }
+  })();
+
+  const setCustomThemes = (themes: CustomTheme[]) => {
+    if (!settings) return;
+    setSettings({ ...settings, custom_themes: JSON.stringify(themes) });
+  };
+
+  const openThemeEditor = (theme?: CustomTheme) => {
+    if (theme) {
+      setEditingTheme(theme);
+      setThemeName(theme.name);
+      setThemeAccent(theme.accent);
+      setThemeBg(theme.bg);
+      setThemeSidebar(theme.sidebar);
+    } else {
+      setEditingTheme(null);
+      setThemeName("");
+      setThemeAccent("#7c3aed");
+      setThemeBg("#07060b");
+      setThemeSidebar("#0c0a12");
+    }
+    setThemeEditorOpen(true);
+  };
+
+  const closeThemeEditor = () => {
+    setThemeEditorOpen(false);
+    if (settings) {
+      if (settings.theme.startsWith("custom-")) {
+        const ct = customThemes.find((c) => `custom-${c.id}` === settings.theme);
+        if (ct) applyCustomThemeVars(ct);
+        else applyTheme("dark");
+      } else {
+        applyTheme(settings.theme);
+      }
+    }
+  };
+
+  const saveCustomTheme = () => {
+    if (!themeName.trim()) { addToast("Give your theme a name", "error"); return; }
+    const id = editingTheme?.id || crypto.randomUUID().slice(0, 8);
+    const theme: CustomTheme = { id, name: themeName.trim(), accent: themeAccent, bg: themeBg, sidebar: themeSidebar };
+    const existing = customThemes.filter((t) => t.id !== id);
+    setCustomThemes([...existing, theme]);
+    if (settings) {
+      setSettings({ ...settings, theme: `custom-${id}`, custom_themes: JSON.stringify([...existing, theme]) });
+    }
+    applyCustomThemeVars(theme);
+    setThemeEditorOpen(false);
+    addToast(`Theme "${theme.name}" saved`, "success");
+  };
+
+  const deleteCustomTheme = (id: string) => {
+    const updated = customThemes.filter((t) => t.id !== id);
+    setCustomThemes(updated);
+    if (settings?.theme === `custom-${id}`) {
+      setSettings({ ...settings, theme: "dark", custom_themes: JSON.stringify(updated) });
+      applyTheme("dark");
+    }
+    addToast("Theme deleted");
+  };
+
+  useEffect(() => {
+    if (themeEditorOpen) {
+      const preview: CustomTheme = { id: "preview", name: "", accent: themeAccent, bg: themeBg, sidebar: themeSidebar };
+      applyCustomThemeVars(preview);
+    }
+  }, [themeAccent, themeBg, themeSidebar, themeEditorOpen]);
 
   const { data: querySettings } = useQuery({
     queryKey: ["settings"],
@@ -129,20 +218,35 @@ export default function Settings() {
   });
 
   useEffect(() => {
-    if (querySettings && !settings) {
-      setSettings(querySettings);
-      applyTheme(querySettings.theme);
+    if (querySettings) {
+      if (!settings) setSettings(querySettings);
+      if (!savedSnapshot.current) savedSnapshot.current = JSON.stringify(querySettings);
     }
   }, [querySettings]);
+
+  useEffect(() => {
+    if (settings) {
+      const isDirty = JSON.stringify(settings) !== savedSnapshot.current;
+      setSettingsDirty(isDirty);
+    }
+    return () => { setSettingsDirty(false); };
+  }, [settings]);
 
   const saveMutation = useMutation({
     mutationFn: (s: AppSettings) => api.saveSettings(s),
     onSuccess: () => {
       if (settings) {
         setCustomStatuses(settings.custom_statuses);
-        applyTheme(settings.theme);
+        if (settings.theme.startsWith("custom-")) {
+          const ct = customThemes.find((c) => `custom-${c.id}` === settings.theme);
+          if (ct) applyCustomThemeVars(ct);
+        } else {
+          applyTheme(settings.theme);
+        }
         queryClient.setQueryData(["settings"], settings);
+        savedSnapshot.current = JSON.stringify(settings);
       }
+      setSettingsDirty(false);
       addToast("Settings saved", "success");
     },
     onError: (e) => addToast(String(e), "error"),
@@ -380,9 +484,14 @@ export default function Settings() {
                   ] as const).map((t) => (
                     <button
                       key={t.value}
-                      onClick={() => { setSettings({ ...settings, theme: t.value }); applyTheme(t.value); }}
-                      onMouseEnter={() => applyTheme(t.value)}
-                      onMouseLeave={() => applyTheme(settings.theme)}
+                      onClick={() => { clearCustomThemeVars(); setSettings({ ...settings, theme: t.value }); applyTheme(t.value); }}
+                      onMouseEnter={() => { clearCustomThemeVars(); applyTheme(t.value); }}
+                      onMouseLeave={() => {
+                        if (settings.theme.startsWith("custom-")) {
+                          const ct = customThemes.find((c) => `custom-${c.id}` === settings.theme);
+                          if (ct) applyCustomThemeVars(ct);
+                        } else applyTheme(settings.theme);
+                      }}
                       className={cn(
                         "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[12px] font-medium transition-all duration-150 border",
                         settings.theme === t.value
@@ -397,7 +506,242 @@ export default function Settings() {
                       {t.label}
                     </button>
                   ))}
+
+                  {customThemes.map((ct) => (
+                    <div key={ct.id} className="relative group">
+                      <button
+                        onClick={() => { setSettings({ ...settings, theme: `custom-${ct.id}` }); applyCustomThemeVars(ct); }}
+                        onMouseEnter={() => applyCustomThemeVars(ct)}
+                        onMouseLeave={() => {
+                          if (settings.theme.startsWith("custom-")) {
+                            const active = customThemes.find((c) => `custom-${c.id}` === settings.theme);
+                            if (active) applyCustomThemeVars(active);
+                          } else applyTheme(settings.theme);
+                        }}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[12px] font-medium transition-all duration-150 border w-full",
+                          settings.theme === `custom-${ct.id}`
+                            ? "border-accent-500/50 bg-accent-600/20 text-white"
+                            : "border-white/6 bg-white/3 text-slate-400 hover:text-slate-200 hover:border-white/12"
+                        )}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border border-white/20 shrink-0"
+                          style={{ background: `radial-gradient(circle at 30% 30%, ${ct.accent}, ${ct.bg})` }}
+                        />
+                        <span className="truncate">{ct.name}</span>
+                      </button>
+                      <div className="absolute -top-1 -right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openThemeEditor(ct); }}
+                          className="w-5 h-5 rounded-md flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                          style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                            <path d="M11.5 1.5l3 3L5 14H2v-3z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteCustomTheme(ct.id); }}
+                          className="w-5 h-5 rounded-md flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
+                          style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
+                        >
+                          <TrashIcon size={9} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => openThemeEditor()}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-[12px] font-medium transition-all duration-150 border border-dashed border-white/10 text-slate-500 hover:text-slate-300 hover:border-accent-500/30 hover:bg-accent-500/5"
+                  >
+                    <PlusIcon size={12} />
+                    Create Theme
+                  </button>
                 </div>
+
+                <AnimatePresence>
+                  {themeEditorOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="mt-4 p-4 rounded-2xl"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(var(--accent-500), 0.06) 0%, rgba(var(--accent-900), 0.04) 100%)",
+                          border: "1px solid rgba(var(--accent-500), 0.15)",
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[12px] font-semibold text-white">
+                            {editingTheme ? "Edit Theme" : "New Custom Theme"}
+                          </span>
+                          <button
+                            onClick={closeThemeEditor}
+                            className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/6 transition-all"
+                          >
+                            <CloseIcon size={11} />
+                          </button>
+                        </div>
+
+                        <div className="flex flex-col gap-4">
+                          <div>
+                            <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-1.5">Theme Name</label>
+                            <input
+                              value={themeName}
+                              onChange={(e) => setThemeName(e.target.value)}
+                              placeholder="My awesome theme…"
+                              className="input-glass text-[12px]"
+                              maxLength={24}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Accent Color</label>
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                <input
+                                  type="color"
+                                  value={themeAccent}
+                                  onChange={(e) => setThemeAccent(e.target.value)}
+                                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                />
+                                <div
+                                  className="w-8 h-8 rounded-xl border border-white/15 cursor-pointer transition-transform hover:scale-110"
+                                  style={{ background: themeAccent, boxShadow: `0 0 16px ${themeAccent}40` }}
+                                />
+                              </div>
+                              <div className="flex gap-1.5 flex-wrap flex-1">
+                                {ACCENT_PRESETS.map((c) => (
+                                  <button
+                                    key={c}
+                                    onClick={() => setThemeAccent(c)}
+                                    className={cn(
+                                      "w-5 h-5 rounded-lg transition-all duration-150 hover:scale-125",
+                                      themeAccent === c ? "ring-2 ring-white/50 scale-110" : "ring-1 ring-white/10"
+                                    )}
+                                    style={{ background: c }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex gap-1 mt-2.5">
+                              {Object.entries(generateShades(themeAccent)).map(([key, val]) => (
+                                <div key={key} className="flex-1 flex flex-col items-center gap-1">
+                                  <div
+                                    className="w-full h-5 rounded-md"
+                                    style={{ background: `rgb(${val})` }}
+                                  />
+                                  <span className="text-[8px] text-slate-600">{key.replace("--accent-", "")}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Background</label>
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <input
+                                    type="color"
+                                    value={themeBg}
+                                    onChange={(e) => { setThemeBg(e.target.value); setThemeSidebar(darkenHex(e.target.value, 3)); }}
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                  />
+                                  <div
+                                    className="w-7 h-7 rounded-lg border border-white/15 cursor-pointer transition-transform hover:scale-110"
+                                    style={{ background: themeBg }}
+                                  />
+                                </div>
+                                <div className="flex gap-1 flex-wrap flex-1">
+                                  {BG_PRESETS.map((c) => (
+                                    <button
+                                      key={c}
+                                      onClick={() => { setThemeBg(c); setThemeSidebar(darkenHex(c, 3)); }}
+                                      className={cn(
+                                        "w-4.5 h-4.5 rounded-md transition-all duration-150 hover:scale-125",
+                                        themeBg === c ? "ring-2 ring-white/40 scale-110" : "ring-1 ring-white/10"
+                                      )}
+                                      style={{ background: c }}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Sidebar</label>
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <input
+                                    type="color"
+                                    value={themeSidebar}
+                                    onChange={(e) => setThemeSidebar(e.target.value)}
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                  />
+                                  <div
+                                    className="w-7 h-7 rounded-lg border border-white/15 cursor-pointer transition-transform hover:scale-110"
+                                    style={{ background: themeSidebar }}
+                                  />
+                                </div>
+                                <span className="text-[10px] text-slate-600">Auto-derived from background</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Preview</label>
+                            <div
+                              className="rounded-xl overflow-hidden flex h-20"
+                              style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+                            >
+                              <div className="w-14 shrink-0 flex flex-col items-center justify-center gap-1.5 py-2" style={{ background: themeSidebar }}>
+                                <div className="w-6 h-6 rounded-lg" style={{ background: themeAccent + "30" }} />
+                                <div className="w-6 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+                                <div className="w-6 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+                              </div>
+                              <div className="flex-1 p-2.5 flex flex-col gap-1.5" style={{ background: themeBg }}>
+                                <div className="flex gap-1.5">
+                                  <div className="w-10 h-2 rounded-full" style={{ background: themeAccent }} />
+                                  <div className="w-6 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+                                </div>
+                                <div className="flex gap-1.5 flex-1">
+                                  {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex-1 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                                      <div className="h-full rounded-lg" style={{ background: `linear-gradient(180deg, ${themeAccent}08, transparent)` }} />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileTap={{ scale: 0.97 }}
+                              onClick={saveCustomTheme}
+                              className="btn-primary flex-1 justify-center text-[12px] py-2.5"
+                            >
+                              <CheckIcon size={13} />
+                              {editingTheme ? "Update Theme" : "Save Theme"}
+                            </motion.button>
+                            <motion.button
+                              whileTap={{ scale: 0.97 }}
+                              onClick={closeThemeEditor}
+                              className="btn-ghost text-[12px] py-2.5"
+                            >
+                              Cancel
+                            </motion.button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </Section>
@@ -699,6 +1043,56 @@ export default function Settings() {
             </motion.button>
           </Section>
 
+          <Section title="Integrations" icon={<SparkleIcon size={13} />} delay={0.15}>
+            <p className="text-[11px] text-slate-600 mb-4 leading-relaxed">
+              Connect third-party services to enrich your library with metadata.
+            </p>
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-400 mb-1">IGDB</p>
+                <p className="text-[11px] text-slate-600 mb-2 leading-relaxed">
+                  Fetches genre, developer, publisher, and release year for any game.
+                </p>
+                <div className="text-[11px] text-slate-600 mb-3 leading-relaxed space-y-1">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-[0.1em] font-semibold mb-1.5">How to get your keys</p>
+                  <p>1. Go to{" "}
+                    <button type="button" onClick={() => api.openUrl("https://dev.twitch.tv/console/apps/create").catch(() => {})} className="text-accent-400 hover:text-accent-300 underline underline-offset-2">
+                      dev.twitch.tv/console
+                    </button>
+                    {" "}and sign in with a Twitch account (free).
+                  </p>
+                  <p>2. Click <span className="text-slate-400 font-medium">Register Your Application</span>. Name it anything.</p>
+                  <p>3. For <span className="text-slate-400 font-medium">OAuth Redirect URL</span> enter <span className="text-slate-300 font-mono bg-white/[0.05] px-1 rounded">http://localhost</span> — this field is required but ZGameLib never uses it.</p>
+                  <p>4. Category: pick <span className="text-slate-400 font-medium">Other</span>. Click Create.</p>
+                  <p>5. Copy the <span className="text-slate-400 font-medium">Client ID</span> shown, then click <span className="text-slate-400 font-medium">New Secret</span> to generate a Client Secret.</p>
+                  <p>6. Paste both below and save.</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold block mb-1.5">Client ID</label>
+                    <input
+                      type="text"
+                      value={settings.igdb_client_id ?? ""}
+                      onChange={(e) => setSettings({ ...settings, igdb_client_id: e.target.value || null })}
+                      placeholder="Twitch Client ID"
+                      className="input-glass text-[12px] font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold block mb-1.5">Client Secret</label>
+                    <input
+                      type="password"
+                      value={settings.igdb_client_secret ?? ""}
+                      onChange={(e) => setSettings({ ...settings, igdb_client_secret: e.target.value || null })}
+                      placeholder="Twitch Client Secret"
+                      className="input-glass text-[12px] font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Section>
+
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -825,7 +1219,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v0.7.0</p>
+                  <p className="text-[11px] text-slate-600">v0.8.0</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}
@@ -878,6 +1272,120 @@ export default function Settings() {
       </div>
 
       </div>
+
+      <AnimatePresence>
+        {settingsUnsavedNav && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSettingsUnsavedNav(null)}
+              className="fixed inset-0 z-[60]"
+              style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 8 }}
+              transition={{ type: "spring", stiffness: 420, damping: 30 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none"
+            >
+              <div
+                className="pointer-events-auto rounded-3xl p-7 w-full max-w-[380px] mx-4"
+                style={{
+                  background: "linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)",
+                  border: "1px solid rgba(var(--accent-500), 0.2)",
+                  boxShadow: "0 0 60px rgba(var(--accent-500), 0.1), 0 30px 60px rgba(0,0,0,0.6)",
+                  backdropFilter: "blur(40px) saturate(180%)",
+                }}
+              >
+                <div className="flex items-start gap-4 mb-5">
+                  <motion.div
+                    initial={{ rotate: -12, scale: 0.8 }}
+                    animate={{ rotate: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(var(--accent-500), 0.2), rgba(var(--accent-700), 0.1))",
+                      border: "1px solid rgba(var(--accent-400), 0.2)",
+                      boxShadow: "0 0 24px rgba(var(--accent-500), 0.15)",
+                    }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-accent-400">
+                      <path d="M12 9v4m0 3h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </motion.div>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-white mb-1.5">Unsaved Changes</h3>
+                    <p className="text-[13px] text-slate-400 leading-relaxed">
+                      You have unsaved settings. Save them before leaving or discard your changes.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      const nav = settingsUnsavedNav;
+                      setSettingsUnsavedNav(null);
+                      setSettingsDirty(false);
+                      if (savedSnapshot.current) {
+                        try {
+                          const original = JSON.parse(savedSnapshot.current);
+                          setSettings(original);
+                          if (original.theme.startsWith("custom-")) {
+                            const ct = JSON.parse(original.custom_themes || "[]").find((t: CustomTheme) => `custom-${t.id}` === original.theme);
+                            if (ct) applyCustomThemeVars(ct);
+                            else applyTheme("dark");
+                          } else {
+                            applyTheme(original.theme);
+                          }
+                        } catch { applyTheme("dark"); }
+                      }
+                      nav.proceed();
+                    }}
+                    className="flex-1 justify-center flex items-center gap-2 font-medium px-4 py-2.5 rounded-xl text-[13px] transition-all duration-200 cursor-pointer text-slate-300"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    Discard
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      const nav = settingsUnsavedNav;
+                      setSettingsUnsavedNav(null);
+                      if (settings) {
+                        saveMutation.mutate(settings, {
+                          onSuccess: () => {
+                            setSettingsDirty(false);
+                            nav.proceed();
+                          },
+                        });
+                      }
+                    }}
+                    className="flex-1 justify-center flex items-center gap-2 font-semibold px-4 py-2.5 rounded-xl text-[13px] transition-all duration-200 cursor-pointer text-white"
+                    style={{
+                      background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-700)))",
+                      border: "1px solid rgba(var(--accent-400), 0.3)",
+                      boxShadow: "0 0 24px rgba(var(--accent-500), 0.2)",
+                    }}
+                  >
+                    <CheckIcon size={14} />
+                    Save & Leave
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

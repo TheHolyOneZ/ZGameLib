@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { api } from "@/lib/tauri";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import type { Collection } from "@/lib/types";
 
 const STATUSES = [
   { key: "none", label: "None" },
@@ -27,6 +28,24 @@ export default function BatchActionBar() {
   const [ratingValue, setRatingValue] = useState("");
   const [tagValue, setTagValue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCollections, setShowCollections] = useState(false);
+  const collectionMenuRef = useRef<HTMLDivElement>(null);
+
+  const { data: allCollections = [] } = useQuery<Collection[]>({
+    queryKey: ["collections"],
+    queryFn: () => api.getCollections(),
+  });
+
+  useEffect(() => {
+    if (!showCollections) return;
+    const handler = (e: MouseEvent) => {
+      if (collectionMenuRef.current && !collectionMenuRef.current.contains(e.target as Node)) {
+        setShowCollections(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showCollections]);
 
   const count = selectedIds.length;
 
@@ -50,6 +69,20 @@ export default function BatchActionBar() {
       setRatingValue("");
       setTagValue("");
       clearSelected();
+    } catch (err) {
+      addToast(String(err), "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCollection = async (col: Collection) => {
+    setLoading(true);
+    try {
+      await Promise.all(selectedIds.map((id) => api.addGameToCollection(col.id, id).catch(() => {})));
+      qc.invalidateQueries({ queryKey: ["collections"] });
+      addToast(`Added ${count} game${count !== 1 ? "s" : ""} to "${col.name}"`);
+      setShowCollections(false);
     } catch (err) {
       addToast(String(err), "error");
     } finally {
@@ -123,6 +156,50 @@ export default function BatchActionBar() {
             onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
             className="w-24 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-accent-500/50"
           />
+
+          {allCollections.length > 0 && (
+            <div className="relative" ref={collectionMenuRef}>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowCollections((v) => !v)}
+                disabled={loading}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
+                  showCollections
+                    ? "bg-accent-500/20 text-accent-300 border-accent-500/40"
+                    : "bg-white/5 text-slate-400 hover:text-slate-200 border-white/10 hover:border-white/20"
+                )}
+              >
+                + Collection
+              </motion.button>
+              <AnimatePresence>
+                {showCollections && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full mb-2 left-0 min-w-[160px] rounded-xl border border-white/10 shadow-2xl z-50 overflow-hidden"
+                    style={{ background: "rgba(12, 10, 20, 0.96)", backdropFilter: "blur(20px)" }}
+                  >
+                    <p className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold px-3 pt-2.5 pb-1.5">Add all to</p>
+                    <div className="flex flex-col pb-1.5">
+                      {allCollections.map((col) => (
+                        <button
+                          key={col.id}
+                          onClick={() => handleAddToCollection(col)}
+                          className="flex items-center gap-2 px-3 py-2 text-[12px] text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-left"
+                        >
+                          {col.name}
+                          <span className="ml-auto text-[10px] text-slate-700 tabular-nums">{col.game_count}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           <motion.button
             whileTap={{ scale: 0.95 }}

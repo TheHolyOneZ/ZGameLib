@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useGameStore } from "@/store/useGameStore";
 import { formatPlaytime } from "@/lib/utils";
-import type { Platform, GameStatus, Game } from "@/lib/types";
+import type { Platform, GameStatus, Game, LibraryGrowthEntry } from "@/lib/types";
 import { TrophyIcon, StarIcon, HeartIcon, GamepadIcon, ClockIcon, ChartIcon } from "@/components/ui/Icons";
 import { useCover } from "@/hooks/useCover";
 import { api } from "@/lib/tauri";
@@ -66,6 +66,12 @@ export default function Stats() {
   const { data: weeklyPlaytime = [] } = useQuery({
     queryKey: ["weekly-playtime"],
     queryFn: () => api.getWeeklyPlaytime(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: libraryGrowth = [] } = useQuery<LibraryGrowthEntry[]>({
+    queryKey: ["library-growth"],
+    queryFn: () => api.getLibraryGrowth(),
     staleTime: 5 * 60 * 1000,
   });
   const { resetFilters, setFilter, setSortKey, setSortAsc } = useGameStore.getState();
@@ -329,6 +335,82 @@ export default function Stats() {
           </div>
         )}
       </motion.div>
+
+      {libraryGrowth.length > 1 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.64 }} className="mb-8">
+          <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-4 flex items-center gap-1.5">
+            <span className="w-3 h-px bg-slate-800" />
+            Library Growth
+            <span className="flex-1 h-px bg-slate-800" />
+          </p>
+          <div className="glass rounded-2xl p-4">
+            {(() => {
+              const platforms: Platform[] = ["steam", "epic", "gog", "custom"];
+              const maxTotal = Math.max(...libraryGrowth.map((e) => e.steam + e.epic + e.gog + e.custom), 1);
+              return (
+                <div>
+                  <div className="flex items-end gap-1 h-32 mb-2">
+                    {libraryGrowth.map((entry, i) => {
+                      const total = entry.steam + entry.epic + entry.gog + entry.custom;
+                      const pct = (total / maxTotal) * 100;
+                      return (
+                        <div key={entry.month} className="flex-1 flex flex-col justify-end relative group/bar">
+                          <AnimatePresence>
+                            <motion.div
+                              initial={{ opacity: 0, y: 4 }}
+                              className="absolute -top-7 left-1/2 -translate-x-1/2 bg-bg-elevated border border-white/10 rounded-md px-1.5 py-0.5 text-[9px] text-slate-200 whitespace-nowrap z-10 pointer-events-none shadow-lg opacity-0 group-hover/bar:opacity-100 transition-opacity"
+                            >
+                              {total}
+                            </motion.div>
+                          </AnimatePresence>
+                          <motion.div
+                            initial={{ scaleY: 0 }}
+                            animate={{ scaleY: 1 }}
+                            transition={{ delay: i * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                            style={{ height: `${Math.max(4, pct)}%`, originY: "bottom" }}
+                            className="w-full rounded-sm overflow-hidden flex flex-col-reverse"
+                          >
+                            {platforms.map((p) => {
+                              const count = entry[p];
+                              if (!count) return null;
+                              return (
+                                <div
+                                  key={p}
+                                  style={{
+                                    flex: count,
+                                    backgroundColor: PLATFORM_COLORS_HEX[p] + "cc",
+                                  }}
+                                />
+                              );
+                            })}
+                          </motion.div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-1 mb-3">
+                    {libraryGrowth.map((entry, i) => (
+                      <div key={entry.month} className="flex-1 text-center overflow-hidden">
+                        <span className="text-[8px] text-slate-700">
+                          {i % 2 === 0 ? entry.month.slice(5) : ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {platforms.map((p) => (
+                      <div key={p} className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: PLATFORM_COLORS_HEX[p] }} />
+                        <span className="text-[10px] text-slate-500 capitalize">{p === "epic" ? "Epic" : p}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </motion.div>
+      )}
 
       {topRated.length > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }} className="mb-8">

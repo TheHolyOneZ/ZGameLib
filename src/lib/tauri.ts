@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime } from "./types";
+import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry } from "./types";
 
 export const api = {
   getAllGames: () => invoke<Game[]>("get_all_games"),
@@ -65,4 +65,19 @@ export const api = {
   getWeeklyPlaytime: () => invoke<WeeklyPlaytime[]>("get_weekly_playtime"),
   batchUpdateGames: (ids: string[], status?: string, rating?: number, tagsToAdd?: string[]) =>
     invoke<void>("batch_update_games", { ids, status, rating, tagsToAdd }),
+
+  getLibraryGrowth: () => invoke<LibraryGrowthEntry[]>("get_library_growth"),
+  fetchIgdbMetadata: (gameId: string, gameName: string, clientId: string, clientSecret: string) =>
+    invoke<IgdbMetadata | null>("fetch_igdb_metadata", { gameId, gameName, clientId, clientSecret }),
+  clearIgdbData: (id: string) => invoke<void>("clear_igdb_data", { id }),
+
+  getCollections: () => invoke<Collection[]>("get_collections"),
+  createCollection: (name: string) => invoke<Collection>("create_collection", { name }),
+  renameCollection: (id: string, name: string) => invoke<void>("rename_collection", { id, name }),
+  deleteCollection: (id: string) => invoke<void>("delete_collection", { id }),
+  getCollectionGames: (collectionId: string) => invoke<Game[]>("get_collection_games", { collectionId }),
+  addGameToCollection: (collectionId: string, gameId: string) => invoke<void>("add_game_to_collection", { collectionId, gameId }),
+  removeGameFromCollection: (collectionId: string, gameId: string) => invoke<void>("remove_game_from_collection", { collectionId, gameId }),
+  getCollectionsForGame: (gameId: string) => invoke<Collection[]>("get_collections_for_game", { gameId }),
+  updateCollectionDescription: (id: string, description: string | null) => invoke<void>("update_collection_description", { id, description }),
 };

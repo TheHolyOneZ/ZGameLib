@@ -11,6 +11,14 @@ import {
   SparkleIcon, SpinIcon, GogIcon, ChevronLeftIcon, ImageIcon,
 } from "@/components/ui/Icons";
 
+function FolderIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M3 7C3 5.9 3.9 5 5 5H9.6C10.1 5 10.6 5.2 10.9 5.6L12 7H19C20.1 7 21 7.9 21 9V18C21 19.1 20.1 20 19 20H5C3.9 20 3 19.1 3 18V7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 const STORAGE_KEY = "zgamelib-sidebar-collapsed";
 
 export default function Sidebar() {
@@ -21,6 +29,17 @@ export default function Sidebar() {
   const setFilter = useGameStore((s) => s.setFilter);
   const resetFilters = useGameStore((s) => s.resetFilters);
   const customStatuses = useUIStore((s) => s.customStatuses);
+
+  const settingsDirty = useUIStore((s) => s.settingsDirty);
+  const setSettingsUnsavedNav = useUIStore((s) => s.setSettingsUnsavedNav);
+
+  const guardedNavigate = (path: string) => {
+    if (settingsDirty && location.pathname === "/settings" && path !== "/settings") {
+      setSettingsUnsavedNav({ path, proceed: () => { useUIStore.getState().setSettingsDirty(false); navigate(path); } });
+      return;
+    }
+    navigate(path);
+  };
 
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
@@ -46,7 +65,7 @@ export default function Sidebar() {
     return (
       <button
         key={path}
-        onClick={() => { resetFilters(); navigate(path); }}
+        onClick={() => { resetFilters(); guardedNavigate(path); }}
         title={collapsed ? label : undefined}
         className={cn(
           "w-full flex items-center rounded-xl text-[13px] transition-all duration-200 relative group",
@@ -122,6 +141,7 @@ export default function Sidebar() {
         {navItem("/", <LibraryIcon size={16} />, "Library")}
         {navItem("/favorites", <HeartIcon size={16} />, "Favorites")}
         {navItem("/recent", <ClockIcon size={16} />, "Recently Played")}
+        {navItem("/collections", <FolderIcon size={16} />, "Collections")}
         {navItem("/stats", <ChartIcon size={16} />, "Stats")}
         {navItem("/spin", <SpinIcon size={16} />, "Game Spin")}
         {navItem("/settings", <SettingsIcon size={16} />, "Settings")}
@@ -162,7 +182,7 @@ export default function Sidebar() {
               </p>
               <div className="flex flex-col gap-0.5">
                 <button
-                  onClick={() => { setFilter("platform", "all"); if (location.pathname !== "/") navigate("/"); }}
+                  onClick={() => { setFilter("platform", "all"); if (location.pathname !== "/") guardedNavigate("/"); }}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300",
                     filters.platform === "all"
@@ -179,7 +199,7 @@ export default function Sidebar() {
                 {platformCounts.map((p) => (
                   <button
                     key={p.key}
-                    onClick={() => { setFilter("platform", filters.platform === p.key ? "all" : p.key); if (location.pathname !== "/") navigate("/"); }}
+                    onClick={() => { setFilter("platform", filters.platform === p.key ? "all" : p.key); if (location.pathname !== "/") guardedNavigate("/"); }}
                     className={cn(
                       "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300",
                       filters.platform === p.key
@@ -209,7 +229,7 @@ export default function Sidebar() {
                   return (
                     <button
                       key={s.key}
-                      onClick={() => { setFilter("status", filters.status === s.key ? "all" : s.key as import("@/lib/types").GameStatus); if (location.pathname !== "/") navigate("/"); }}
+                      onClick={() => { setFilter("status", filters.status === s.key ? "all" : s.key as import("@/lib/types").GameStatus); if (location.pathname !== "/") guardedNavigate("/"); }}
                       className={cn(
                         "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
                         filters.status === s.key
@@ -234,7 +254,7 @@ export default function Sidebar() {
               </p>
               <div className="flex flex-col gap-0.5">
                 <button
-                  onClick={() => { setFilter("hasCover", filters.hasCover === true ? null : true); if (location.pathname !== "/") navigate("/"); }}
+                  onClick={() => { setFilter("hasCover", filters.hasCover === true ? null : true); if (location.pathname !== "/") guardedNavigate("/"); }}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
                     filters.hasCover === true
@@ -249,7 +269,7 @@ export default function Sidebar() {
                   </span>
                 </button>
                 <button
-                  onClick={() => { setFilter("hasCover", filters.hasCover === false ? null : false); if (location.pathname !== "/") navigate("/"); }}
+                  onClick={() => { setFilter("hasCover", filters.hasCover === false ? null : false); if (location.pathname !== "/") guardedNavigate("/"); }}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
                     filters.hasCover === false

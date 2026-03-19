@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useGames } from "@/hooks/useGames";
 import { useCover, setCoverCache, clearCoverCache } from "@/hooks/useCover";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { cn, formatPlaytime, formatDate, COVER_PLACEHOLDER } from "@/lib/utils";
 import StarRating from "@/components/ui/StarRating";
@@ -17,9 +17,131 @@ import CoverSearchModal from "@/components/modals/CoverSearchModal";
 import {
   CloseIcon, HeartIcon, PlayIcon, FolderIcon, TrashIcon,
   CheckIcon, TagIcon, ClockIcon, StarIcon, ImageIcon, SearchIcon,
-  CopyIcon, ExternalLinkIcon
+  CopyIcon, ExternalLinkIcon, PlusIcon,
 } from "@/components/ui/Icons";
-import type { Session } from "@/lib/types";
+import type { Session, Collection, Game } from "@/lib/types";
+
+function GenreIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="7" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M8 14H10M9 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M14 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M8 4H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function DevIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <path d="M8 9L4 12L8 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 9L20 12L16 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 4L10 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function PubIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <path d="M3 21H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M5 21V7L12 3L19 7V21" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      <rect x="9" y="13" width="6" height="8" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+    </svg>
+  );
+}
+
+function CalIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="5" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M8 3V7M16 3V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M8 15H8.01M12 15H12.01M16 15H16.01M8 19H8.01M12 19H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function InfoCircleIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M12 11V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="7.5" r="0.75" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function ClearIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+      <path d="M3 6H21M8 6V4H16V6M19 6L18 20C18 21.1 17.1 22 16 22H8C6.9 22 6 21.1 6 20L5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IgdbMetadataCard({ game, onClear }: { game: Game; onClear: () => void }) {
+  const [showTip, setShowTip] = useState(false);
+
+  const fields: { label: string; value: string | number | null | undefined; icon: ReactNode }[] = [
+    { label: "Genre", value: game.genre, icon: <GenreIcon /> },
+    { label: "Developer", value: game.developer, icon: <DevIcon /> },
+    { label: "Publisher", value: game.publisher, icon: <PubIcon /> },
+    { label: "Released", value: game.release_year, icon: <CalIcon /> },
+  ].filter((f) => f.value != null && f.value !== "");
+
+  return (
+    <div className="rounded-2xl border border-white/[0.06]" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)" }}>
+      <div className="flex items-center justify-between px-4 pt-3 pb-2.5">
+        <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] font-semibold">IGDB Metadata</span>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={onClear}
+            className="w-5 h-5 rounded flex items-center justify-center text-slate-600 hover:text-red-400 transition-colors"
+            title="Remove IGDB data"
+          >
+            <ClearIcon />
+          </button>
+          <div className="relative">
+            <button
+              onMouseEnter={() => setShowTip(true)}
+              onMouseLeave={() => setShowTip(false)}
+              onClick={() => setShowTip((v) => !v)}
+              className="w-5 h-5 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
+            >
+              <InfoCircleIcon />
+            </button>
+            {showTip && (
+              <div className="absolute right-0 top-7 z-50 w-[220px] rounded-xl border border-white/[0.08] shadow-2xl p-3 text-[11px] text-slate-400 leading-relaxed" style={{ background: "rgba(12,12,18,0.98)" }}>
+                Data sourced from IGDB by game name. If another title shares a similar name, the wrong match may have been returned — double-check and re-fetch if needed.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap border-t border-white/[0.05]">
+        {fields.map((f, i) => (
+          <div
+            key={f.label}
+            className="flex items-start gap-2.5 px-4 py-3 min-w-0"
+            style={{
+              width: fields.length === 1 ? "100%" : "50%",
+              borderTop: i >= 2 ? "1px solid rgba(255,255,255,0.05)" : undefined,
+              borderLeft: i % 2 === 1 ? "1px solid rgba(255,255,255,0.05)" : undefined,
+            }}
+          >
+            <span className="text-slate-500 shrink-0 mt-0.5">{f.icon}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-semibold mb-0.5">{f.label}</p>
+              <p className="text-[12px] text-slate-200 font-medium leading-snug break-words">{f.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function GameDetail() {
   const selectedGameId = useGameStore((s) => s.selectedGameId);
@@ -47,10 +169,26 @@ export default function GameDetail() {
   const [descExpanded, setDescExpanded] = useState(false);
   const [coverLightbox, setCoverLightbox] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [pendingTags, setPendingTags] = useState<Set<string>>(new Set());
+  const [showCollectionMenu, setShowCollectionMenu] = useState(false);
+  const [igdbFetching, setIgdbFetching] = useState(false);
+  const pendingTagTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const collectionMenuRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const customStatuses = useUIStore((s) => s.customStatuses);
   const qc = useQueryClient();
+
+  const { data: allCollections = [] } = useQuery<Collection[]>({
+    queryKey: ["collections"],
+    queryFn: () => api.getCollections(),
+  });
+
+  const { data: gameCollections = [], refetch: refetchGameCollections } = useQuery<Collection[]>({
+    queryKey: ["game-collections", selectedGameId],
+    queryFn: () => api.getCollectionsForGame(game?.id ?? ""),
+    enabled: !!selectedGameId,
+  });
 
   const flashSaved = useCallback(() => {
     setShowSaved(true);
@@ -65,8 +203,23 @@ export default function GameDetail() {
     setLoadingSessions(false);
     setDescExpanded(false);
     setLightboxIndex(null);
+    setShowCollectionMenu(false);
+    pendingTagTimers.current.forEach((t) => clearTimeout(t));
+    pendingTagTimers.current.clear();
+    setPendingTags(new Set());
     if (selectedGameId) qc.invalidateQueries({ queryKey: ["games"] });
   }, [selectedGameId, qc]);
+
+  useEffect(() => {
+    if (!showCollectionMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (collectionMenuRef.current && !collectionMenuRef.current.contains(e.target as Node)) {
+        setShowCollectionMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showCollectionMenu]);
 
   useEffect(() => {
     if (lightboxIndex === null || !screenshots) return;
@@ -80,7 +233,7 @@ export default function GameDetail() {
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxIndex, screenshots]);
 
-  const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, is_pinned: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0, deleted_at: null, custom_fields: {} as Record<string, string>, hltb_main_mins: null, hltb_extra_mins: null };
+  const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, is_pinned: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0, deleted_at: null, custom_fields: {} as Record<string, string>, hltb_main_mins: null, hltb_extra_mins: null, genre: null, developer: null, publisher: null, release_year: null };
   const coverUrl = useCover(game ?? dummyGame);
 
   if (!game) return null;
@@ -167,7 +320,92 @@ export default function GameDetail() {
     }
   };
 
-  const removeTag = (t: string) => update({ id: game.id, tags: game.tags.filter((x) => x !== t) });
+  const removeTag = (t: string) => {
+    setPendingTags((prev) => new Set([...prev, t]));
+    const timer = setTimeout(() => {
+      update({ id: game.id, tags: game.tags.filter((x) => x !== t) });
+      setPendingTags((prev) => { const next = new Set(prev); next.delete(t); return next; });
+      pendingTagTimers.current.delete(t);
+    }, 5000);
+    pendingTagTimers.current.set(t, timer);
+    addToast(`Tag "${t}" removed — click to undo`, "info");
+  };
+
+  const undoRemoveTag = (t: string) => {
+    const timer = pendingTagTimers.current.get(t);
+    if (timer) clearTimeout(timer);
+    pendingTagTimers.current.delete(t);
+    setPendingTags((prev) => { const next = new Set(prev); next.delete(t); return next; });
+  };
+
+  const doIgdbFetch = async () => {
+    setIgdbFetching(true);
+    try {
+      const settings = await api.getSettings();
+      const clientId = settings.igdb_client_id;
+      const clientSecret = settings.igdb_client_secret;
+      if (!clientId || !clientSecret) {
+        addToast("Set IGDB credentials in Settings → Integrations", "error");
+        return;
+      }
+      const data = await api.fetchIgdbMetadata(game.id, game.name, clientId, clientSecret);
+      if (data) {
+        const allGames = await api.getAllGames();
+        useGameStore.getState().setGames(allGames);
+        addToast("IGDB metadata fetched", "success");
+      } else {
+        addToast("No IGDB data found", "info");
+      }
+    } catch {
+      addToast("Could not fetch IGDB metadata", "error");
+    } finally {
+      setIgdbFetching(false);
+    }
+  };
+
+  const handleIgdbFetch = () => {
+    if (game.igdb_skipped) {
+      openConfirm(
+        "This game was flagged after its IGDB data was cleared — the search may return the wrong match again. Fetch anyway?",
+        doIgdbFetch
+      );
+    } else {
+      doIgdbFetch();
+    }
+  };
+
+  const handleClearIgdb = () => {
+    openConfirm(
+      `Remove IGDB data for "${game.name}"? The game will be flagged — you'll be asked to confirm before any future IGDB fetch.`,
+      async () => {
+        try {
+          await api.clearIgdbData(game.id);
+          const allGames = await api.getAllGames();
+          useGameStore.getState().setGames(allGames);
+          addToast("IGDB data removed", "success");
+        } catch {
+          addToast("Failed to remove IGDB data", "error");
+        }
+      }
+    );
+  };
+
+  const toggleCollection = async (col: Collection) => {
+    const inCollection = gameCollections.some((c) => c.id === col.id);
+    try {
+      if (inCollection) {
+        await api.removeGameFromCollection(col.id, game.id);
+        addToast(`Removed from "${col.name}"`, "success");
+      } else {
+        await api.addGameToCollection(col.id, game.id);
+        addToast(`Added to "${col.name}"`, "success");
+      }
+      refetchGameCollections();
+      qc.invalidateQueries({ queryKey: ["collections"] });
+    } catch (e) {
+      addToast(String(e), "error");
+    }
+  };
 
   return (
     <>
@@ -494,23 +732,37 @@ export default function GameDetail() {
                       addToast("Could not fetch HLTB data", "error");
                     }
                   }}
-                  className="shrink-0 p-2 rounded-xl text-slate-600 hover:text-accent-400 glass transition-all"
+                  className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-accent-400 glass transition-all duration-200"
                   title="Fetch HowLongToBeat estimate"
                 >
-                  <ClockIcon size={14} />
+                  <ClockIcon size={15} />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleIgdbFetch}
+                  disabled={igdbFetching}
+                  className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-accent-400 glass transition-all duration-200 disabled:opacity-40"
+                  title="Fetch IGDB metadata"
+                >
+                  {igdbFetching ? (
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-accent-500/30 border-t-accent-500 animate-spin" />
+                  ) : (
+                    <SearchIcon size={15} />
+                  )}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.85 }}
                   onClick={() => toggleFavorite(game.id)}
                   className={cn(
-                    "shrink-0 p-2.5 rounded-xl transition-all duration-300",
+                    "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300",
                     game.is_favorite
                       ? "text-pink-400 bg-pink-500/15 border border-pink-500/25 glow-inner"
                       : "text-slate-600 hover:text-pink-400 glass"
                   )}
                 >
-                  <HeartIcon size={18} filled={game.is_favorite} />
+                  <HeartIcon size={16} filled={game.is_favorite} />
                 </motion.button>
               </div>
 
@@ -539,17 +791,66 @@ export default function GameDetail() {
                 <motion.button
                   whileTap={{ scale: 0.92 }}
                   onClick={() => api.openGameFolder(game.id).catch(() => {})}
-                  className="btn-ghost px-4"
+                  className="btn-icon w-10 h-10"
+                  title="Open game folder"
                 >
-                  <FolderIcon size={14} />
+                  <FolderIcon size={15} />
                 </motion.button>
+                <div className="relative shrink-0" ref={collectionMenuRef}>
+                  <motion.button
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => setShowCollectionMenu((v) => !v)}
+                    className={cn("btn-icon w-10 h-10", showCollectionMenu && "text-accent-400 border-accent-500/30 bg-accent-500/10")}
+                    title="Add to Collection"
+                  >
+                    <PlusIcon size={15} />
+                  </motion.button>
+                  <AnimatePresence>
+                    {showCollectionMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full mb-2 right-0 min-w-[180px] glass rounded-xl border border-white/8 shadow-xl z-50 overflow-hidden"
+                      >
+                        <p className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold px-3 pt-2.5 pb-1.5">Collections</p>
+                        {allCollections.length === 0 ? (
+                          <p className="text-[12px] text-slate-600 px-3 pb-3">No collections yet</p>
+                        ) : (
+                          <div className="flex flex-col pb-1.5">
+                            {allCollections.map((col) => {
+                              const active = gameCollections.some((c) => c.id === col.id);
+                              return (
+                                <button
+                                  key={col.id}
+                                  onClick={() => toggleCollection(col)}
+                                  className={cn(
+                                    "flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors hover:bg-white/5",
+                                    active ? "text-accent-300" : "text-slate-400"
+                                  )}
+                                >
+                                  <span className={cn("w-3.5 h-3.5 rounded flex items-center justify-center border", active ? "bg-accent-600/40 border-accent-500/50" : "border-white/15")}>
+                                    {active && <CheckIcon size={9} />}
+                                  </span>
+                                  {col.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <motion.button
                   whileTap={{ scale: 0.92 }}
                   onClick={handleDelete}
-                  className="btn-ghost px-4 text-red-500/60 hover:text-red-400"
-                  style={{ borderColor: "rgba(239,68,68,0.08)" }}
+                  className="btn-icon w-10 h-10 text-red-500/50 hover:text-red-400"
+                  style={{ borderColor: "rgba(239,68,68,0.06)" }}
+                  title="Remove game"
                 >
-                  <TrashIcon size={14} />
+                  <TrashIcon size={15} />
                 </motion.button>
               </div>
 
@@ -579,6 +880,10 @@ export default function GameDetail() {
                     <span className="text-[12px] text-slate-400 ml-2">+Extra: <span className="text-slate-200 font-medium">{Math.round(game.hltb_extra_mins / 60 * 10) / 10}h</span></span>
                   )}
                 </div>
+              )}
+
+              {(game.genre || game.developer || game.publisher || game.release_year) && (
+                <IgdbMetadataCard game={game} onClear={handleClearIgdb} />
               )}
 
               <div>
@@ -626,20 +931,31 @@ export default function GameDetail() {
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-2.5">
                   <AnimatePresence>
-                    {game.tags.map((t) => (
-                      <motion.button
-                        key={t}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => removeTag(t)}
-                        className="glass px-3 py-1 rounded-full text-[11px] text-slate-400 hover:text-red-400 hover:border-red-500/25 transition-all duration-200 group flex items-center gap-1"
-                      >
-                        {t}
-                        <span className="text-slate-700 group-hover:text-red-400 text-[9px]">x</span>
-                      </motion.button>
-                    ))}
+                    {game.tags.map((t) => {
+                      const pending = pendingTags.has(t);
+                      return (
+                        <motion.button
+                          key={t}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: pending ? 0.45 : 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => pending ? undoRemoveTag(t) : removeTag(t)}
+                          className={cn(
+                            "px-3 py-1 rounded-full text-[11px] transition-all duration-200 group flex items-center gap-1",
+                            pending
+                              ? "glass text-slate-600 border-red-500/15 line-through"
+                              : "glass text-slate-400 hover:text-red-400 hover:border-red-500/25"
+                          )}
+                          title={pending ? "Click to undo" : "Click to remove"}
+                        >
+                          {t}
+                          <span className={cn("text-[9px]", pending ? "text-accent-500 no-underline" : "text-slate-700 group-hover:text-red-400")}>
+                            {pending ? "↩" : "x"}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
                   </AnimatePresence>
                 </div>
                 <input

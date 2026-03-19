@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useCover } from "@/hooks/useCover";
@@ -50,6 +50,7 @@ export default function CommandPalette() {
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const navigate = useNavigate();
+  const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -64,14 +65,23 @@ export default function CommandPalette() {
     }
   }, [isOpen]);
 
+  const guardedNavigate = useCallback((path: string) => {
+    const { settingsDirty, setSettingsUnsavedNav, setSettingsDirty } = useUIStore.getState();
+    if (settingsDirty && location.pathname === "/settings" && path !== "/settings") {
+      setSettingsUnsavedNav({ path, proceed: () => { setSettingsDirty(false); navigate(path); } });
+      return;
+    }
+    navigate(path);
+  }, [navigate, location.pathname]);
+
   const makeActions = useCallback((): ActionItem[] => [
     { type: "action", id: "add-game", label: "Add Game", icon: <PlusIcon size={14} />, action: () => { setAddGameOpen(true); setOpen(false); } },
-    { type: "action", id: "library", label: "Library", icon: <LibraryIcon size={14} />, action: () => { navigate("/"); setOpen(false); } },
-    { type: "action", id: "favorites", label: "Favorites", icon: <HeartIcon size={14} />, action: () => { navigate("/favorites"); setOpen(false); } },
-    { type: "action", id: "stats", label: "Stats", icon: <ChartIcon size={14} />, action: () => { navigate("/stats"); setOpen(false); } },
-    { type: "action", id: "spin", label: "Game Spin", icon: <SpinIcon size={14} />, action: () => { navigate("/spin"); setOpen(false); } },
-    { type: "action", id: "settings", label: "Settings", icon: <SettingsIcon size={14} />, action: () => { navigate("/settings"); setOpen(false); } },
-  ], [navigate, setAddGameOpen, setOpen]);
+    { type: "action", id: "library", label: "Library", icon: <LibraryIcon size={14} />, action: () => { guardedNavigate("/"); setOpen(false); } },
+    { type: "action", id: "favorites", label: "Favorites", icon: <HeartIcon size={14} />, action: () => { guardedNavigate("/favorites"); setOpen(false); } },
+    { type: "action", id: "stats", label: "Stats", icon: <ChartIcon size={14} />, action: () => { guardedNavigate("/stats"); setOpen(false); } },
+    { type: "action", id: "spin", label: "Game Spin", icon: <SpinIcon size={14} />, action: () => { guardedNavigate("/spin"); setOpen(false); } },
+    { type: "action", id: "settings", label: "Settings", icon: <SettingsIcon size={14} />, action: () => { guardedNavigate("/settings"); setOpen(false); } },
+  ], [guardedNavigate, setAddGameOpen, setOpen]);
 
   const results: ResultItem[] = (() => {
     const q = query.toLowerCase();

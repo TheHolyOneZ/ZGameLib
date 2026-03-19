@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useScan } from "@/hooks/useGames";
@@ -5,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
-import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon } from "@/components/ui/Icons";
+import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon } from "@/components/ui/Icons";
 
 export default function Topbar() {
   const hiddenIds = useGameStore((s) => s.hiddenIds);
@@ -18,6 +19,39 @@ export default function Topbar() {
   const openConfirm = useUIStore((s) => s.openConfirm);
   const { scan, isScanning } = useScan();
   const { data: isPortable } = useQuery({ queryKey: ["portable_mode"], queryFn: api.isPortableMode, staleTime: Infinity });
+  const [igdbScanning, setIgdbScanning] = useState(false);
+  const [igdbProgress, setIgdbProgress] = useState(0);
+  const [igdbTotal, setIgdbTotal] = useState(0);
+
+  const handleIgdbScanAll = async () => {
+    const settings = await api.getSettings();
+    if (!settings.igdb_client_id || !settings.igdb_client_secret) {
+      addToast("Set IGDB credentials in Settings → Integrations first", "error");
+      return;
+    }
+    const pending = useGameStore.getState().games.filter(
+      (g) => !g.igdb_skipped && !g.genre && !g.developer && !g.publisher && !g.release_year
+    );
+    if (pending.length === 0) {
+      addToast("All games already have IGDB data", "info");
+      return;
+    }
+    setIgdbScanning(true);
+    setIgdbTotal(pending.length);
+    setIgdbProgress(0);
+    let done = 0;
+    for (const game of pending) {
+      try {
+        await api.fetchIgdbMetadata(game.id, game.name, settings.igdb_client_id!, settings.igdb_client_secret!);
+      } catch { /* skip failed games */ }
+      done++;
+      setIgdbProgress(done);
+    }
+    setIgdbScanning(false);
+    const allGames = await api.getAllGames();
+    useGameStore.getState().setGames(allGames);
+    addToast(`IGDB scan complete — ${done} game${done !== 1 ? "s" : ""} processed`, "success");
+  };
 
   const handleRemoveDuplicates = () => {
     const games = useGameStore.getState().games;
@@ -80,6 +114,31 @@ export default function Topbar() {
       >
         <LayersIcon size={14} />
       </motion.button>
+
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.93 }}
+        onClick={handleIgdbScanAll}
+        disabled={igdbScanning}
+        className="btn-icon relative disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Fetch IGDB metadata for all games without it"
+        aria-label="Scan all games with IGDB"
+      >
+        <motion.span
+          animate={igdbScanning ? { rotate: 360 } : {}}
+          transition={igdbScanning ? { duration: 1.8, repeat: Infinity, ease: "linear" } : {}}
+          className="flex items-center"
+        >
+          <SparkleIcon size={14} />
+        </motion.span>
+        {igdbScanning && (
+          <span className="absolute -bottom-0.5 -right-0.5 text-[8px] font-bold leading-none text-accent-300 bg-[#0d0d12] rounded px-0.5">
+            {igdbProgress}/{igdbTotal}
+          </span>
+        )}
+      </motion.button>
+
+      <div className="w-px h-5 bg-white/6 shrink-0" />
 
       <div className="flex items-center gap-1.5 shrink-0">
         <motion.button

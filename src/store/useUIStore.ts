@@ -58,6 +58,11 @@ interface UIStore {
 
   isCommandPaletteOpen: boolean;
   setCommandPaletteOpen: (v: boolean) => void;
+
+  settingsDirty: boolean;
+  setSettingsDirty: (v: boolean) => void;
+  settingsUnsavedNav: { path: string; proceed: () => void } | null;
+  setSettingsUnsavedNav: (v: { path: string; proceed: () => void } | null) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -108,4 +113,9 @@ export const useUIStore = create<UIStore>((set) => ({
 
   isCommandPaletteOpen: false,
   setCommandPaletteOpen: (v) => set({ isCommandPaletteOpen: v }),
+
+  settingsDirty: false,
+  setSettingsDirty: (v) => set({ settingsDirty: v }),
+  settingsUnsavedNav: null,
+  setSettingsUnsavedNav: (v) => set({ settingsUnsavedNav: v }),
 }));

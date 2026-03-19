@@ -24,6 +24,19 @@ export interface Game {
   custom_fields: Record<string, string>;
   hltb_main_mins: number | null;
   hltb_extra_mins: number | null;
+  genre: string | null;
+  developer: string | null;
+  publisher: string | null;
+  release_year: number | null;
+  igdb_skipped: boolean;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  created_at: string;
+  game_count: number;
+  description: string | null;
 }
 
 export interface Note {
@@ -65,6 +78,18 @@ export interface UpdateGamePayload {
   exe_path?: string;
   install_dir?: string;
   custom_fields?: Record<string, string>;
+  genre?: string;
+  developer?: string;
+  publisher?: string;
+  release_year?: number;
+}
+
+export interface IgdbMetadata {
+  genre: string | null;
+  developer: string | null;
+  publisher: string | null;
+  release_year: number | null;
+  summary: string | null;
 }
 
 export interface HltbData {
@@ -99,6 +124,17 @@ export interface AppSettings {
   close_to_tray: boolean;
   autostart: boolean;
   playtime_reminders: boolean;
+  igdb_client_id: string | null;
+  igdb_client_secret: string | null;
+  custom_themes: string;
+}
+
+export interface CustomTheme {
+  id: string;
+  name: string;
+  accent: string;
+  bg: string;
+  sidebar: string;
 }
 
 export interface ImportResult {
@@ -127,6 +163,14 @@ export interface UpdateInfo {
 export interface WeeklyPlaytime {
   week: string;
   mins: number;
+}
+
+export interface LibraryGrowthEntry {
+  month: string;
+  steam: number;
+  epic: number;
+  gog: number;
+  custom: number;
 }
 
 export type SortKey = "name" | "rating" | "last_played" | "date_added" | "playtime_mins" | "sort_order";

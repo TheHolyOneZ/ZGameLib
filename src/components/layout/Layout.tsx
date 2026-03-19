@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { listen } from "@tauri-apps/api/event";
 import { api } from "@/lib/tauri";
+import { applyThemeFromSettings } from "@/lib/theme";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useScan } from "@/hooks/useGames";
@@ -184,7 +185,7 @@ function AppBehavior() {
 
   useEffect(() => {
     if (data?.theme) {
-      document.documentElement.setAttribute("data-theme", data.theme);
+      applyThemeFromSettings(data.theme, data.custom_themes || "[]");
     }
   }, [data?.theme]);
 
@@ -304,10 +305,12 @@ export default function Layout() {
               <p className="text-[13px] font-bold text-white mb-4">Keyboard Shortcuts</p>
               <div className="flex flex-col gap-2.5">
                 {[
+                  ["Ctrl + K", "Open command palette"],
                   ["/", "Focus search"],
                   ["N", "Add game"],
                   ["F", "Toggle favorite (game open)"],
-                  ["Escape", "Close panel / modal"],
+                  ["Escape", "Close panel / overlay"],
+                  ["Ctrl + Enter", "Save note"],
                   ["?", "Toggle this help"],
                 ].map(([key, label]) => (
                   <div key={key} className="flex items-center justify-between">

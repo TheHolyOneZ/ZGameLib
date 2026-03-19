@@ -10,7 +10,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-0.7.0-22c55e?style=flat-square" alt="v0.7.0"/>
+  <img src="https://img.shields.io/badge/Version-0.8.0-22c55e?style=flat-square" alt="v0.8.0"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -18,8 +18,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 <p>
   <a href="https://zsync.eu/zgamelib/"><strong>🌐 Website</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
   <a href="https://github.com/TheHolyOneZ/ZGameLib"><strong>GitHub</strong></a>
 </p>
 
@@ -29,11 +29,11 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 ## Preview
 
-> Recorded on v0.7.0. Newer versions include per-page search, mod loader, cleaner layout, and more improvements.
+> Recorded on v0.3.0. Newer versions include per-page search, mod loader, cleaner layout, and more improvements.
 
 <div align="center">
 
-[![ZGameLib Preview](https://img.youtube.com/vi/4L1U4SOJrQg/maxresdefault.jpg)](https://www.youtube.com/watch?v=4L1U4SOJrQg)
+[![ZGameLib Preview](https://img.youtube.com/vi/rlqUUqAPOxU/maxresdefault.jpg)](https://www.youtube.com/watch?v=rlqUUqAPOxU)
 
 </div>
 
@@ -43,8 +43,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| [ZGameLib_0.7.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
-| [ZGameLib_0.7.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.7.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
+| [ZGameLib_0.8.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
+| [ZGameLib_0.8.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_0.8.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -59,7 +59,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
   - [Mod Loader](#-mod-loader)
   - [Game Spin Wheel](#-game-spin-wheel)
   - [Statistics](#-statistics)
-  - [Themes](#-themes--7-built-in)
+  - [Themes](#-themes--7-built-in--custom)
   - [System Integration](#-system-integration)
   - [Data & Privacy](#-data--privacy)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
@@ -129,9 +129,14 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 - Scroll-to-top floating button after 400 px of scroll
 
 **Context Menu & Health**
-- **Right-click** any game card or list row → Play · Open Folder · Favorite · Pin · Copy Name · View Details · **Delete**
+- **Right-click** any game card or list row → Play · Open Folder · Favorite · Pin · Copy Name · View Details · **Collections** (submenu) · **Delete**
 - **Exe health badge** — amber warning icon on cards when the executable is missing
 - Loading skeleton grid while library loads
+
+**Bulk IGDB Scan**
+- Sparkle button (✦) in the Topbar scans every game that has no IGDB data and is not flagged
+- Spins while running; a live `X/Y` counter badge shows progress
+- Games flagged after clearing wrong IGDB data are silently skipped
 
 **Command Palette** (`Ctrl+K`)
 - Centered overlay with fuzzy search across all game names
@@ -141,8 +146,17 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 **Batch Multi-Select**
 - Checkbox appears top-left on game cards (visible on hover or when selected) and in list rows
 - Select multiple games; a **BatchActionBar** slides up from the bottom
-- Apply a status, set a rating (clamped 1–10), or add a tag to all selected games at once
+- Apply a status, set a rating (clamped 1–10), add a tag, or **add to a Collection** — all applied to every selected game at once
 - Delete all selected games with one click; × clears the selection
+
+**Collections**
+- Create named collections to group games any way you like
+- Grid/list view toggle, search bar, and click-to-edit description per collection
+- Right-click a collection to rename or delete it
+- Open a collection to browse its games with search and grid/list toggle
+- Right-click any game (anywhere) → **Collections submenu** — checkmarks show which collections it belongs to; click to add or remove
+- A game can belong to multiple collections simultaneously
+- **Remove from Collection** option appears in the right-click menu when browsing a collection
 
 **Weekly Playtime Goal**
 - Set a weekly playtime target in hours at the top of the Library page
@@ -212,10 +226,12 @@ A slide-in drawer (500 px wide) that opens without navigating away from your lib
 - **10-star rating** (interactive, 1–10 scale; fire icon 🔥 appears when rating ≥ 8)
 - **Quick rate** — 10-button rating row appears on game card hover (no need to open the panel)
 - **Custom status buttons** — your defined statuses, color-coded
-- **Tags** — add/remove inline; comma or Enter to confirm
+- **Tags** — add/remove inline; comma or Enter to confirm; removing a tag shows a **5-second undo countdown** with strikethrough — click the tag to cancel before it commits
 - **Description** — freeform textarea, editable inline; truncated at 200 chars with "Show more / Show less"
 - **Custom fields** — add arbitrary key/value metadata per game; stored per-game in the database
 - **Time-to-beat** — click the clock icon to fetch HowLongToBeat data; main story and completionist hours shown in the stats grid; cached in DB
+- **IGDB Metadata** — click the sparkle icon to fetch genre, developer, publisher, and release year from IGDB; shown in a modern card with custom SVG icons; (i) button warns about potential name-match inaccuracy; trash button clears data and flags the game so future fetches prompt for confirmation
+- **Collections** — `+` button opens a dropdown to add/remove the game from any of your collections; checkmarks show current membership
 - **Notes** section (see below)
 
 </td>
@@ -245,6 +261,7 @@ A slide-in drawer (500 px wide) that opens without navigating away from your lib
 **Notes**
 - Timestamped notes per game — full history preserved
 - Inline editor per note (edit / delete)
+- **Markdown preview** — per-note toggle between edit (pencil) and rendered preview (eye icon); renders full Markdown with sanitization
 - New note textarea at the bottom
 - <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save a new note
 
@@ -362,6 +379,7 @@ All stat cards are **clickable** — each navigates to the Library with the rele
 - **Playtime — Last 12 Weeks** — bar chart grouped by ISO week; bars grow from bottom with staggered entrance animation; hover for exact hours; weeks labeled every other column to avoid crowding
 - **Lowest Rated** — up to 5 games with a rating ≤ 4, scores highlighted in red
 - **Most Neglected** — up to 5 games with zero recorded playtime, sorted by time in library, with "Added X days ago" label
+- **Library Growth** — stacked bar chart showing how many games were added per calendar month, bars colored by platform; legend at the bottom
 - Staggered entrance animations
 
 </td>
@@ -370,7 +388,7 @@ All stat cards are **clickable** — each navigates to the Library with the rele
 
 ---
 
-### 🎨 Themes — 7 Built-In
+### 🎨 Themes — 7 Built-In + Custom
 
 | # | Theme | Accent | Base Background |
 |---|-------|--------|----------------|
@@ -381,6 +399,9 @@ All stat cards are **clickable** — each navigates to the Library with the rele
 | 5 | **Dracula** | 🌸 Pink / Red | `#282a36` |
 | 6 | **Gruvbox** | 🟠 Warm orange | `#282828` |
 | 7 | **Tokyo Night** | 💙 Blue cyan | `#1a1b26` |
+| + | **Custom** | Any color | Any color |
+
+**Custom Theme Creator** — pick one accent color and a background; ZGameLib auto-generates all 8 accent shades (200–900) via HSL math. The entire app previews live as you adjust colors. Save with a name, edit or delete anytime. Stored as JSON in the `custom_themes` setting.
 
 All themes are implemented as **CSS custom properties** (`--accent-200` through `--accent-900`). Every accent color, gradient, glow, glass effect, and border throughout the entire UI responds to the active theme — not just backgrounds.
 
@@ -448,7 +469,8 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
   3. Launch the app — the database and settings will now be stored in the same folder as the exe
   > Make sure the file is named exactly `portable.flag` with no `.txt` extension. If Windows is hiding extensions, check via View → Show → File name extensions.
 - **Zero telemetry. Zero accounts. Zero cloud.**
-- The only network calls made are: cover art fetching (Steam CDN / GOG / Steam SearchApps), HLTB lookup (on user request), mod installer downloads from GitHub, and the update check against `zsync.eu` — all explicitly user-initiated or one-time at startup
+- **Export library** JSON now uses v3 format — includes `collections` and `collection_games`; backwards-compatible with older exports on import
+- The only network calls made are: cover art fetching (Steam CDN / GOG / Steam SearchApps), HLTB lookup (on user request), IGDB metadata fetch via Twitch OAuth (on user request), mod installer downloads from GitHub, and the update check against `zsync.eu` — all explicitly user-initiated or one-time at startup
 
 ---
 
@@ -694,8 +716,31 @@ setCommandPaletteOpen
 | `custom_fields` | TEXT | NOT NULL DEFAULT '{}' | JSON map of user-defined key/value metadata |
 | `hltb_main_mins` | INTEGER | | HowLongToBeat main story time in minutes |
 | `hltb_extra_mins` | INTEGER | | HowLongToBeat completionist time in minutes |
+| `genre` | TEXT | | IGDB genre (first match) |
+| `developer` | TEXT | | IGDB developer company name |
+| `publisher` | TEXT | | IGDB publisher company name |
+| `release_year` | INTEGER | | IGDB first release year |
+| `igdb_skipped` | INTEGER | NOT NULL DEFAULT 0 | 1 when user cleared IGDB data — prompts confirmation before re-fetch |
 
 Indexes: `platform` · `is_favorite` · `status` · `last_played`
+
+### `collections`
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `id` | TEXT | PK | UUID |
+| `name` | TEXT | NOT NULL | Display name (max 100 chars) |
+| `created_at` | TEXT | NOT NULL | ISO 8601 |
+| `description` | TEXT | | Optional notes / description |
+
+### `collection_games`
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `collection_id` | TEXT | FK → `collections.id` ON DELETE CASCADE | |
+| `game_id` | TEXT | FK → `games.id` ON DELETE CASCADE | |
+
+Primary key: `(collection_id, game_id)`
 
 ### `notes`
 
@@ -725,7 +770,8 @@ Index: `game_id`
 
 | Key | Values | Default | Description |
 |-----|--------|---------|-------------|
-| `theme` | `dark` \| `amoled` \| `nord` \| `catppuccin` \| `dracula` \| `gruvbox` \| `tokyonight` | `dark` | UI theme |
+| `theme` | `dark` \| `amoled` \| `nord` \| `catppuccin` \| `dracula` \| `gruvbox` \| `tokyonight` \| `custom-{id}` | `dark` | UI theme |
+| `custom_themes` | JSON array | `[]` | User-created themes (id, name, accent, bg, sidebar) |
 | `default_view` | `grid` \| `list` | `grid` | Default library view |
 | `grid_columns` | `3`–`6` | `4` | Grid column count |
 | `steam_path` | path string | auto | Steam install override |
@@ -792,6 +838,7 @@ Walks up to **6 directory levels deep** looking for executables using this prior
 | GitHub Releases API | Latest BepInEx x64 ZIP download | User clicks Install BepInEx |
 | GitHub Releases API | Latest MelonLoader x64 ZIP download | User clicks Install MelonLoader |
 | HowLongToBeat | Time-to-beat estimates (main story + completionist) | User clicks clock icon in Game Detail |
+| IGDB (via Twitch OAuth) | Genre · developer · publisher · release year | User clicks IGDB button in Game Detail or bulk scan in Topbar |
 | Tauri Updater | Checks `https://zsync.eu/zgamelib/update.json` with Minisign public key | App startup |
 
 ---
@@ -939,9 +986,8 @@ Output directory: `src-tauri/target/release/bundle/`
 
 ```
 bundle/
-├── msi/   ZGameLib_0.7.0_x64_en-US.msi
-└── nsis/  ZGameLib_0.7.0_x64-setup.exe
-
+├── msi/   ZGameLib_0.8.0_x64_en-US.msi
+└── nsis/  ZGameLib_0.8.0_x64-setup.exe
 ```
 
 ### Frontend Only
