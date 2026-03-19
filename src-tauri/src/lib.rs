@@ -5,7 +5,7 @@ mod commands;
 use db::{DbState, init_db, queries};
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
-use commands::{games, scanner, launcher, settings, modloader};
+use commands::{games, scanner, launcher, settings, modloader, collections};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -183,6 +183,18 @@ pub fn run() {
             games::fetch_hltb_data,
             games::get_weekly_playtime,
             games::batch_update_games,
+            games::get_library_growth,
+            games::fetch_igdb_metadata,
+            games::clear_igdb_data,
+            collections::get_collections,
+            collections::create_collection,
+            collections::rename_collection,
+            collections::delete_collection,
+            collections::get_collection_games,
+            collections::add_game_to_collection,
+            collections::remove_game_from_collection,
+            collections::get_collections_for_game,
+            collections::update_collection_description,
             scanner::scan_steam_games,
             scanner::scan_epic_games,
             scanner::scan_gog_games,

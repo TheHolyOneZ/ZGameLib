@@ -2,7 +2,7 @@ use tauri::State;
 use chrono::Utc;
 use uuid::Uuid;
 use crate::db::{DbState, queries};
-use crate::models::{Game, Note, Session, CreateGamePayload, UpdateGamePayload, HltbData, WeeklyPlaytime};
+use crate::models::{Game, Note, Session, CreateGamePayload, UpdateGamePayload, HltbData, WeeklyPlaytime, IgdbMetadata, LibraryGrowthEntry};
 
 #[tauri::command]
 pub fn get_all_games(state: State<DbState>) -> Result<Vec<Game>, String> {
@@ -43,6 +43,11 @@ pub fn create_game(state: State<DbState>, payload: CreateGamePayload) -> Result<
         custom_fields: std::collections::HashMap::new(),
         hltb_main_mins: None,
         hltb_extra_mins: None,
+        genre: None,
+        developer: None,
+        publisher: None,
+        release_year: None,
+        igdb_skipped: false,
     };
     queries::insert_game(&conn, &game).map_err(|e| e.to_string())?;
     Ok(game)
@@ -83,6 +88,10 @@ pub fn update_game(state: State<DbState>, payload: UpdateGamePayload) -> Result<
     if let Some(exe) = payload.exe_path { game.exe_path = Some(exe); }
     if let Some(dir) = payload.install_dir { game.install_dir = Some(dir); }
     if let Some(cf) = payload.custom_fields { game.custom_fields = cf; }
+    if let Some(v) = payload.genre { game.genre = if v.is_empty() { None } else { Some(v) }; }
+    if let Some(v) = payload.developer { game.developer = if v.is_empty() { None } else { Some(v) }; }
+    if let Some(v) = payload.publisher { game.publisher = if v.is_empty() { None } else { Some(v) }; }
+    if let Some(v) = payload.release_year { game.release_year = Some(v); }
 
     queries::update_game(&conn, &game).map_err(|e| e.to_string())?;
     Ok(game)
@@ -372,4 +381,146 @@ pub fn batch_update_games(
     }
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_library_growth(state: State<DbState>) -> Result<Vec<LibraryGrowthEntry>, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare(
+        "SELECT strftime('%Y-%m', date_added) as month, platform, COUNT(*) as cnt
+         FROM games WHERE deleted_at IS NULL AND date_added IS NOT NULL
+         GROUP BY month, platform ORDER BY month ASC"
+    ).map_err(|e| e.to_string())?;
+
+    let rows: Vec<(String, String, i64)> = stmt.query_map([], |row| {
+        Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+    }).map_err(|e| e.to_string())?
+    .filter_map(|r| r.ok())
+    .collect();
+    drop(stmt);
+
+    let mut month_map: std::collections::BTreeMap<String, LibraryGrowthEntry> = std::collections::BTreeMap::new();
+    for (month, platform, cnt) in rows {
+        let entry = month_map.entry(month.clone()).or_insert(LibraryGrowthEntry {
+            month,
+            steam: 0, epic: 0, gog: 0, custom: 0,
+        });
+        match platform.as_str() {
+            "steam"  => entry.steam  += cnt,
+            "epic"   => entry.epic   += cnt,
+            "gog"    => entry.gog    += cnt,
+            "custom" => entry.custom += cnt,
+            _ => {}
+        }
+    }
+
+    Ok(month_map.into_values().collect())
+}
+
+#[tauri::command]
+pub fn fetch_igdb_metadata(
+    state: State<DbState>,
+    game_id: String,
+    game_name: String,
+    client_id: String,
+    client_secret: String,
+) -> Result<Option<IgdbMetadata>, String> {
+    if client_id.trim().is_empty() || client_secret.trim().is_empty() {
+        return Err("IGDB client_id and client_secret are required".to_string());
+    }
+
+    let token_url = "https://id.twitch.tv/oauth2/token";
+    let token_body = format!(
+        "client_id={}&client_secret={}&grant_type=client_credentials",
+        client_id.trim(), client_secret.trim()
+    );
+    let token_resp = ureq::post(token_url)
+        .set("Content-Type", "application/x-www-form-urlencoded")
+        .timeout(std::time::Duration::from_secs(15))
+        .send_string(&token_body)
+        .map_err(|e| format!("Failed to get IGDB token: {}", e))?;
+    let token_json: serde_json::Value = serde_json::from_str(
+        &token_resp.into_string().map_err(|e| e.to_string())?
+    ).map_err(|e| e.to_string())?;
+    let access_token = token_json["access_token"]
+        .as_str()
+        .ok_or("Failed to parse access token")?
+        .to_string();
+
+    let query = format!(
+        "fields name,genres.name,involved_companies.company.name,involved_companies.developer,involved_companies.publisher,first_release_date,summary; search \"{}\"; limit 5;",
+        game_name.replace('"', "")
+    );
+    let igdb_resp = ureq::post("https://api.igdb.com/v4/games")
+        .set("Client-ID", client_id.trim())
+        .set("Authorization", &format!("Bearer {}", access_token))
+        .set("Content-Type", "text/plain")
+        .timeout(std::time::Duration::from_secs(15))
+        .send_string(&query)
+        .map_err(|e| format!("IGDB request failed: {}", e))?;
+    let igdb_games: serde_json::Value = serde_json::from_str(
+        &igdb_resp.into_string().map_err(|e| e.to_string())?
+    ).map_err(|e| e.to_string())?;
+
+    let entry = match igdb_games.as_array().and_then(|a| a.first()) {
+        Some(e) => e.clone(),
+        None => return Ok(None),
+    };
+
+    let genre = entry["genres"].as_array()
+        .and_then(|a| a.first())
+        .and_then(|g| g["name"].as_str())
+        .map(|s| s.to_string());
+
+    let mut developer: Option<String> = None;
+    let mut publisher: Option<String> = None;
+    if let Some(companies) = entry["involved_companies"].as_array() {
+        for ic in companies {
+            let name = ic["company"]["name"].as_str().map(|s| s.to_string());
+            if ic["developer"].as_bool().unwrap_or(false) && developer.is_none() {
+                developer = name.clone();
+            }
+            if ic["publisher"].as_bool().unwrap_or(false) && publisher.is_none() {
+                publisher = name;
+            }
+        }
+    }
+
+    let release_year = entry["first_release_date"].as_i64().map(|ts| {
+        let dt = chrono::DateTime::<chrono::Utc>::from_timestamp(ts, 0)
+            .unwrap_or_else(|| chrono::Utc::now());
+        dt.format("%Y").to_string().parse::<i64>().unwrap_or(0)
+    });
+
+    let summary = entry["summary"].as_str().map(|s| s.to_string());
+
+    let meta = IgdbMetadata {
+        genre: genre.clone(),
+        developer: developer.clone(),
+        publisher: publisher.clone(),
+        release_year,
+        summary: summary.clone(),
+    };
+
+    {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let _ = conn.execute(
+            "UPDATE games SET genre=?1, developer=?2, publisher=?3, release_year=?4 WHERE id=?5",
+            rusqlite::params![genre, developer, publisher, release_year, game_id],
+        );
+        if let Some(ref s) = summary {
+            let _ = conn.execute(
+                "UPDATE games SET description=?1 WHERE id=?2 AND (description IS NULL OR description = '')",
+                rusqlite::params![s, game_id],
+            );
+        }
+    }
+
+    Ok(Some(meta))
+}
+
+#[tauri::command]
+pub fn clear_igdb_data(state: State<DbState>, id: String) -> Result<(), String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    queries::clear_igdb_data(&conn, &id).map_err(|e| e.to_string())
 }

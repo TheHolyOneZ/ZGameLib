@@ -508,6 +508,11 @@ fn scan_steam_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<ru
             custom_fields: std::collections::HashMap::new(),
             hltb_main_mins: None,
             hltb_extra_mins: None,
+            genre: None,
+            developer: None,
+            publisher: None,
+            release_year: None,
+            igdb_skipped: false,
         };
         if queries::insert_game(&conn, &game).is_ok() {
             added += 1;
@@ -644,6 +649,11 @@ fn scan_epic_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rus
             custom_fields: std::collections::HashMap::new(),
             hltb_main_mins: None,
             hltb_extra_mins: None,
+            genre: None,
+            developer: None,
+            publisher: None,
+            release_year: None,
+            igdb_skipped: false,
         };
         if queries::insert_game(&conn, &game).is_ok() {
             added += 1;
@@ -788,6 +798,11 @@ fn scan_gog_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rusq
             custom_fields: std::collections::HashMap::new(),
             hltb_main_mins: None,
             hltb_extra_mins: None,
+            genre: None,
+            developer: None,
+            publisher: None,
+            release_year: None,
+            igdb_skipped: false,
         };
         if queries::insert_game(&conn, &game).is_ok() { added += 1; }
     }
@@ -1066,6 +1081,11 @@ fn scan_folder_for_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mut
             custom_fields: std::collections::HashMap::new(),
             hltb_main_mins: None,
             hltb_extra_mins: None,
+            genre: None,
+            developer: None,
+            publisher: None,
+            release_year: None,
+            igdb_skipped: false,
         };
         if queries::insert_game(&conn, &game).is_ok() {
             added += 1;

@@ -1,5 +1,5 @@
 use rusqlite::{Connection, params};
-use crate::models::{Game, Note};
+use crate::models::{Game, Note, Collection};
 
 fn row_to_game(row: &rusqlite::Row) -> rusqlite::Result<Game> {
     let tags_str: String = row.get(16)?;
@@ -32,16 +32,27 @@ fn row_to_game(row: &rusqlite::Row) -> rusqlite::Result<Game> {
         custom_fields,
         hltb_main_mins: row.get(20).unwrap_or(None),
         hltb_extra_mins: row.get(21).unwrap_or(None),
+        genre: row.get(22).unwrap_or(None),
+        developer: row.get(23).unwrap_or(None),
+        publisher: row.get(24).unwrap_or(None),
+        release_year: row.get(25).unwrap_or(None),
+        igdb_skipped: row.get::<_, i64>(26).unwrap_or(0) != 0,
     })
 }
 
+const GAME_SELECT: &str =
+    "SELECT id, name, platform, exe_path, install_dir, cover_path, description,
+            rating, is_favorite, status, playtime_mins, last_played, date_added,
+            steam_app_id, epic_app_name, sort_order, tags,
+            COALESCE(is_pinned, 0), deleted_at, COALESCE(custom_fields, '{}'),
+            hltb_main_mins, hltb_extra_mins,
+            genre, developer, publisher, release_year,
+            COALESCE(igdb_skipped, 0)
+     FROM games";
+
 pub fn get_all_games(conn: &Connection) -> anyhow::Result<Vec<Game>> {
     let mut stmt = conn.prepare(
-        "SELECT id, name, platform, exe_path, install_dir, cover_path, description,
-                rating, is_favorite, status, playtime_mins, last_played, date_added,
-                steam_app_id, epic_app_name, sort_order, tags,
-                COALESCE(is_pinned, 0), deleted_at, COALESCE(custom_fields, '{}'), hltb_main_mins, hltb_extra_mins
-         FROM games WHERE deleted_at IS NULL ORDER BY is_pinned DESC, sort_order ASC, name ASC",
+        &format!("{} WHERE deleted_at IS NULL ORDER BY is_pinned DESC, sort_order ASC, name ASC", GAME_SELECT),
     )?;
     let games = stmt
         .query_map([], row_to_game)?
@@ -52,11 +63,7 @@ pub fn get_all_games(conn: &Connection) -> anyhow::Result<Vec<Game>> {
 
 pub fn get_trashed_games(conn: &Connection) -> anyhow::Result<Vec<Game>> {
     let mut stmt = conn.prepare(
-        "SELECT id, name, platform, exe_path, install_dir, cover_path, description,
-                rating, is_favorite, status, playtime_mins, last_played, date_added,
-                steam_app_id, epic_app_name, sort_order, tags,
-                COALESCE(is_pinned, 0), deleted_at, COALESCE(custom_fields, '{}'), hltb_main_mins, hltb_extra_mins
-         FROM games WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC",
+        &format!("{} WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", GAME_SELECT),
     )?;
     let games = stmt
         .query_map([], row_to_game)?
@@ -85,11 +92,7 @@ pub fn purge_trash(conn: &Connection) -> anyhow::Result<usize> {
 
 pub fn get_game_by_id(conn: &Connection, id: &str) -> anyhow::Result<Option<Game>> {
     let mut stmt = conn.prepare(
-        "SELECT id, name, platform, exe_path, install_dir, cover_path, description,
-                rating, is_favorite, status, playtime_mins, last_played, date_added,
-                steam_app_id, epic_app_name, sort_order, tags,
-                COALESCE(is_pinned, 0), deleted_at, COALESCE(custom_fields, '{}'), hltb_main_mins, hltb_extra_mins
-         FROM games WHERE id = ?1",
+        &format!("{} WHERE id = ?1", GAME_SELECT),
     )?;
     let mut rows = stmt.query_map(params![id], row_to_game)?;
     Ok(rows.next().and_then(|r| r.ok()))
@@ -101,14 +104,17 @@ pub fn insert_game(conn: &Connection, game: &Game) -> anyhow::Result<()> {
     conn.execute(
         "INSERT INTO games (id, name, platform, exe_path, install_dir, cover_path, description,
                             rating, is_favorite, status, playtime_mins, last_played, date_added,
-                            steam_app_id, epic_app_name, sort_order, tags, is_pinned, custom_fields)
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19)",
+                            steam_app_id, epic_app_name, sort_order, tags, is_pinned, custom_fields,
+                            hltb_main_mins, hltb_extra_mins, genre, developer, publisher, release_year)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24,?25)",
         params![
             game.id, game.name, game.platform, game.exe_path, game.install_dir,
             game.cover_path, game.description, game.rating,
             game.is_favorite as i64, game.status, game.playtime_mins,
             game.last_played, game.date_added, game.steam_app_id, game.epic_app_name,
-            game.sort_order, tags, game.is_pinned as i64, cf
+            game.sort_order, tags, game.is_pinned as i64, cf,
+            game.hltb_main_mins, game.hltb_extra_mins,
+            game.genre, game.developer, game.publisher, game.release_year
         ],
     )?;
     Ok(())
@@ -121,13 +127,15 @@ pub fn update_game(conn: &Connection, game: &Game) -> anyhow::Result<()> {
         "UPDATE games SET name=?2, cover_path=?3, description=?4, rating=?5,
                           is_favorite=?6, status=?7, playtime_mins=?8, last_played=?9,
                           tags=?10, exe_path=?11, install_dir=?12, is_pinned=?13,
-                          custom_fields=?14, hltb_main_mins=?15, hltb_extra_mins=?16
+                          custom_fields=?14, hltb_main_mins=?15, hltb_extra_mins=?16,
+                          genre=?17, developer=?18, publisher=?19, release_year=?20
          WHERE id=?1",
         params![
             game.id, game.name, game.cover_path, game.description, game.rating,
             game.is_favorite as i64, game.status, game.playtime_mins,
             game.last_played, tags, game.exe_path, game.install_dir,
-            game.is_pinned as i64, cf, game.hltb_main_mins, game.hltb_extra_mins
+            game.is_pinned as i64, cf, game.hltb_main_mins, game.hltb_extra_mins,
+            game.genre, game.developer, game.publisher, game.release_year
         ],
     )?;
     Ok(())
@@ -199,6 +207,115 @@ pub fn set_setting(conn: &Connection, key: &str, value: &str) -> anyhow::Result<
     conn.execute(
         "INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
         params![key, value],
+    )?;
+    Ok(())
+}
+
+pub fn get_all_collections(conn: &Connection) -> anyhow::Result<Vec<Collection>> {
+    let mut stmt = conn.prepare(
+        "SELECT c.id, c.name, c.created_at, COUNT(cg.game_id) as game_count, c.description
+         FROM collections c
+         LEFT JOIN collection_games cg ON cg.collection_id = c.id
+         GROUP BY c.id
+         ORDER BY c.name ASC",
+    )?;
+    let collections = stmt
+        .query_map([], |row| {
+            Ok(Collection {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                created_at: row.get(2)?,
+                game_count: row.get(3)?,
+                description: row.get(4)?,
+            })
+        })?
+        .filter_map(|r| r.ok())
+        .collect();
+    Ok(collections)
+}
+
+pub fn insert_collection(conn: &Connection, id: &str, name: &str, created_at: &str) -> anyhow::Result<()> {
+    conn.execute(
+        "INSERT INTO collections (id, name, created_at) VALUES (?1, ?2, ?3)",
+        params![id, name, created_at],
+    )?;
+    Ok(())
+}
+
+pub fn rename_collection(conn: &Connection, id: &str, name: &str) -> anyhow::Result<()> {
+    conn.execute("UPDATE collections SET name=?2 WHERE id=?1", params![id, name])?;
+    Ok(())
+}
+
+pub fn delete_collection(conn: &Connection, id: &str) -> anyhow::Result<()> {
+    conn.execute("DELETE FROM collections WHERE id=?1", params![id])?;
+    Ok(())
+}
+
+pub fn get_collection_games(conn: &Connection, collection_id: &str) -> anyhow::Result<Vec<Game>> {
+    let mut stmt = conn.prepare(
+        &format!(
+            "{} INNER JOIN collection_games cg ON cg.game_id = games.id
+             WHERE cg.collection_id = ?1 AND games.deleted_at IS NULL
+             ORDER BY games.name ASC",
+            GAME_SELECT
+        ),
+    )?;
+    let games = stmt
+        .query_map(params![collection_id], row_to_game)?
+        .filter_map(|r| r.ok())
+        .collect();
+    Ok(games)
+}
+
+pub fn add_game_to_collection(conn: &Connection, collection_id: &str, game_id: &str) -> anyhow::Result<()> {
+    conn.execute(
+        "INSERT OR IGNORE INTO collection_games (collection_id, game_id) VALUES (?1, ?2)",
+        params![collection_id, game_id],
+    )?;
+    Ok(())
+}
+
+pub fn remove_game_from_collection(conn: &Connection, collection_id: &str, game_id: &str) -> anyhow::Result<()> {
+    conn.execute(
+        "DELETE FROM collection_games WHERE collection_id=?1 AND game_id=?2",
+        params![collection_id, game_id],
+    )?;
+    Ok(())
+}
+
+pub fn get_collections_for_game(conn: &Connection, game_id: &str) -> anyhow::Result<Vec<Collection>> {
+    let mut stmt = conn.prepare(
+        "SELECT c.id, c.name, c.created_at, 0 as game_count, c.description
+         FROM collections c
+         INNER JOIN collection_games cg ON cg.collection_id = c.id
+         WHERE cg.game_id = ?1
+         ORDER BY c.name ASC",
+    )?;
+    let collections = stmt
+        .query_map(params![game_id], |row| {
+            Ok(Collection {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                created_at: row.get(2)?,
+                game_count: row.get(3)?,
+                description: row.get(4)?,
+            })
+        })?
+        .filter_map(|r| r.ok())
+        .collect();
+    Ok(collections)
+}
+
+pub fn update_collection_description(conn: &Connection, id: &str, description: Option<&str>) -> anyhow::Result<()> {
+    conn.execute("UPDATE collections SET description=?2 WHERE id=?1", params![id, description])?;
+    Ok(())
+}
+
+pub fn clear_igdb_data(conn: &Connection, id: &str) -> anyhow::Result<()> {
+    conn.execute(
+        "UPDATE games SET genre=NULL, developer=NULL, publisher=NULL, release_year=NULL, igdb_skipped=1 WHERE id=?1",
+        params![id],
     )?;
     Ok(())
 }

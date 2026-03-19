@@ -1,6 +1,6 @@
 use tauri::State;
 use crate::db::{DbState, queries};
-use crate::models::{AppSettings, StatusConfig, ImportResult, Game, Session, Note, FullExport};
+use crate::models::{AppSettings, StatusConfig, ImportResult, Game, Session, Note, FullExport, CollectionGameEntry};
 
 const DEFAULT_STATUSES: &str = r##"[
     {"key":"playing","label":"Playing","color":"#4ade80"},
@@ -40,6 +40,9 @@ pub fn get_settings(state: State<DbState>) -> Result<AppSettings, String> {
             .map(|v| v == "true").unwrap_or(false),
         playtime_reminders: queries::get_setting(&conn, "playtime_reminders")
             .map(|v| v != "false").unwrap_or(true),
+        igdb_client_id: queries::get_setting(&conn, "igdb_client_id").filter(|v| !v.is_empty()),
+        igdb_client_secret: queries::get_setting(&conn, "igdb_client_secret").filter(|v| !v.is_empty()),
+        custom_themes: queries::get_setting(&conn, "custom_themes").unwrap_or_else(|| "[]".to_string()),
     })
 }
 
@@ -65,6 +68,13 @@ pub fn save_settings(state: State<DbState>, settings: AppSettings) -> Result<(),
     queries::set_setting(&conn, "close_to_tray", if settings.close_to_tray { "true" } else { "false" }).map_err(|e| e.to_string())?;
     queries::set_setting(&conn, "autostart", if settings.autostart { "true" } else { "false" }).map_err(|e| e.to_string())?;
     queries::set_setting(&conn, "playtime_reminders", if settings.playtime_reminders { "true" } else { "false" }).map_err(|e| e.to_string())?;
+    if let Some(ref v) = settings.igdb_client_id {
+        queries::set_setting(&conn, "igdb_client_id", v).map_err(|e| e.to_string())?;
+    }
+    if let Some(ref v) = settings.igdb_client_secret {
+        queries::set_setting(&conn, "igdb_client_secret", v).map_err(|e| e.to_string())?;
+    }
+    queries::set_setting(&conn, "custom_themes", &settings.custom_themes).map_err(|e| e.to_string())?;
 
     #[cfg(windows)]
     {
@@ -92,11 +102,12 @@ pub fn import_library(state: State<DbState>, path: String) -> Result<ImportResul
     let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let raw: serde_json::Value = serde_json::from_str(&json).map_err(|e| e.to_string())?;
 
-    let (games, sessions, notes): (Vec<Game>, Vec<Session>, Vec<Note>) = if raw.is_array() {
-        (serde_json::from_value(raw).unwrap_or_default(), vec![], vec![])
+    let (games, sessions, notes, collections, collection_games) = if raw.is_array() {
+        let g: Vec<Game> = serde_json::from_value(raw).unwrap_or_default();
+        (g, vec![], vec![], vec![], vec![])
     } else {
         let export: FullExport = serde_json::from_str(&json).map_err(|e| e.to_string())?;
-        (export.games, export.sessions, export.notes)
+        (export.games, export.sessions, export.notes, export.collections, export.collection_games)
     };
 
     let conn = state.0.lock().map_err(|e| e.to_string())?;
@@ -153,6 +164,25 @@ pub fn import_library(state: State<DbState>, path: String) -> Result<ImportResul
         );
     }
 
+    for collection in collections {
+        let exists: bool = conn.query_row(
+            "SELECT COUNT(*) FROM collections WHERE id = ?1",
+            rusqlite::params![collection.id], |r| r.get::<_, i64>(0),
+        ).unwrap_or(0) > 0;
+        if exists { continue; }
+        let _ = conn.execute(
+            "INSERT INTO collections (id, name, created_at) VALUES (?1, ?2, ?3)",
+            rusqlite::params![collection.id, collection.name, collection.created_at],
+        );
+    }
+
+    for cg in collection_games {
+        let _ = conn.execute(
+            "INSERT OR IGNORE INTO collection_games (collection_id, game_id) VALUES (?1, ?2)",
+            rusqlite::params![cg.collection_id, cg.game_id],
+        );
+    }
+
     Ok(ImportResult { added, skipped })
 }
 
@@ -176,7 +206,17 @@ pub fn export_library(state: State<DbState>) -> Result<String, String> {
         created_at: r.get(3)?, updated_at: r.get(4)?,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
     drop(n_stmt);
-    let export = FullExport { version: 2, games, sessions, notes };
+
+    let collections = crate::db::queries::get_all_collections(&conn).unwrap_or_default();
+    let mut cg_stmt = conn.prepare(
+        "SELECT collection_id, game_id FROM collection_games ORDER BY collection_id ASC"
+    ).map_err(|e| e.to_string())?;
+    let collection_games: Vec<CollectionGameEntry> = cg_stmt.query_map([], |r| {
+        Ok(CollectionGameEntry { collection_id: r.get(0)?, game_id: r.get(1)? })
+    }).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+    drop(cg_stmt);
+
+    let export = FullExport { version: 3, games, sessions, notes, collections, collection_games };
     serde_json::to_string_pretty(&export).map_err(|e| e.to_string())
 }
 
@@ -192,11 +232,11 @@ fn csv_escape(s: &str) -> String {
 pub fn export_library_csv(state: State<DbState>) -> Result<String, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let games = crate::db::queries::get_all_games(&conn).map_err(|e| e.to_string())?;
-    let mut csv = String::from("id,name,platform,status,rating,playtime_mins,date_added,is_favorite,tags\n");
+    let mut csv = String::from("id,name,platform,status,rating,playtime_mins,date_added,is_favorite,tags,genre,developer,publisher,release_year\n");
     for g in &games {
         let tags = g.tags.join("|");
         csv.push_str(&format!(
-            "{},{},{},{},{},{},{},{},{}\n",
+            "{},{},{},{},{},{},{},{},{},{},{},{},{}\n",
             csv_escape(&g.id),
             csv_escape(&g.name),
             csv_escape(&g.platform),
@@ -206,6 +246,10 @@ pub fn export_library_csv(state: State<DbState>) -> Result<String, String> {
             csv_escape(&g.date_added),
             g.is_favorite,
             csv_escape(&tags),
+            csv_escape(g.genre.as_deref().unwrap_or("")),
+            csv_escape(g.developer.as_deref().unwrap_or("")),
+            csv_escape(g.publisher.as_deref().unwrap_or("")),
+            g.release_year.map(|y| y.to_string()).unwrap_or_default(),
         ));
     }
     Ok(csv)

@@ -27,6 +27,27 @@ pub struct Game {
     pub hltb_main_mins: Option<i64>,
     #[serde(default)]
     pub hltb_extra_mins: Option<i64>,
+    #[serde(default)]
+    pub genre: Option<String>,
+    #[serde(default)]
+    pub developer: Option<String>,
+    #[serde(default)]
+    pub publisher: Option<String>,
+    #[serde(default)]
+    pub release_year: Option<i64>,
+    #[serde(default)]
+    pub igdb_skipped: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Collection {
+    pub id: String,
+    pub name: String,
+    pub created_at: String,
+    #[serde(default)]
+    pub game_count: i64,
+    #[serde(default)]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,6 +84,19 @@ pub struct UpdateGamePayload {
     pub exe_path: Option<String>,
     pub install_dir: Option<String>,
     pub custom_fields: Option<std::collections::HashMap<String, String>>,
+    pub genre: Option<String>,
+    pub developer: Option<String>,
+    pub publisher: Option<String>,
+    pub release_year: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IgdbMetadata {
+    pub genre: Option<String>,
+    pub developer: Option<String>,
+    pub publisher: Option<String>,
+    pub release_year: Option<i64>,
+    pub summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,12 +134,31 @@ pub struct FullExport {
     pub games: Vec<Game>,
     pub sessions: Vec<Session>,
     pub notes: Vec<Note>,
+    #[serde(default)]
+    pub collections: Vec<Collection>,
+    #[serde(default)]
+    pub collection_games: Vec<CollectionGameEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CollectionGameEntry {
+    pub collection_id: String,
+    pub game_id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeeklyPlaytime {
     pub week: String,
     pub mins: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LibraryGrowthEntry {
+    pub month: String,
+    pub steam: i64,
+    pub epic: i64,
+    pub gog: i64,
+    pub custom: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -137,4 +190,8 @@ pub struct AppSettings {
     pub close_to_tray: bool,
     pub autostart: bool,
     pub playtime_reminders: bool,
+    pub igdb_client_id: Option<String>,
+    pub igdb_client_secret: Option<String>,
+    #[serde(default)]
+    pub custom_themes: String,
 }
