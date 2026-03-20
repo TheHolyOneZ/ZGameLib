@@ -208,6 +208,12 @@ pub struct AppSettings {
     pub exclude_idle_time: bool,
     #[serde(default)]
     pub include_uninstalled_steam: bool,
+    #[serde(default)]
+    pub onboarding_completed: bool,
+    #[serde(default)]
+    pub onboarding_tour_mode: String,
+    #[serde(default)]
+    pub last_seen_version: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -224,4 +230,28 @@ fn default_true() -> bool { true }
 pub struct SteamSyncResult {
     pub updated: usize,
     pub skipped: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GameSummary {
+    pub id: String,
+    pub name: String,
+    pub cover_path: Option<String>,
+    pub platform: String,
+    pub rating: Option<f64>,
+    pub playtime_mins: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct YearInReview {
+    pub total_sessions: usize,
+    pub total_hours: f64,
+    pub most_played: Option<GameSummary>,
+    pub top_rated: Option<GameSummary>,
+    pub games_completed: usize,
+    pub new_games_added: usize,
+    pub platform_breakdown: std::collections::HashMap<String, usize>,
+    pub longest_session_mins: i64,
+    pub busiest_month: Option<String>,
+    pub total_unique_games_played: usize,
 }

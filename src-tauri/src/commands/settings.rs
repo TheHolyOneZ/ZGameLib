@@ -1,6 +1,6 @@
 use tauri::State;
 use crate::db::{DbState, queries};
-use crate::models::{AppSettings, StatusConfig, ImportResult, Game, Session, Note, FullExport, CollectionGameEntry, SteamSyncResult, PullUninstalledResult};
+use crate::models::{AppSettings, StatusConfig, ImportResult, Game, Session, Note, FullExport, CollectionGameEntry, SteamSyncResult, PullUninstalledResult, YearInReview, GameSummary};
 
 const DEFAULT_STATUSES: &str = r##"[
     {"key":"playing","label":"Playing","color":"#4ade80"},
@@ -25,7 +25,7 @@ pub fn get_settings(state: State<DbState>) -> Result<AppSettings, String> {
         epic_path: queries::get_setting(&conn, "epic_path"),
         custom_statuses,
         grid_columns: queries::get_setting(&conn, "grid_columns")
-            .and_then(|v| v.parse().ok()).unwrap_or(4),
+            .and_then(|v| v.parse().ok()).unwrap_or(6),
         auto_scan: queries::get_setting(&conn, "auto_scan")
             .map(|v| v == "true").unwrap_or(false),
         show_playtime_on_cards: queries::get_setting(&conn, "show_playtime_on_cards")
@@ -53,6 +53,12 @@ pub fn get_settings(state: State<DbState>) -> Result<AppSettings, String> {
             .map(|v| v != "false").unwrap_or(true),
         include_uninstalled_steam: queries::get_setting(&conn, "include_uninstalled_steam")
             .map(|v| v == "true").unwrap_or(false),
+        onboarding_completed: queries::get_setting(&conn, "onboarding_completed")
+            .map(|v| v == "true").unwrap_or(false),
+        onboarding_tour_mode: queries::get_setting(&conn, "onboarding_tour_mode")
+            .unwrap_or_default(),
+        last_seen_version: queries::get_setting(&conn, "last_seen_version")
+            .unwrap_or_default(),
     })
 }
 
@@ -96,6 +102,8 @@ pub fn save_settings(state: State<DbState>, settings: AppSettings) -> Result<(),
     }
     queries::set_setting(&conn, "exclude_idle_time", if settings.exclude_idle_time { "true" } else { "false" }).map_err(|e| e.to_string())?;
     queries::set_setting(&conn, "include_uninstalled_steam", if settings.include_uninstalled_steam { "true" } else { "false" }).map_err(|e| e.to_string())?;
+    queries::set_setting(&conn, "onboarding_completed", if settings.onboarding_completed { "true" } else { "false" }).map_err(|e| e.to_string())?;
+    queries::set_setting(&conn, "onboarding_tour_mode", &settings.onboarding_tour_mode).map_err(|e| e.to_string())?;
 
     #[cfg(windows)]
     {
@@ -313,6 +321,115 @@ pub fn is_portable_mode() -> bool {
         .ok()
         .and_then(|p| p.parent().map(|d| d.join("portable.flag").exists()))
         .unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn save_setting(state: State<DbState>, key: String, value: String) -> Result<(), String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    queries::set_setting(&conn, &key, &value).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_year_in_review(state: State<DbState>, year: i32) -> Result<YearInReview, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let year_start = format!("{}-01-01", year);
+    let year_end = format!("{}-01-01", year + 1);
+
+    let (total_sessions, total_hours, longest_session_mins) = {
+        let mut stmt = conn.prepare(
+            "SELECT COUNT(*), COALESCE(SUM(duration_mins), 0.0), COALESCE(MAX(duration_mins), 0) FROM sessions WHERE started_at >= ?1 AND started_at < ?2"
+        ).map_err(|e| e.to_string())?;
+        stmt.query_row(rusqlite::params![year_start, year_end], |r| {
+            Ok((
+                r.get::<_, i64>(0).unwrap_or(0) as usize,
+                r.get::<_, f64>(1).unwrap_or(0.0) / 60.0,
+                r.get::<_, i64>(2).unwrap_or(0),
+            ))
+        }).unwrap_or((0, 0.0, 0))
+    };
+
+    let most_played = {
+        let mut stmt = conn.prepare(
+            "SELECT g.id, g.name, g.cover_path, g.platform, g.rating, SUM(s.duration_mins) as tm
+             FROM sessions s JOIN games g ON s.game_id = g.id
+             WHERE s.started_at >= ?1 AND s.started_at < ?2 AND g.deleted_at IS NULL
+             GROUP BY s.game_id ORDER BY tm DESC LIMIT 1"
+        ).map_err(|e| e.to_string())?;
+        stmt.query_row(rusqlite::params![year_start, year_end], |r| {
+            Ok(GameSummary { id: r.get(0)?, name: r.get(1)?, cover_path: r.get(2)?, platform: r.get(3)?, rating: r.get(4)?, playtime_mins: r.get(5)? })
+        }).ok()
+    };
+
+    let top_rated = {
+        let mut stmt = conn.prepare(
+            "SELECT g.id, g.name, g.cover_path, g.platform, g.rating, g.playtime_mins
+             FROM games g WHERE g.deleted_at IS NULL AND g.rating IS NOT NULL
+             AND (g.date_added >= ?1 AND g.date_added < ?2
+                  OR EXISTS (SELECT 1 FROM sessions s WHERE s.game_id = g.id AND s.started_at >= ?1 AND s.started_at < ?2))
+             ORDER BY g.rating DESC LIMIT 1"
+        ).map_err(|e| e.to_string())?;
+        stmt.query_row(rusqlite::params![year_start, year_end, year_start, year_end], |r| {
+            Ok(GameSummary { id: r.get(0)?, name: r.get(1)?, cover_path: r.get(2)?, platform: r.get(3)?, rating: r.get(4)?, playtime_mins: r.get(5)? })
+        }).ok()
+    };
+
+    let games_completed: usize = conn.query_row(
+        "SELECT COUNT(*) FROM games WHERE status = 'completed' AND last_played >= ?1 AND last_played < ?2 AND deleted_at IS NULL",
+        rusqlite::params![year_start, year_end], |r| r.get::<_, i64>(0)
+    ).unwrap_or(0) as usize;
+
+    let new_games_added: usize = conn.query_row(
+        "SELECT COUNT(*) FROM games WHERE date_added >= ?1 AND date_added < ?2 AND deleted_at IS NULL",
+        rusqlite::params![year_start, year_end], |r| r.get::<_, i64>(0)
+    ).unwrap_or(0) as usize;
+
+    let platform_breakdown = {
+        let mut stmt = conn.prepare(
+            "SELECT g.platform, COUNT(DISTINCT s.game_id) FROM sessions s
+             JOIN games g ON s.game_id = g.id
+             WHERE s.started_at >= ?1 AND s.started_at < ?2 AND g.deleted_at IS NULL
+             GROUP BY g.platform"
+        ).map_err(|e| e.to_string())?;
+        let rows = stmt.query_map(rusqlite::params![year_start, year_end], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?))
+        }).map_err(|e| e.to_string())?;
+        let mut map = std::collections::HashMap::new();
+        for row in rows.filter_map(|r| r.ok()) {
+            map.insert(row.0, row.1 as usize);
+        }
+        map
+    };
+
+    let busiest_month = {
+        let mut stmt = conn.prepare(
+            "SELECT strftime('%m', started_at) as mo, COUNT(*) as cnt FROM sessions
+             WHERE started_at >= ?1 AND started_at < ?2 GROUP BY mo ORDER BY cnt DESC LIMIT 1"
+        ).map_err(|e| e.to_string())?;
+        stmt.query_row(rusqlite::params![year_start, year_end], |r| r.get::<_, String>(0)).ok()
+            .and_then(|m| {
+                const MONTHS: [&str; 12] = ["January","February","March","April","May","June",
+                                             "July","August","September","October","November","December"];
+                m.parse::<usize>().ok().and_then(|n| MONTHS.get(n.saturating_sub(1)).map(|s| s.to_string()))
+            })
+    };
+
+    let total_unique_games_played: usize = conn.query_row(
+        "SELECT COUNT(DISTINCT game_id) FROM sessions WHERE started_at >= ?1 AND started_at < ?2",
+        rusqlite::params![year_start, year_end], |r| r.get::<_, i64>(0)
+    ).unwrap_or(0) as usize;
+
+    Ok(YearInReview {
+        total_sessions,
+        total_hours,
+        most_played,
+        top_rated,
+        games_completed,
+        new_games_added,
+        platform_breakdown,
+        longest_session_mins,
+        busiest_month,
+        total_unique_games_played,
+    })
 }
 
 #[tauri::command]

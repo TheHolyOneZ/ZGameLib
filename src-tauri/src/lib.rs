@@ -117,6 +117,39 @@ pub fn run() {
                 }
             }
 
+            {
+                let db = app.state::<DbState>();
+                let lock = db.0.lock();
+                if let Ok(conn) = lock {
+                    let completed = queries::get_setting(&conn, "onboarding_completed")
+                        .map(|v| v == "true")
+                        .unwrap_or(false);
+                    if !completed {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("start-onboarding", ());
+                        }
+                    }
+                }
+            }
+
+            {
+                let db = app.state::<DbState>();
+                let lock = db.0.lock();
+                if let Ok(conn) = lock {
+                    let current_version = env!("CARGO_PKG_VERSION");
+                    let last_seen = queries::get_setting(&conn, "last_seen_version").unwrap_or_default();
+                    if last_seen != current_version {
+                        if last_seen.is_empty() || last_seen.starts_with("0.") {
+                            let _ = queries::set_setting(&conn, "onboarding_completed", "false");
+                        }
+                        let _ = queries::set_setting(&conn, "last_seen_version", current_version);
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("show-whats-new", current_version);
+                        }
+                    }
+                }
+            }
+
             let start_min = {
                 let db = app.state::<DbState>();
                 let lock = db.0.lock();
@@ -225,6 +258,8 @@ pub fn run() {
             settings::is_portable_mode,
             settings::sync_steam_playtime,
             settings::pull_uninstalled_steam_games,
+            settings::save_setting,
+            settings::get_year_in_review,
             logger::get_log_contents,
             modloader::check_modloader_status,
             modloader::install_bepinex,

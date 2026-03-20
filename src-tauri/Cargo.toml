@@ -1,6 +1,6 @@
 [package]
 name = "zgamelib"
-version = "0.9.0"
+version = "1.0.0"
 description = "ZGameLib - Personal Game Library"
 authors = ["TheHolyOneZ"]
 license = "MIT"
