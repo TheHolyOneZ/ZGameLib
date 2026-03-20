@@ -1070,17 +1070,6 @@ npx tauri dev
 
 Rust source changes trigger a full backend recompile. Frontend changes hot-reload instantly.
 
-### Production Build
-
-```powershell
-.\build-release.ps1
-```
-
-Outputs installers to `src-tauri/target/release/bundle/`:
-- `msi/ZGameLib_1.0.0_x64_en-US.msi`
-- `nsis/ZGameLib_1.0.0_x64-setup.exe`
-
----
 
 ## License
 
