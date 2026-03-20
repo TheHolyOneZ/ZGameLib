@@ -67,7 +67,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true }: P
 
   return (
     <div className="flex items-center gap-3 px-6 pt-5 pb-3">
-      <div className="relative flex-1 max-w-xs group">
+      <div className="relative flex-1 max-w-xs group" data-tour="search-input">
         <SearchIcon
           size={14}
           className="absolute left-3 inset-y-0 my-auto text-slate-600 pointer-events-none group-focus-within:text-accent-400 transition-colors duration-300"
@@ -139,7 +139,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true }: P
       <div className="flex-1" />
 
       {showSort && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" data-tour="sort-key">
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
@@ -164,7 +164,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true }: P
       )}
 
       {showViewToggle && (
-        <div className="flex items-center glass rounded-xl p-1 gap-0.5">
+        <div className="flex items-center glass rounded-xl p-1 gap-0.5" data-tour="view-toggle">
           {[
             { mode: "grid" as const, Icon: GridIcon },
             { mode: "list" as const, Icon: ListIcon },

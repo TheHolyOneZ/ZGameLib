@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { api } from "@/lib/tauri";
 import { useUIStore } from "@/store/useUIStore";
+import { useNavigate } from "react-router-dom";
 import { useCover } from "@/hooks/useCover";
 import type { AppSettings, StatusConfig, Game, CustomTheme } from "@/lib/types";
 import { COVER_PLACEHOLDER } from "@/lib/utils";
@@ -38,14 +39,16 @@ const COLOR_PRESETS = [
   "#e879f9", "#a3e635", "#94a3b8",
 ];
 
-function Section({ title, icon, delay = 0, children }: {
+function Section({ title, icon, delay = 0, dataTour, children }: {
   title: string;
   icon: React.ReactNode;
   delay?: number;
+  dataTour?: string;
   children: React.ReactNode;
 }) {
   return (
     <motion.div
+      data-tour={dataTour}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -113,11 +116,15 @@ function TrashedGameRow({ game, onRestore, onDelete }: { game: Game; onRestore: 
 }
 
 export default function Settings() {
+  const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
   const setCustomStatuses = useUIStore((s) => s.setCustomStatuses);
   const setSettingsDirty = useUIStore((s) => s.setSettingsDirty);
   const settingsUnsavedNav = useUIStore((s) => s.settingsUnsavedNav);
   const setSettingsUnsavedNav = useUIStore((s) => s.setSettingsUnsavedNav);
+  const setModeSelectorOpen = useUIStore((s) => s.setModeSelectorOpen);
+  const setWhatsNewOpen = useUIStore((s) => s.setWhatsNewOpen);
+  const setWhatsNewVersion = useUIStore((s) => s.setWhatsNewVersion);
   const queryClient = useQueryClient();
   const cachedSettings = queryClient.getQueryData<AppSettings>(["settings"]);
 
@@ -747,7 +754,7 @@ export default function Settings() {
             </div>
           </Section>
 
-          <Section title="Appearance" icon={<SparkleIcon size={13} />} delay={0.06}>
+          <Section title="Appearance" icon={<SparkleIcon size={13} />} delay={0.06} dataTour="settings-appearance">
             <div className="flex flex-col gap-5">
               <div>
                 <label className="text-xs text-slate-600 uppercase tracking-[0.14em] font-semibold block mb-2.5">
@@ -841,7 +848,7 @@ export default function Settings() {
             </div>
           </Section>
 
-          <Section title="Behavior" icon={<SettingsIcon size={13} />} delay={0.1}>
+          <Section title="Behavior" icon={<SettingsIcon size={13} />} delay={0.1} dataTour="settings-behavior">
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -1120,7 +1127,7 @@ export default function Settings() {
             </motion.button>
           </Section>
 
-          <Section title="Integrations" icon={<SparkleIcon size={13} />} delay={0.15}>
+          <Section title="Integrations" icon={<SparkleIcon size={13} />} delay={0.15} dataTour="settings-integrations">
             <p className="text-[11px] text-slate-600 mb-4 leading-relaxed">
               Connect third-party services to enrich your library with metadata.
             </p>
@@ -1252,7 +1259,7 @@ export default function Settings() {
           </motion.button>
 
           <div className="grid grid-cols-2 gap-4">
-            <Section title="Data" icon={<DownloadIcon size={13} />} delay={0.2}>
+            <Section title="Data" icon={<DownloadIcon size={13} />} delay={0.2} dataTour="settings-data">
               <p className="text-[11px] text-slate-600 mb-4 leading-relaxed">
                 Export your library as JSON or restore from a backup.
               </p>
@@ -1362,7 +1369,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v0.9.0</p>
+                  <p className="text-[11px] text-slate-600">v1.0.0</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}
@@ -1421,6 +1428,30 @@ export default function Settings() {
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                   </svg>
                   Copy Logs
+                </motion.button>
+                <div className="w-full h-px bg-white/[0.05] my-1" />
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setModeSelectorOpen(true)}
+                  className="btn-ghost w-full justify-center text-[12px]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L15 8.5L22 9.5L17 14.5L18.5 21.5L12 18L5.5 21.5L7 14.5L2 9.5L9 8.5L12 2Z"/>
+                  </svg>
+                  Take the Tour
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { setWhatsNewVersion("1.0.0"); setWhatsNewOpen(true); }}
+                  className="btn-ghost w-full justify-center text-[12px]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8V12M12 16h.01"/>
+                  </svg>
+                  What's New
                 </motion.button>
               </div>
             </Section>

@@ -467,6 +467,7 @@ export default function GameDetail() {
           />
           <motion.div
             ref={panelRef}
+            data-tour="game-detail"
             initial={{ x: "100%", opacity: 0.5 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
@@ -547,6 +548,7 @@ export default function GameDetail() {
               ].map((tab) => (
                 <button
                   key={tab.key}
+                  data-tour={`detail-tab-${tab.key}`}
                   onClick={() => {
                     setActiveTab(tab.key);
                     if (tab.key === "screenshots" && screenshots === null) loadScreenshots();
@@ -745,6 +747,7 @@ export default function GameDetail() {
                       addToast("Could not fetch HLTB data", "error");
                     }
                   }}
+                  data-tour="hltb-btn"
                   className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-accent-400 glass transition-all duration-200"
                   title="Fetch HowLongToBeat estimate"
                 >
@@ -755,6 +758,7 @@ export default function GameDetail() {
                   whileTap={{ scale: 0.9 }}
                   onClick={handleIgdbFetch}
                   disabled={igdbFetching}
+                  data-tour="igdb-btn"
                   className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-accent-400 glass transition-all duration-200 disabled:opacity-40"
                   title="Fetch IGDB metadata"
                 >
@@ -781,6 +785,7 @@ export default function GameDetail() {
 
               <div className="flex gap-2">
                 <motion.button
+                  data-tour="play-btn"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handlePlay}

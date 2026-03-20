@@ -134,6 +134,9 @@ export interface AppSettings {
   steam_id_64: string | null;
   exclude_idle_time: boolean;
   include_uninstalled_steam: boolean;
+  onboarding_completed: boolean;
+  onboarding_tour_mode: string;
+  last_seen_version: string;
 }
 
 export interface PullUninstalledResult {
@@ -202,6 +205,28 @@ export type FilterLogic = "and" | "or";
 
 export type SortKey = "name" | "rating" | "last_played" | "date_added" | "playtime_mins" | "sort_order";
 export type ViewMode = "grid" | "list";
+
+export interface GameSummary {
+  id: string;
+  name: string;
+  cover_path: string | null;
+  platform: string;
+  rating: number | null;
+  playtime_mins: number;
+}
+
+export interface YearInReview {
+  total_sessions: number;
+  total_hours: number;
+  most_played: GameSummary | null;
+  top_rated: GameSummary | null;
+  games_completed: number;
+  new_games_added: number;
+  platform_breakdown: Record<string, number>;
+  longest_session_mins: number;
+  busiest_month: string | null;
+  total_unique_games_played: number;
+}
 
 export interface ModInfo {
   name: string;

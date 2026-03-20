@@ -32,6 +32,17 @@ export default function Topbar() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [scanMenuOpen]);
+
+  useEffect(() => {
+    const handleOpen = () => setScanMenuOpen(true);
+    const handleClose = () => setScanMenuOpen(false);
+    window.addEventListener("tour:scan-menu-open", handleOpen);
+    window.addEventListener("tour:scan-menu-close", handleClose);
+    return () => {
+      window.removeEventListener("tour:scan-menu-open", handleOpen);
+      window.removeEventListener("tour:scan-menu-close", handleClose);
+    };
+  }, []);
   const { data: isPortable } = useQuery({ queryKey: ["portable_mode"], queryFn: api.isPortableMode, staleTime: Infinity });
   const [igdbScanning, setIgdbScanning] = useState(false);
   const [igdbProgress, setIgdbProgress] = useState(0);
@@ -57,7 +68,7 @@ export default function Topbar() {
     for (const game of pending) {
       try {
         await api.fetchIgdbMetadata(game.id, game.name, settings.igdb_client_id!, settings.igdb_client_secret!);
-      } catch { /* skip failed games */ }
+      } catch {}
       done++;
       setIgdbProgress(done);
     }
@@ -103,6 +114,7 @@ export default function Topbar() {
       </div>
       <div className="flex items-center gap-2">
       <motion.button
+        data-tour="log-btn"
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setLogPanelOpen(!logPanelOpen)}
@@ -119,6 +131,7 @@ export default function Topbar() {
       <div className="w-px h-5 bg-white/6 shrink-0" />
 
       <motion.button
+        data-tour="dedup-btn"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.93 }}
         onClick={handleRemoveDuplicates}
@@ -130,6 +143,7 @@ export default function Topbar() {
       </motion.button>
 
       <motion.button
+        data-tour="igdb-scan-btn"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.93 }}
         onClick={handleIgdbScanAll}
@@ -155,7 +169,7 @@ export default function Topbar() {
       <div className="w-px h-5 bg-white/6 shrink-0" />
 
       <div className="flex items-center gap-1.5 shrink-0">
-        <div className="relative" ref={scanMenuRef}>
+        <div className="relative" ref={scanMenuRef} data-tour="scan-btn">
           <div className="flex items-stretch">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -188,6 +202,7 @@ export default function Topbar() {
           <AnimatePresence>
             {scanMenuOpen && (
               <motion.div
+                data-tour="scan-dropdown"
                 initial={{ opacity: 0, y: -6, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.96 }}
@@ -221,6 +236,7 @@ export default function Topbar() {
           </AnimatePresence>
         </div>
         <motion.button
+          data-tour="add-game-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => setAddGameOpen(true)}

@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,9 @@ import LogPanel from "@/components/ui/LogPanel";
 import LoadingBeam from "@/components/ui/LoadingBeam";
 import CommandPalette from "@/components/ui/CommandPalette";
 import ModsPromoPanel from "@/components/game/ModsPromoPanel";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import TourModeSelector from "@/components/onboarding/TourModeSelector";
+import WhatsNewModal from "@/components/modals/WhatsNewModal";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
 
@@ -223,10 +226,34 @@ function AppBehavior() {
     return () => { promise.then((f) => f()); };
   }, []);
 
+  useEffect(() => {
+    const promise = listen("start-onboarding", () => {
+      useUIStore.getState().setModeSelectorOpen(true);
+    });
+    return () => { promise.then((f) => f()); };
+  }, []);
+
+  const hasTriggeredOnboarding = useRef(false);
+  useEffect(() => {
+    if (data && data.onboarding_completed === false && !hasTriggeredOnboarding.current) {
+      hasTriggeredOnboarding.current = true;
+      useUIStore.getState().setModeSelectorOpen(true);
+    }
+  }, [data?.onboarding_completed]);
+
+  useEffect(() => {
+    const promise = listen<string>("show-whats-new", (event) => {
+      useUIStore.getState().setWhatsNewVersion(event.payload);
+      useUIStore.getState().setWhatsNewOpen(true);
+    });
+    return () => { promise.then((f) => f()); };
+  }, []);
+
   return null;
 }
 
 export default function Layout() {
+  const navigate = useNavigate();
   const pendingUpdate = useUIStore((s) => s.pendingUpdate);
   const setPendingUpdate = useUIStore((s) => s.setPendingUpdate);
   const isDetailOpen = useUIStore((s) => s.isDetailOpen);
@@ -235,12 +262,19 @@ export default function Layout() {
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const selectedGameId = useGameStore((s) => s.selectedGameId);
   const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
+  const modeSelectorOpen = useUIStore((s) => s.modeSelectorOpen);
+  const setModeSelectorOpen = useUIStore((s) => s.setModeSelectorOpen);
+  const setTourOpen = useUIStore((s) => s.setTourOpen);
+  const setTourMode = useUIStore((s) => s.setTourMode);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault();
         setCommandPaletteOpen(true);
+        return;
+      }
+      if (e.ctrlKey && e.key === "z") {
         return;
       }
       const tag = (document.activeElement as HTMLElement)?.tagName;
@@ -252,17 +286,33 @@ export default function Layout() {
         return;
       }
       if (e.key === "n" || e.key === "N") { setAddGameOpen(true); return; }
+      if (e.key === "w" || e.key === "W") { navigate("/wrapped"); return; }
+      if (e.key === "s" || e.key === "S") {
+        const scanBtn = document.querySelector<HTMLButtonElement>('[data-tour="scan-btn"] button');
+        scanBtn?.focus();
+        return;
+      }
+      if (e.key === "h" || e.key === "H") {
+        useGameStore.getState().toggleShowHidden();
+        return;
+      }
       if (!selectedGameId) return;
       const { games, updateGame } = useGameStore.getState();
       const game = games.find((g) => g.id === selectedGameId);
       if (!game) return;
       if (e.key === "f" || e.key === "F") {
         api.toggleFavorite(game.id).then((v) => updateGame({ ...game, is_favorite: v })).catch(() => {});
+        return;
+      }
+      const ratingMap: Record<string, number> = { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "0": 10 };
+      if (ratingMap[e.key] !== undefined && isDetailOpen) {
+        const rating = ratingMap[e.key];
+        api.updateGame({ id: game.id, rating }).then((updated) => updateGame(updated)).catch(() => {});
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [selectedGameId, showShortcuts, setDetailOpen, setAddGameOpen, setCommandPaletteOpen]);
+  }, [selectedGameId, showShortcuts, setDetailOpen, setAddGameOpen, setCommandPaletteOpen, isDetailOpen, navigate]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -284,6 +334,23 @@ export default function Layout() {
       <ConfirmModal />
       <LogPanel />
       <ToastContainer />
+      <WhatsNewModal />
+      <AnimatePresence>
+        {modeSelectorOpen && (
+          <TourModeSelector
+            onStart={(mode) => {
+              setModeSelectorOpen(false);
+              setTourMode(mode);
+              setTourOpen(true);
+            }}
+            onSkip={async () => {
+              setModeSelectorOpen(false);
+              await api.saveSetting("onboarding_completed", "true");
+            }}
+          />
+        )}
+      </AnimatePresence>
+      <OnboardingTour />
       <AnimatePresence>
         {pendingUpdate && (
           <UpdateBanner update={pendingUpdate} onDismiss={() => setPendingUpdate(null)} />
@@ -315,6 +382,10 @@ export default function Layout() {
                   ["/", "Focus search"],
                   ["N", "Add game"],
                   ["F", "Toggle favorite (game open)"],
+                  ["1–9, 0", "Quick rate game (0 = 10)"],
+                  ["S", "Focus scan button"],
+                  ["W", "Open Year in Review"],
+                  ["H", "Toggle hidden games"],
                   ["Escape", "Close panel / overlay"],
                   ["Ctrl + Enter", "Save note"],
                   ["?", "Toggle this help"],

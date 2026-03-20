@@ -111,6 +111,7 @@ export default function AddGameModal() {
             className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
           >
             <div
+              data-tour="add-game-modal"
               className="glass-strong rounded-3xl w-full max-w-md pointer-events-auto overflow-hidden"
               style={{
                 boxShadow: "0 0 80px rgb(var(--accent-500) /0.12), 0 30px 80px rgba(0,0,0,0.6)",

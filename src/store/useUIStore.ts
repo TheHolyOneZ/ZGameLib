@@ -63,6 +63,18 @@ interface UIStore {
   setSettingsDirty: (v: boolean) => void;
   settingsUnsavedNav: { path: string; proceed: () => void } | null;
   setSettingsUnsavedNav: (v: { path: string; proceed: () => void } | null) => void;
+
+  modeSelectorOpen: boolean;
+  setModeSelectorOpen: (v: boolean) => void;
+  tourOpen: boolean;
+  setTourOpen: (v: boolean) => void;
+  tourMode: "fast" | "standard" | "detailed" | null;
+  setTourMode: (m: "fast" | "standard" | "detailed" | null) => void;
+
+  whatsNewOpen: boolean;
+  setWhatsNewOpen: (v: boolean) => void;
+  whatsNewVersion: string;
+  setWhatsNewVersion: (v: string) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -118,4 +130,16 @@ export const useUIStore = create<UIStore>((set) => ({
   setSettingsDirty: (v) => set({ settingsDirty: v }),
   settingsUnsavedNav: null,
   setSettingsUnsavedNav: (v) => set({ settingsUnsavedNav: v }),
+
+  modeSelectorOpen: false,
+  setModeSelectorOpen: (v) => set({ modeSelectorOpen: v }),
+  tourOpen: false,
+  setTourOpen: (v) => set({ tourOpen: v }),
+  tourMode: null,
+  setTourMode: (m) => set({ tourMode: m }),
+
+  whatsNewOpen: false,
+  setWhatsNewOpen: (v) => set({ whatsNewOpen: v }),
+  whatsNewVersion: "",
+  setWhatsNewVersion: (v) => set({ whatsNewVersion: v }),
 }));

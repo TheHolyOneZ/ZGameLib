@@ -115,7 +115,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     queryFn: () => api.getSettings(),
     staleTime: 5 * 60 * 1000,
   });
-  const gridColumns = appSettings?.grid_columns ?? 4;
+  const gridColumns = appSettings?.grid_columns ?? 6;
   const paginationEnabled = appSettings?.pagination_enabled ?? false;
   const pageSize = appSettings?.pagination_page_size ?? 24;
 
@@ -158,6 +158,53 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
   }
 
   if (games.length === 0) {
+    const onboardingDone = appSettings?.onboarding_completed ?? false;
+
+    if (onboardingDone) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center justify-center py-20 gap-6 text-center px-6"
+        >
+          <div className="relative">
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center"
+              style={{ boxShadow: "0 0 40px rgb(var(--accent-500) / 0.15), 0 16px 40px rgba(0,0,0,0.3)", border: "1px solid rgb(var(--accent-500) / 0.15)" }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-accent-400"><rect x="3" y="7" width="18" height="13" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M9 14H10M9 11H10M14 14H15M14 11H15M12 7V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </motion.div>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-300 mb-1">Your library is empty</h3>
+            <p className="text-sm text-slate-600 max-w-sm leading-relaxed">Get started by scanning for games or adding one manually.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3 w-full max-w-md">
+            {[
+              { label: "Scan Steam / Epic / GOG", desc: "Auto-detect installed games", onClick: () => import("@/hooks/useGames").then(m => m.useScan) },
+              { label: "Add a game manually", desc: "Pick an exe or folder", onClick: () => setAddGameOpen(true) },
+              { label: "Browse Steam library", desc: "Import owned games", onClick: () => setAddGameOpen(true) },
+            ].map((card, i) => (
+              <motion.button
+                key={i}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={card.onClick}
+                className="flex flex-col items-start gap-1 p-3 rounded-xl text-left transition-all"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                <span className="text-[12px] font-medium text-slate-300">{card.label}</span>
+                <span className="text-[10px] text-slate-600">{card.desc}</span>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+      );
+    }
+
     return (
       <EmptyState
         title="No games found"
@@ -237,12 +284,14 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
   return (
     <>
       <div
+        data-tour="game-grid"
         className="p-6 grid gap-4"
         style={{ gridTemplateColumns: gridColumns === 0 ? "repeat(auto-fill, minmax(180px, 1fr))" : `repeat(${gridColumns}, minmax(0, 1fr))` }}
       >
-        {visibleGames.map((g) => (
+        {visibleGames.map((g, idx) => (
           <motion.div
             key={g.id}
+            data-tour={idx === 0 ? "game-card-first" : undefined}
             variants={itemVariants}
             initial="hidden"
             animate="show"

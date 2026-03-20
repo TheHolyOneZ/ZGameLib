@@ -4,6 +4,7 @@ import GameGrid from "@/components/library/GameGrid";
 import RecentlyPlayed from "@/components/library/RecentlyPlayed";
 import PinnedRow from "@/components/library/PinnedRow";
 import GoalBar from "@/components/library/GoalBar";
+import Recommendations from "@/components/library/Recommendations";
 import PageSearch from "@/components/layout/PageSearch";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 
@@ -16,6 +17,7 @@ export default function Library() {
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
         <GoalBar />
         <PinnedRow />
+        <Recommendations />
         <RecentlyPlayed />
         <GameGrid isLoading={isLoading} />
       </div>

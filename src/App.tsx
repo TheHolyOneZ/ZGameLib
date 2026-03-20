@@ -7,6 +7,7 @@ import Stats from "@/pages/Stats";
 import Settings from "@/pages/Settings";
 import Spin from "@/pages/Spin";
 import Collections from "@/pages/Collections";
+import Wrapped from "@/pages/Wrapped";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/recent" element={<RecentlyPlayedPage />} />
           <Route path="/collections" element={<Collections />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/wrapped" element={<Wrapped />} />
           <Route path="/spin" element={<Spin />} />
           <Route path="/settings" element={<Settings />} />
         </Route>

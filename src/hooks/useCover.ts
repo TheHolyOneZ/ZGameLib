@@ -9,13 +9,13 @@ function cacheGet(key: string): string | undefined {
   if (!cache.has(key)) return undefined;
   const val = cache.get(key)!;
   cache.delete(key);
-  cache.set(key, val); // move to end (most recently used)
+  cache.set(key, val);
   return val;
 }
 
 function cacheSet(key: string, val: string) {
   if (cache.has(key)) cache.delete(key);
-  else if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!); // evict oldest
+  else if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
   cache.set(key, val);
 }
 

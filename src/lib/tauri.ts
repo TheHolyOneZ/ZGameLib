@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult } from "./types";
+import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult, YearInReview } from "./types";
 
 export const api = {
   getAllGames: () => invoke<Game[]>("get_all_games"),
@@ -84,4 +84,6 @@ export const api = {
   syncSteamPlaytime: (apiKey: string, steamId: string) => invoke<SteamSyncResult>("sync_steam_playtime", { apiKey, steamId }),
   pullUninstalledSteamGames: (apiKey: string, steamId: string) => invoke<PullUninstalledResult>("pull_uninstalled_steam_games", { apiKey, steamId }),
   getLogContents: () => invoke<string[]>("get_log_contents"),
+  saveSetting: (key: string, value: string) => invoke<void>("save_setting", { key, value }),
+  getYearInReview: (year: number) => invoke<YearInReview>("get_year_in_review", { year }),
 };

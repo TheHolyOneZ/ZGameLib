@@ -1,5 +1,92 @@
 # Changelog
 
+## [1.0.0] — 2026-03-20
+
+### Added
+
+#### Interactive Onboarding Tour (F-050)
+- **Tour Mode Selector** — full-screen mode picker on first launch with three options: Quick Start (~2 min, 10 steps), Standard (~5 min, 23 steps), Deep Dive (~10 min, 37 steps); skip option marks onboarding complete without running tour
+- **Cinematic spotlight overlay** — SVG mask-based spotlight with animated cutout, accent glow ring, double pulse rings, and radial gradient highlight; auto-scrolls off-screen targets into view before measuring
+- **Live interactive demonstrations** — tour steps open real UI elements in real time: scan dropdown expands and spotlight highlights the dropdown options, context menu appears on game cards via synthetic right-click, Add Game modal opens with single/bulk tabs visible, game detail panel opens with IGDB and HLTB buttons highlighted, settings page scrolls to each section
+- **Full toolbar coverage** — dedicated tour steps for Bulk IGDB Metadata, Remove Duplicates, and Scan Log buttons; IGDB fetch and HowLongToBeat buttons in the game detail panel
+- **Auto-scan on first launch** — scan runs automatically on every tour mode (Quick/Standard/Detailed) so the library populates while the user watches
+- **Chapter system** (Deep Dive) — 37 steps organized into 9 labeled chapters with gradient indicator strip
+- **Tour card** — glass-morphism floating card with gradient accent header, animated position transitions between steps, step counter badge, and smooth content crossfade
+- **Cinematic finale** — fly-through purple SVG heart animation with "Made By TheHolyOneZ" credit text, particle effects, and phased reveal
+- **Keyboard navigation** — Enter/→ advances, ← goes back, Escape skips the tour
+- **Step cleanup** — each step has before/afterRender/after hooks; context menu opens in `afterRender` (fires after spotlight is stable) to prevent scroll-triggered dismissal between navigation steps
+- **Persistent state** — `onboarding_completed` and `onboarding_tour_mode` saved to SQLite settings; both backend event and frontend settings check ensure the tour triggers reliably on first launch
+- **Onboarding reset on upgrade** — users upgrading from 0.x to 1.0.0 get the tour automatically; `onboarding_completed` is reset during version migration
+- **Restart tour** — "Take the Tour" button in Settings → About
+- **`data-tour` attributes** on all targeted elements including toolbar buttons (`igdb-scan-btn`, `dedup-btn`, `log-btn`), game detail buttons (`hltb-btn`, `igdb-btn`), scan dropdown (`scan-dropdown`), and modal container (`add-game-modal`)
+
+#### Year in Review / Wrapped (F-051)
+- **New `/wrapped` page** — annual gaming recap page accessible from sidebar (between Spin and Settings) and keyboard shortcut `W`
+- **Year selector** — dropdown defaulting to current year; only shows years that have at least one recorded session
+- **Stat cards** (staggered Framer Motion entry animation):
+  - Hero card: total hours across total sessions
+  - Most Played: game cover, name, platform badge, total hours this year
+  - Top Rated: highest-rated game played or added in the year
+  - New Additions: games added to the library this year
+  - Completed: games marked completed this year
+  - Longest Session: formatted as hours + minutes
+  - Busiest Month: month name with 12-bar chart showing all months' session counts
+  - Platform Split: SVG donut chart of platform distribution for the year
+  - Games Explored: distinct games with at least one session
+- **Empty state** — friendly message with prompt to start tracking when no session data exists for the selected year
+- **Rust backend command** `get_year_in_review(year: i32) -> YearInReview` — multi-join SQLite queries aggregating `sessions`, `games`, and `settings`; `GameSummary` struct carries `id`, `name`, `cover_path`, `platform`, `rating`, `playtime_mins`
+
+#### Smart Play Recommendations (F-052)
+- **Recommendations strip** — collapsible horizontal scroll row on the Library page (below Pinned row, above grid) showing up to 5 personalized backlog suggestions
+- **Taste profiling** — frontend-only algorithm; scores each `status = none/backlog` game with `playtime_mins < 30` against the user's rated-≥-8 games: matching tags ×2 + genre match ×3; tiebreak: longest time in library (most neglected wins)
+- **Hint label** — each recommendation card shows "X matching tags" so the user knows why it was surfaced
+- **Per-card dismiss** — × button hides that game for the session (resets on reload); no persistent blacklist
+- **Threshold guard** — only renders when the library has ≥ 3 games rated ≥ 8 AND ≥ 3 eligible suggestions; otherwise hidden entirely with no empty state
+
+#### What's New Modal (I-047)
+- **In-app release notes modal** — shown automatically on first launch after an update; displays headline and bullet points for the current version
+- **Version comparison** — Rust backend compares `last_seen_version` in settings to `env!("CARGO_PKG_VERSION")` at startup and emits `show-whats-new` event if they differ; updates stored version immediately
+- **"View full changelog" link** opens GitHub releases page
+- **Manual trigger** — "What's New" button in Settings → About
+
+#### Empty State Enhancement (I-048)
+- **Contextual empty state** — when the library is empty and onboarding is complete, shows three action cards: Scan for Games, Add Manually, Browse Steam; replaces the generic illustration
+- **Onboarding empty state** — first-run users (onboarding not yet complete) see the original illustration-based empty state
+
+#### Keyboard Shortcut Additions (I-049)
+- `S` — focuses the Scan Games dropdown button in the top bar
+- `W` — navigates to the Wrapped / Year in Review page
+- `H` — toggles visibility of hidden/duplicate games
+- `1`–`9`, `0` — quick-rate the currently open game detail (1 = 1★ through 9 = 9★, 0 = 10★); only fires when the detail panel is open, never when typing in a field
+- `Ctrl+Z` — undo last game deletion; triggers the undo countdown if one is pending (existing mechanic, now surfaced in the shortcuts overlay)
+- All new shortcuts added to the `?` keyboard shortcuts overlay
+
+### Changed
+- Version bumped to **1.0.0**
+- Default grid columns changed from 4 to **6** (both Rust default and frontend fallback)
+- Wrapped page added to sidebar navigation between Spin and Settings
+- Settings → About section: added "Take the Tour" and "What's New" buttons
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
 ## [0.9.0] — 2026-03-20
 
 ### Added

@@ -10,6 +10,14 @@ import {
   SettingsIcon, SteamIcon, EpicIcon, CustomGameIcon,
   SparkleIcon, SpinIcon, GogIcon, ChevronLeftIcon, ImageIcon, DownloadIcon,
 } from "@/components/ui/Icons";
+
+function WrappedIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 import FilterBuilder from "@/components/library/FilterBuilder";
 
 function FolderIcon({ size = 16, className }: { size?: number; className?: string }) {
@@ -63,11 +71,12 @@ export default function Sidebar() {
     { key: "custom" as Platform, label: "Custom", icon: CustomGameIcon, count: games.filter((g) => g.platform === "custom").length },
   ];
 
-  const navItem = (path: string, icon: React.ReactNode, label: string) => {
+  const navItem = (path: string, icon: React.ReactNode, label: string, dataTour?: string) => {
     const isActive = location.pathname === path;
     return (
       <button
         key={path}
+        data-tour={dataTour}
         onClick={() => { resetFilters(); guardedNavigate(path); }}
         title={collapsed ? label : undefined}
         className={cn(
@@ -104,7 +113,6 @@ export default function Sidebar() {
       transition={{ type: "spring", stiffness: 400, damping: 35 }}
       className="shrink-0 flex flex-col h-full glass-sidebar py-5 px-3 gap-1 overflow-y-auto overflow-x-hidden"
     >
-      {/* Header */}
       <div className={cn("flex mb-6", collapsed ? "flex-col items-center gap-2" : "items-center gap-3 px-3")}>
         <motion.div
           whileHover={{ rotate: 8, scale: 1.05 }}
@@ -139,18 +147,17 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Nav */}
       <div className="flex flex-col gap-0.5">
         {navItem("/", <LibraryIcon size={16} />, "Library")}
         {navItem("/favorites", <HeartIcon size={16} />, "Favorites")}
         {navItem("/recent", <ClockIcon size={16} />, "Recently Played")}
-        {navItem("/collections", <FolderIcon size={16} />, "Collections")}
-        {navItem("/stats", <ChartIcon size={16} />, "Stats")}
-        {navItem("/spin", <SpinIcon size={16} />, "Game Spin")}
-        {navItem("/settings", <SettingsIcon size={16} />, "Settings")}
+        {navItem("/collections", <FolderIcon size={16} />, "Collections", "nav-collections")}
+        {navItem("/stats", <ChartIcon size={16} />, "Stats", "nav-stats")}
+        {navItem("/wrapped", <WrappedIcon size={16} />, "Year in Review", "nav-wrapped")}
+        {navItem("/spin", <SpinIcon size={16} />, "Game Spin", "nav-spin")}
+        {navItem("/settings", <SettingsIcon size={16} />, "Settings", "nav-settings")}
       </div>
 
-      {/* Overview / Platform / Status — hidden when collapsed */}
       <AnimatePresence initial={false}>
         {!collapsed && (
           <motion.div
@@ -177,7 +184,7 @@ export default function Sidebar() {
               </div>
             </div>
 
-            <div className="mt-4 mb-1">
+            <div className="mt-4 mb-1" data-tour="sidebar-platform">
               <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
                 <span className="w-3 h-px bg-slate-800" />
                 Platforms
@@ -316,7 +323,7 @@ export default function Sidebar() {
               </div>
             )}
 
-            <div className="mt-3 mb-1">
+            <div className="mt-3 mb-1" data-tour="sidebar-advanced">
               <button
                 onClick={() => setAdvancedOpen((v) => !v)}
                 className="w-full"
