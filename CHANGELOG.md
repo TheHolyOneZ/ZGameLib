@@ -1,5 +1,35 @@
 # Changelog
 
+
+
+
+## [1.2.1] — 2026-04-04
+
+### Added
+
+- **Ubisoft Connect platform** — added alongside Steam, Epic Games, and GOG as a built-in default platform
+- **Ubisoft auto-scan** — reads `HKLM\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\{id}` for install directories and `HKLM\...\Uninstall\Uplay Install {id}` for display names; exposed as `scan_ubisoft_games` command and included in `scan_all_games`
+- **Ubisoft launch** — `launch_ubisoft_game` command opens `ubisoft://launch/{gameId}` via `open::that()`; playtime tracking follows the same directory-based process monitoring used by Steam and Epic
+- **`ubisoft_game_id` column** — new nullable TEXT column in the `games` table; live migration via `ALTER TABLE` applies to existing installs
+- **Ubisoft platform badge** — `UbisoftIcon` SVG added to `Icons.tsx` and `PlatformBadge.tsx`
+- **Ubisoft sidebar filter** — Ubisoft Connect entry with live game count in the Platforms section of the sidebar
+- **Ubisoft spin wheel filter** — "Ubisoft" quick-filter chip added to the Game Spin page; platform dot colored `#60a5fa`
+- **Ubisoft stats support** — `ubisoft` field added to `LibraryGrowthEntry`; library growth chart, platform breakdown, and Year in Review donut all track Ubisoft games separately
+- **Ubisoft filter builder** — Ubisoft Connect available as a platform value in the advanced filter builder
+- **Ubisoft game detail** — Game ID shown in the info section of the detail panel when `ubisoft_game_id` is set
+- **Collapsible library sections** — Play Next and Recently Played rows can be collapsed by clicking their header; a chevron rotates to indicate state; collapsed state persists in `localStorage` across sessions
+
+### Changed
+
+- `VALID_PLATFORMS` in `settings.rs` extended to include `"ubisoft"`
+- `Platform` TypeScript union extended to `"steam" | "epic" | "gog" | "custom" | "ubisoft"`
+- `useLaunchGame` hook routes Ubisoft games to `launch_ubisoft_game` before falling back to direct exe launch
+
+
+
+---
+
+
 ## [1.2.0] — 2026-03-21
 
 ### Added
