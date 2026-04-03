@@ -11,10 +11,11 @@ const PLATFORM_COLORS: Record<string, string> = {
   epic: "#94a3b8",
   gog: "#c084fc",
   custom: "#a78bfa",
+  ubisoft: "#60a5fa",
 };
 
 function GameCoverMini({ game }: { game: GameSummary }) {
-  const fakeGame = { ...game, is_favorite: false, tags: [], status: "none" as const, is_pinned: false, igdb_skipped: false, not_installed: false, sort_order: 0, playtime_mins: game.playtime_mins, date_added: "", deleted_at: null, exe_path: null, install_dir: null, description: null, last_played: null, steam_app_id: null, epic_app_name: null, custom_fields: {}, hltb_main_mins: null, hltb_extra_mins: null, genre: null, developer: null, publisher: null, release_year: null, platform: game.platform as Platform };
+  const fakeGame = { ...game, is_favorite: false, tags: [], status: "none" as const, is_pinned: false, igdb_skipped: false, not_installed: false, sort_order: 0, playtime_mins: game.playtime_mins, date_added: "", deleted_at: null, exe_path: null, install_dir: null, description: null, last_played: null, steam_app_id: null, epic_app_name: null, ubisoft_game_id: null, custom_fields: {}, hltb_main_mins: null, hltb_extra_mins: null, genre: null, developer: null, publisher: null, release_year: null, platform: game.platform as Platform };
   const coverUrl = useCover(fakeGame);
 
   return (

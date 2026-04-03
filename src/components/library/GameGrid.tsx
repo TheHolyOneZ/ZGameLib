@@ -185,7 +185,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
           </div>
           <div className="grid grid-cols-3 gap-3 w-full max-w-md">
             {[
-              { label: "Scan Steam / Epic / GOG", desc: "Auto-detect installed games", onClick: () => scan() },
+              { label: "Scan Steam / Epic / GOG / Ubisoft", desc: "Auto-detect installed games", onClick: () => scan() },
               { label: "Add a game manually", desc: "Pick an exe or folder", onClick: () => setAddGameOpen(true) },
               { label: "Browse Steam library", desc: "Import owned games", onClick: () => setAddGameOpen(true) },
             ].map((card, i) => (

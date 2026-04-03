@@ -1,5 +1,5 @@
 import { cn, PLATFORM_COLORS } from "@/lib/utils";
-import { SteamIcon, EpicIcon, GogIcon, CustomGameIcon } from "@/components/ui/Icons";
+import { SteamIcon, EpicIcon, GogIcon, CustomGameIcon, UbisoftIcon } from "@/components/ui/Icons";
 import Badge from "@/components/ui/Badge";
 import type { Platform } from "@/lib/types";
 
@@ -8,6 +8,7 @@ const PLATFORM_ICONS: Record<Platform, React.ComponentType<{ size?: number; clas
   epic: EpicIcon,
   gog: GogIcon,
   custom: CustomGameIcon,
+  ubisoft: UbisoftIcon,
 };
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -15,6 +16,7 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   epic: "Epic",
   gog: "GOG",
   custom: "Custom",
+  ubisoft: "Ubisoft",
 };
 
 interface PlatformBadgeProps {

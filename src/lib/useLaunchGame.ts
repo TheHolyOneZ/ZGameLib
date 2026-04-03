@@ -11,6 +11,8 @@ export function useLaunchGame() {
       return api.launchSteamGame(game.steam_app_id, game.id);
     if (game.platform === "epic" && game.epic_app_name)
       return api.launchEpicGame(game.epic_app_name, game.id);
+    if (game.platform === "ubisoft" && game.ubisoft_game_id)
+      return api.launchUbisoftGame(game.ubisoft_game_id, game.id);
     return api.launchGame(game.id);
   };
 

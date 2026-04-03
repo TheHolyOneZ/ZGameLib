@@ -5,12 +5,12 @@
 </h1>
 
 <p><strong>A beautiful, free, open-source personal game library for Windows.</strong><br/>
-Track, organize, rate and launch every game you own — Steam, Epic, GOG, and custom — from one sleek desktop app.</p>
+Track, organize, rate and launch every game you own — Steam, Epic, GOG, Ubisoft Connect, and custom — from one sleek desktop app.</p>
 
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-1.2.0-22c55e?style=flat-square" alt="v1.2.0"/>
+  <img src="https://img.shields.io/badge/Version-1.2.1-22c55e?style=flat-square" alt="v1.2.1"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -18,8 +18,8 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 <p>
   <a href="https://zsync.eu/zgamelib/"><strong>🌐 Website</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_1.2.0_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_1.2.0_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
+  <a href="https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
   <a href="https://github.com/TheHolyOneZ/ZGameLib"><strong>GitHub</strong></a>
 </p>
 
@@ -27,21 +27,19 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, and cu
 
 ---
 
-## What's New in v1.2.0
+## What's New in v1.2.1
 
-v1.2.0 brings **game session management**, **security hardening**, and **8 targeted bug fixes**.
+v1.2.1 adds **Ubisoft Connect** as a full first-class platform and introduces **collapsible library sections**.
 
 | Feature | Description |
 |---------|-------------|
-| **Game-Already-Running Detection** | Launching while another session is active shows a confirm dialog with "Stop & Launch" to switch games instantly |
-| **Live "Playing" Indicator** | Play button shows a pulsing green "Playing" state while a game session is active |
-| **Stop & Launch** | Terminates the running game process (`TerminateProcess`) before launching the new one |
-| **ZipSlip Patch** | Path traversal vulnerability patched in BepInEx/MelonLoader installer |
-| **Filesystem Hardening** | `save_file` restricted to safe directories (AppData, Documents, Desktop) |
-| **IGDB Token Cache** | OAuth tokens cached with 60s expiry buffer — no redundant round-trips |
-| **Soft-Delete Fix** | Partial UNIQUE indexes prevent duplicate blocking on soft-deleted records |
-| **Transaction Safety** | `reorder_games` and `batch_update_games` wrapped in SQLite transactions |
-| **Game Tracking Fallback** | Steam/Epic games without install directory stay tracked instead of resetting instantly |
+| **Ubisoft Connect** | Added alongside Steam, Epic Games, and GOG as a default platform |
+| **Ubisoft Auto-Scan** | Reads Windows registry (`HKLM\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs`) to detect installed games and executables |
+| **Ubisoft Launch** | Launches games directly via `ubisoft://launch/{id}` protocol with full playtime tracking |
+| **Ubisoft Platform Badge** | Sidebar filter, spin wheel filter, stats chart, library growth chart, and Year in Review all support Ubisoft |
+| **Filter Builder Support** | Ubisoft Connect available as a platform option in the advanced filter builder |
+| **Game Detail Panel** | Shows Ubisoft Game ID in the info section |
+| **Collapsible Sections** | Play Next and Recently Played rows can be collapsed with one click — preference persists across sessions |
 
 ---
 
@@ -61,8 +59,8 @@ v1.2.0 brings **game session management**, **security hardening**, and **8 targe
 
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| [ZGameLib_1.2.0_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_1.2.0_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
-| [ZGameLib_1.2.0_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_1.2.0_x64-setup.exe) | `.exe` | NSIS alternative installer |
+| [ZGameLib_1.2.1_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
+| [ZGameLib_1.2.1_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64-setup.exe) | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -70,7 +68,7 @@ v1.2.0 brings **game session management**, **security hardening**, and **8 targe
 
 ## Table of Contents
 
-- [What's New in v1.2.0](#whats-new-in-v120)
+- [What's New in v1.2.1](#whats-new-in-v121)
 - [Features](#features)
   - [Onboarding Tour](#-interactive-onboarding-tour)
   - [Library & Scanning](#-library--scanning)
@@ -167,7 +165,7 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 - **Drag-and-drop reordering** — select "Custom Order" sort to drag cards into any order; persisted to the database
 
 **Filtering**
-- Filter by platform: All / Steam / Epic / GOG / Custom
+- Filter by platform: All / Steam / Epic / GOG / Ubisoft Connect / Custom
 - Filter by status (any custom status)
 - Filter by cover art: Has Cover / Missing Cover (sidebar, with counts)
 - Favorites-only toggle
@@ -252,12 +250,24 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 </td>
 <td width="33%" valign="top">
 
+**🔵 Ubisoft Connect**
+- Launches via `ubisoft://launch/{gameId}` protocol
+- Registry-based game ID and install directory detection
+- Full playtime tracking with directory-based process monitoring
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
 **⬜ GOG / Custom**
 - Direct executable spawn
 - Full process monitoring from launch
 - Instant playtime tracking start
 
 </td>
+<td width="33%" valign="top"></td>
+<td width="33%" valign="top"></td>
 </tr>
 </table>
 
@@ -391,7 +401,7 @@ Can't decide what to play? Let the wheel decide.
 <td width="50%" valign="top">
 
 **Controls & Result**
-- Filter pool: All · Steam · Epic · GOG · Custom · Favorites
+- Filter pool: All · Steam · Epic · GOG · Ubisoft · Custom · Favorites
 - Free-text search to include only matching games
 - **Exclude last winner** toggle
 - Pool preview: first 5 game covers + "+X more"

@@ -121,6 +121,7 @@ function ValueInput({ field, value, onChange }: { field: FilterField; value: str
       <option value="steam" className="bg-[#0d0c14]">Steam</option>
       <option value="epic" className="bg-[#0d0c14]">Epic Games</option>
       <option value="gog" className="bg-[#0d0c14]">GOG</option>
+      <option value="ubisoft" className="bg-[#0d0c14]">Ubisoft Connect</option>
       <option value="custom" className="bg-[#0d0c14]">Custom</option>
     </select>
   );

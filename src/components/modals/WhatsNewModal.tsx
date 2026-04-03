@@ -9,6 +9,18 @@ interface ReleaseNote {
 }
 
 const RELEASE_NOTES: Record<string, ReleaseNote> = {
+  "1.2.1": {
+    headline: "Ubisoft Connect support — auto-scan, launch, and full platform integration.",
+    bullets: [
+      "Ubisoft Connect added as a default platform alongside Steam, Epic Games, and GOG",
+      "Auto-scan reads the Ubisoft registry to detect installed games and their executables",
+      "Launch Ubisoft games directly via the ubisoft:// protocol with full playtime tracking",
+      "Ubisoft platform badge, sidebar filter, spin wheel filter, and stats chart support",
+      "Library growth chart and Year in Review now track Ubisoft games separately",
+      "Filter builder and advanced filters include Ubisoft Connect as a platform option",
+      "Game detail panel shows Ubisoft Game ID in the info section",
+    ],
+  },
   "1.2.0": {
     headline: "Game tracking overhaul, security hardening, and targeted bug fixes.",
     bullets: [

@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   GamepadIcon, LibraryIcon, HeartIcon, ClockIcon, ChartIcon,
   SettingsIcon, SteamIcon, EpicIcon, CustomGameIcon,
-  SparkleIcon, SpinIcon, GogIcon, ChevronLeftIcon, ImageIcon, DownloadIcon,
+  SparkleIcon, SpinIcon, GogIcon, UbisoftIcon, ChevronLeftIcon, ImageIcon, DownloadIcon,
 } from "@/components/ui/Icons";
 
 function WrappedIcon({ size = 16, className }: { size?: number; className?: string }) {
@@ -68,6 +68,7 @@ export default function Sidebar() {
     { key: "steam" as Platform, label: "Steam", icon: SteamIcon, count: games.filter((g) => g.platform === "steam").length },
     { key: "epic" as Platform, label: "Epic Games", icon: EpicIcon, count: games.filter((g) => g.platform === "epic").length },
     { key: "gog" as Platform, label: "GOG", icon: GogIcon, count: games.filter((g) => g.platform === "gog").length },
+    { key: "ubisoft" as Platform, label: "Ubisoft Connect", icon: UbisoftIcon, count: games.filter((g) => g.platform === "ubisoft").length },
     { key: "custom" as Platform, label: "Custom", icon: CustomGameIcon, count: games.filter((g) => g.platform === "custom").length },
   ];
 

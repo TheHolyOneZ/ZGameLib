@@ -1,10 +1,23 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { timeAgo, COVER_PLACEHOLDER } from "@/lib/utils";
 import { useUIStore } from "@/store/useUIStore";
 import { useCover } from "@/hooks/useCover";
 import { ClockIcon } from "@/components/ui/Icons";
 import type { Game } from "@/lib/types";
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12" height="12" viewBox="0 0 24 24" fill="none"
+      className="text-slate-600 transition-transform duration-300"
+      style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+    >
+      <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 
 function RecentCard({ game, index }: { game: Game; index: number }) {
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
@@ -42,6 +55,15 @@ function RecentCard({ game, index }: { game: Game; index: number }) {
 
 export default function RecentlyPlayed() {
   const games = useGameStore((s) => s.games);
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem("section_recentlyplayed_open") !== "false"; } catch { return true; }
+  });
+
+  const toggle = () => setOpen((v) => {
+    const next = !v;
+    try { localStorage.setItem("section_recentlyplayed_open", String(next)); } catch {}
+    return next;
+  });
 
   const recent = [...games]
     .filter((g) => g.last_played)
@@ -51,19 +73,36 @@ export default function RecentlyPlayed() {
   if (recent.length === 0) return null;
 
   return (
-    <div className="px-6 pt-6 pb-2">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="px-6 pt-4 pb-2">
+      <button
+        onClick={toggle}
+        className="flex items-center gap-2 mb-3 w-full text-left group"
+      >
         <ClockIcon size={14} className="text-slate-600" />
-        <h2 className="text-[11px] font-semibold text-slate-600 uppercase tracking-[0.15em]">
+        <h2 className="text-[11px] font-semibold text-slate-600 uppercase tracking-[0.15em] group-hover:text-slate-400 transition-colors">
           Recently Played
         </h2>
         <div className="flex-1 h-px bg-white/[0.03]" />
-      </div>
-      <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
-        {recent.map((g, i) => (
-          <RecentCard key={g.id} game={g} index={i} />
-        ))}
-      </div>
+        <ChevronIcon open={open} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="recent-cards"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
+              {recent.map((g, i) => (
+                <RecentCard key={g.id} game={g} index={i} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

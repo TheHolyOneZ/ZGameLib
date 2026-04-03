@@ -217,7 +217,7 @@ export default function Topbar() {
                   <ScanIcon size={13} className="text-slate-400 shrink-0" />
                   <div>
                     <div className="font-medium">Scan Installed Games</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Detect games from Steam, Epic, GOG</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Detect games from Steam, Epic, GOG, Ubisoft</div>
                   </div>
                 </button>
                 <button

@@ -14,6 +14,7 @@ const PLATFORM_COLORS_HEX: Record<Platform, string> = {
   epic: "#94a3b8",
   gog: "#c084fc",
   custom: "#a78bfa",
+  ubisoft: "#60a5fa",
 };
 
 const STATUS_HEX: Record<GameStatus, string> = {
@@ -98,6 +99,7 @@ export default function Stats() {
     epic: games.filter((g) => g.platform === "epic").length,
     gog: games.filter((g) => g.platform === "gog").length,
     custom: games.filter((g) => g.platform === "custom").length,
+    ubisoft: games.filter((g) => g.platform === "ubisoft").length,
   };
 
   const statusBreakdown: Partial<Record<GameStatus, number>> = {};
@@ -345,13 +347,13 @@ export default function Stats() {
           </p>
           <div className="glass rounded-2xl p-4">
             {(() => {
-              const platforms: Platform[] = ["steam", "epic", "gog", "custom"];
-              const maxTotal = Math.max(...libraryGrowth.map((e) => e.steam + e.epic + e.gog + e.custom), 1);
+              const platforms: Platform[] = ["steam", "epic", "gog", "custom", "ubisoft"];
+              const maxTotal = Math.max(...libraryGrowth.map((e) => e.steam + e.epic + e.gog + e.custom + e.ubisoft), 1);
               return (
                 <div>
                   <div className="flex items-end gap-1 h-32 mb-2">
                     {libraryGrowth.map((entry, i) => {
-                      const total = entry.steam + entry.epic + entry.gog + entry.custom;
+                      const total = entry.steam + entry.epic + entry.gog + entry.custom + entry.ubisoft;
                       const pct = (total / maxTotal) * 100;
                       return (
                         <div key={entry.month} className="flex-1 flex flex-col justify-end relative group/bar">

@@ -343,6 +343,17 @@ export function GogIcon({ size = 16, className }: IconProps) {
   );
 }
 
+export function UbisoftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M12 2.5C12 2.5 16 5.5 16 12C16 18.5 12 21.5 12 21.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M12 2.5C12 2.5 8 5.5 8 12C8 18.5 12 21.5 12 21.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 export function SpinIcon({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">

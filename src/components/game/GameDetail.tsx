@@ -1080,7 +1080,7 @@ export default function GameDetail() {
 
               <GameNotes gameId={game.id} />
 
-              {(game.steam_app_id || game.epic_app_name || game.install_dir) && (
+              {(game.steam_app_id || game.epic_app_name || game.ubisoft_game_id || game.install_dir) && (
                 <div className="glass rounded-xl p-4 space-y-1.5">
                   <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-2">Info</p>
                   {game.steam_app_id && (
@@ -1093,6 +1093,12 @@ export default function GameDetail() {
                     <p className="text-[11px] text-slate-600 flex gap-2">
                       <span className="text-slate-500 shrink-0">Epic</span>
                       <span className="text-slate-400 truncate">{game.epic_app_name}</span>
+                    </p>
+                  )}
+                  {game.ubisoft_game_id && (
+                    <p className="text-[11px] text-slate-600 flex gap-2">
+                      <span className="text-slate-500 shrink-0">Ubisoft ID</span>
+                      <span className="text-slate-400 truncate">{game.ubisoft_game_id}</span>
                     </p>
                   )}
                   {game.install_dir && (

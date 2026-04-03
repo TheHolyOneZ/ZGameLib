@@ -63,9 +63,30 @@ function SparkleIcon() {
   );
 }
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12" height="12" viewBox="0 0 24 24" fill="none"
+      className="text-slate-600 transition-transform duration-300"
+      style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+    >
+      <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 export default function Recommendations() {
   const games = useGameStore((s) => s.games);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem("section_playnext_open") !== "false"; } catch { return true; }
+  });
+
+  const toggle = () => setOpen((v) => {
+    const next = !v;
+    try { localStorage.setItem("section_playnext_open", String(next)); } catch {}
+    return next;
+  });
 
   const recommendations = useMemo(() => {
     const highRated = games.filter((g) => (g.rating ?? 0) >= 8);
@@ -98,26 +119,43 @@ export default function Recommendations() {
 
   return (
     <div className="px-6 pt-4 pb-2">
-      <div className="flex items-center gap-2 mb-4">
+      <button
+        onClick={toggle}
+        className="flex items-center gap-2 mb-3 w-full text-left group"
+      >
         <SparkleIcon />
-        <h2 className="text-[11px] font-semibold text-slate-600 uppercase tracking-[0.15em]">
+        <h2 className="text-[11px] font-semibold text-slate-600 uppercase tracking-[0.15em] group-hover:text-slate-400 transition-colors">
           Play Next
         </h2>
         <div className="flex-1 h-px bg-white/[0.03]" />
-        <span className="text-[10px] text-slate-700">Based on your highly-rated games</span>
-      </div>
-      <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
-        <AnimatePresence>
-          {visible.map(({ game, tagMatches }) => (
-            <RecommendCard
-              key={game.id}
-              game={game}
-              matchCount={tagMatches}
-              onDismiss={() => setDismissed((s) => new Set([...s, game.id]))}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
+        {open && <span className="text-[10px] text-slate-700">Based on your highly-rated games</span>}
+        <ChevronIcon open={open} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="playnext-cards"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
+              <AnimatePresence>
+                {visible.map(({ game, tagMatches }) => (
+                  <RecommendCard
+                    key={game.id}
+                    game={game}
+                    matchCount={tagMatches}
+                    onDismiss={() => setDismissed((s) => new Set([...s, game.id]))}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export type Platform = "steam" | "epic" | "gog" | "custom";
+export type Platform = "steam" | "epic" | "gog" | "custom" | "ubisoft";
 export type GameStatus = "none" | "backlog" | "playing" | "completed" | "dropped" | "on_hold";
 
 export interface Game {
@@ -17,6 +17,7 @@ export interface Game {
   date_added: string;
   steam_app_id: string | null;
   epic_app_name: string | null;
+  ubisoft_game_id: string | null;
   tags: string[];
   sort_order: number;
   deleted_at: string | null;
@@ -64,6 +65,7 @@ export interface CreateGamePayload {
   cover_path?: string;
   steam_app_id?: string;
   epic_app_name?: string;
+  ubisoft_game_id?: string;
 }
 
 export interface UpdateGamePayload {
@@ -186,6 +188,7 @@ export interface LibraryGrowthEntry {
   epic: number;
   gog: number;
   custom: number;
+  ubisoft: number;
 }
 
 export interface SteamSyncResult {

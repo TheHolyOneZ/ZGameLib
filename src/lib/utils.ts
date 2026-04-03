@@ -58,6 +58,7 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   epic: "Epic Games",
   gog: "GOG",
   custom: "Custom",
+  ubisoft: "Ubisoft Connect",
 };
 
 export const COVER_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23111118'/%3E%3Cstop offset='100%25' stop-color='%230a0a0f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='300' height='400'/%3E%3Ccircle cx='150' cy='180' r='40' fill='none' stroke='%231a1a2e' stroke-width='2'/%3E%3Cpath d='M140 170 L140 190 L165 180Z' fill='%231a1a2e'/%3E%3C/svg%3E`;
@@ -67,5 +68,6 @@ export const PLATFORM_COLORS: Record<Platform, string> = {
   epic: "bg-slate-800/60 text-slate-300 border-slate-600/50",
   gog: "bg-violet-900/40 text-violet-300 border-violet-700/50",
   custom: "bg-accent-900/40 text-accent-300 border-accent-700/50",
+  ubisoft: "bg-blue-900/50 text-blue-300 border-blue-700/50",
 };
 

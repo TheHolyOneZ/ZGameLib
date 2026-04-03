@@ -7,7 +7,7 @@ import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import { cn, formatPlaytime } from "@/lib/utils";
 import type { Game } from "@/lib/types";
-import { SpinIcon, PlayIcon, SearchIcon, SteamIcon, EpicIcon, GogIcon, CustomGameIcon, HeartIcon, LibraryIcon, SparkleIcon, CloseIcon, CheckIcon } from "@/components/ui/Icons";
+import { SpinIcon, PlayIcon, SearchIcon, SteamIcon, EpicIcon, GogIcon, CustomGameIcon, UbisoftIcon, HeartIcon, LibraryIcon, SparkleIcon, CloseIcon, CheckIcon } from "@/components/ui/Icons";
 import Badge from "@/components/ui/Badge";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 
@@ -194,7 +194,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
 
   const handlePlay = () => { launch(game); };
 
-  const platformLabel = game.platform === "steam" ? "Steam" : game.platform === "epic" ? "Epic" : game.platform === "gog" ? "GOG" : "Custom";
+  const platformLabel = game.platform === "steam" ? "Steam" : game.platform === "epic" ? "Epic" : game.platform === "gog" ? "GOG" : game.platform === "ubisoft" ? "Ubisoft" : "Custom";
 
   return (
     <motion.div
@@ -300,7 +300,7 @@ function HistoryRow({ game, time }: { game: Game; time: Date }) {
   );
 }
 
-type QuickFilter = "all" | "steam" | "epic" | "gog" | "custom" | "favorites";
+type QuickFilter = "all" | "steam" | "epic" | "gog" | "custom" | "ubisoft" | "favorites";
 
 export default function Spin() {
   const allGames = useGameStore((s) => s.games);
@@ -323,6 +323,7 @@ export default function Spin() {
     if (quickFilter === "steam") list = list.filter((g) => g.platform === "steam");
     else if (quickFilter === "epic") list = list.filter((g) => g.platform === "epic");
     else if (quickFilter === "gog") list = list.filter((g) => g.platform === "gog");
+    else if (quickFilter === "ubisoft") list = list.filter((g) => g.platform === "ubisoft");
     else if (quickFilter === "custom") list = list.filter((g) => g.platform === "custom");
     else if (quickFilter === "favorites") list = list.filter((g) => g.is_favorite);
     if (search.trim()) {
@@ -338,6 +339,7 @@ export default function Spin() {
     if (f === "steam") list = list.filter((g) => g.platform === "steam");
     else if (f === "epic") list = list.filter((g) => g.platform === "epic");
     else if (f === "gog") list = list.filter((g) => g.platform === "gog");
+    else if (f === "ubisoft") list = list.filter((g) => g.platform === "ubisoft");
     else if (f === "custom") list = list.filter((g) => g.platform === "custom");
     else if (f === "favorites") list = list.filter((g) => g.is_favorite);
     setSelected(new Set(list.map((g) => g.id)));
@@ -403,12 +405,13 @@ export default function Spin() {
     { key: "steam", label: "Steam", icon: <SteamIcon size={12} /> },
     { key: "epic", label: "Epic", icon: <EpicIcon size={12} /> },
     { key: "gog", label: "GOG", icon: <GogIcon size={12} /> },
+    { key: "ubisoft", label: "Ubisoft", icon: <UbisoftIcon size={12} /> },
     { key: "custom", label: "Custom", icon: <CustomGameIcon size={12} /> },
     { key: "favorites", label: "Favs", icon: <HeartIcon size={12} /> },
   ];
 
   const platformDot = (p: string) =>
-    p === "steam" ? "#38bdf8" : p === "epic" ? "#94a3b8" : p === "gog" ? "#a78bfa" : "#4ade80";
+    p === "steam" ? "#38bdf8" : p === "epic" ? "#94a3b8" : p === "gog" ? "#a78bfa" : p === "ubisoft" ? "#60a5fa" : "#4ade80";
 
   return (
     <div className="h-full overflow-hidden flex flex-col">

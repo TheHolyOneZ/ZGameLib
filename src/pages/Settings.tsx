@@ -853,7 +853,7 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[13px] text-slate-300">Auto-scan on startup</p>
-                  <p className="text-[11px] text-slate-600 mt-0.5">Scan Steam & Epic for new games when the app opens</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">Scan Steam, Epic, GOG & Ubisoft for new games when the app opens</p>
                 </div>
                 <Toggle
                   value={settings.auto_scan}
@@ -1369,7 +1369,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-600">v1.2.0</p>
+                  <p className="text-[11px] text-slate-600">v1.2.1</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}
@@ -1444,7 +1444,7 @@ export default function Settings() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => { setWhatsNewVersion("1.2.0"); setWhatsNewOpen(true); }}
+                  onClick={() => { setWhatsNewVersion("1.2.1"); setWhatsNewOpen(true); }}
                   className="btn-ghost w-full justify-center text-[12px]"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
