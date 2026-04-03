@@ -63,6 +63,7 @@ pub fn create_tables(conn: &Connection) -> anyhow::Result<()> {
     let _ = conn.execute("ALTER TABLE games ADD COLUMN release_year INTEGER", []);
     let _ = conn.execute("ALTER TABLE games ADD COLUMN igdb_skipped INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE games ADD COLUMN not_installed INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE games ADD COLUMN ubisoft_game_id TEXT", []);
 
     migrate_unique_to_partial(conn)?;
 

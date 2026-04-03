@@ -506,6 +506,7 @@ fn scan_steam_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<ru
             date_added: now.clone(),
             steam_app_id: Some(entry.app_id),
             epic_app_name: None,
+            ubisoft_game_id: None,
             tags: vec![],
             sort_order: 0,
             deleted_at: None,
@@ -648,6 +649,7 @@ fn scan_epic_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rus
             date_added: now.clone(),
             steam_app_id: None,
             epic_app_name: Some(entry.app_name),
+            ubisoft_game_id: None,
             tags: vec![],
             sort_order: 0,
             deleted_at: None,
@@ -799,7 +801,7 @@ fn scan_gog_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rusq
             status: "none".to_string(),
             is_favorite: false, playtime_mins: 0,
             last_played: None, date_added: now.clone(),
-            steam_app_id: None, epic_app_name: None,
+            steam_app_id: None, epic_app_name: None, ubisoft_game_id: None,
             tags: vec![], sort_order: 0,
             deleted_at: None, is_pinned: false,
             custom_fields: std::collections::HashMap::new(),
@@ -881,6 +883,153 @@ pub fn get_game_screenshots(steam_app_id: String) -> Result<Vec<String>, String>
     Ok(shots.into_iter().map(|p| p.to_string_lossy().to_string()).collect())
 }
 
+#[cfg(windows)]
+fn get_ubisoft_games_from_registry() -> Vec<(String, String, String)> {
+    use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_READ};
+    use winreg::RegKey;
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let mut games = vec![];
+    let installs_paths = [
+        "SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs",
+        "SOFTWARE\\Ubisoft\\Launcher\\Installs",
+    ];
+    for installs_path in &installs_paths {
+        if let Ok(installs_key) = hklm.open_subkey_with_flags(installs_path, KEY_READ) {
+            for game_id in installs_key.enum_keys().flatten() {
+                if let Ok(sub) = installs_key.open_subkey_with_flags(&game_id, KEY_READ) {
+                    let install_dir: String = sub.get_value("InstallDir").unwrap_or_default();
+                    if install_dir.is_empty() { continue; }
+                    let name = hklm
+                        .open_subkey_with_flags(
+                            &format!("SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Uplay Install {}", game_id),
+                            KEY_READ,
+                        )
+                        .or_else(|_| hklm.open_subkey_with_flags(
+                            &format!("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Uplay Install {}", game_id),
+                            KEY_READ,
+                        ))
+                        .ok()
+                        .and_then(|k| k.get_value::<String, _>("DisplayName").ok())
+                        .unwrap_or_default();
+                    if name.is_empty() { continue; }
+                    games.push((game_id, name, install_dir));
+                }
+            }
+            if !games.is_empty() { break; }
+        }
+    }
+    games
+}
+
+#[cfg(not(windows))]
+fn get_ubisoft_games_from_registry() -> Vec<(String, String, String)> { vec![] }
+
+#[tauri::command]
+pub async fn scan_ubisoft_games(app: AppHandle, state: State<'_, DbState>) -> Result<ScanResult, String> {
+    let db = state.0.clone();
+    let app2 = app.clone();
+    tokio::task::spawn_blocking(move || scan_ubisoft_games_inner(app2, db))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn scan_ubisoft_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rusqlite::Connection>>) -> Result<ScanResult, String> {
+    let raw = get_ubisoft_games_from_registry();
+    let total = raw.len();
+    log(&app, "info", &format!("Ubisoft Connect: found {} game(s) in registry", total));
+
+    struct UbisoftEntry { game_id: String, name: String, exe_path: Option<String>, install_dir: String, cover: Option<String> }
+    let mut entries = Vec::with_capacity(total);
+
+    for (game_id, name, install_dir) in raw {
+        log(&app, "info", &format!("--- [{}] {}", game_id, name));
+        let exe_path = find_steam_game_exe(&install_dir, &name);
+        match &exe_path {
+            Some(p) => log(&app, "ok", &format!("  exe: {}", p)),
+            None => log(&app, "warn", "  exe: not found"),
+        }
+        let cover = if let Some(local) = find_cover_in_dir_internal(&install_dir) {
+            log(&app, "ok", &format!("  cover: local ({})", local));
+            Some(local)
+        } else {
+            log(&app, "info", &format!("  searching Steam CDN for \"{}\"...", name));
+            let sc = search_steam_cover_for_name(&name, &app);
+            match &sc {
+                Some(_) => log(&app, "ok", "  cover: Steam CDN ✓"),
+                None => log(&app, "warn", "  cover: not found"),
+            }
+            sc
+        };
+        entries.push(UbisoftEntry { game_id, name, exe_path, install_dir, cover });
+    }
+
+    let conn = db.lock().map_err(|e| e.to_string())?;
+    conn.execute_batch("BEGIN").map_err(|e| e.to_string())?;
+    let now = chrono::Utc::now().to_rfc3339();
+    let mut added = 0;
+    let mut skipped = 0;
+
+    let mut ubi_stmt = conn.prepare(
+        "SELECT ubisoft_game_id, id, cover_path FROM games WHERE ubisoft_game_id IS NOT NULL AND deleted_at IS NULL"
+    ).map_err(|e| e.to_string())?;
+    let ubi_existing: std::collections::HashMap<String, (String, Option<String>)> =
+        ubi_stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, Option<String>>(2)?)))
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .map(|(gid, id, cover)| (gid, (id, cover)))
+            .collect();
+    drop(ubi_stmt);
+
+    for entry in entries {
+        if let Some((existing_id, existing_cover)) = ubi_existing.get(&entry.game_id) {
+            let existing_id = existing_id.clone();
+            if existing_cover.is_none() {
+                if let Some(ref cover) = entry.cover {
+                    let _ = crate::db::queries::update_cover_path(&conn, &existing_id, cover);
+                }
+            }
+            skipped += 1;
+            continue;
+        }
+        let game = Game {
+            id: Uuid::new_v4().to_string(),
+            name: entry.name,
+            platform: "ubisoft".to_string(),
+            exe_path: entry.exe_path,
+            install_dir: Some(entry.install_dir),
+            cover_path: entry.cover,
+            description: None,
+            rating: None,
+            status: "none".to_string(),
+            is_favorite: false,
+            playtime_mins: 0,
+            last_played: None,
+            date_added: now.clone(),
+            steam_app_id: None,
+            epic_app_name: None,
+            ubisoft_game_id: Some(entry.game_id),
+            tags: vec![],
+            sort_order: 0,
+            deleted_at: None,
+            is_pinned: false,
+            custom_fields: std::collections::HashMap::new(),
+            hltb_main_mins: None,
+            hltb_extra_mins: None,
+            genre: None,
+            developer: None,
+            publisher: None,
+            release_year: None,
+            igdb_skipped: false,
+            not_installed: false,
+        };
+        if queries::insert_game(&conn, &game).is_ok() { added += 1; }
+    }
+
+    conn.execute_batch("COMMIT").map_err(|e| e.to_string())?;
+    log(&app, "ok", &format!("Ubisoft scan done: {} added, {} skipped", added, skipped));
+    Ok(ScanResult { added, skipped, total })
+}
+
 #[tauri::command]
 pub async fn scan_all_games(app: AppHandle, state: State<'_, DbState>) -> Result<ScanResult, String> {
     if SCAN_RUNNING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
@@ -895,17 +1044,19 @@ pub async fn scan_all_games(app: AppHandle, state: State<'_, DbState>) -> Result
         log(&app2, "info", "=== Scanning Epic ===");
         let epic = scan_epic_games_inner(app2.clone(), db.clone()).unwrap_or(empty.clone());
         log(&app2, "info", "=== Scanning GOG ===");
-        let gog = scan_gog_games_inner(app2.clone(), db).unwrap_or(empty);
+        let gog = scan_gog_games_inner(app2.clone(), db.clone()).unwrap_or(empty.clone());
+        log(&app2, "info", "=== Scanning Ubisoft Connect ===");
+        let ubi = scan_ubisoft_games_inner(app2.clone(), db).unwrap_or(empty);
         log(&app2, "ok", &format!(
             "=== All done: {} added, {} skipped, {} total ===",
-            steam.added + epic.added + gog.added,
-            steam.skipped + epic.skipped + gog.skipped,
-            steam.total + epic.total + gog.total,
+            steam.added + epic.added + gog.added + ubi.added,
+            steam.skipped + epic.skipped + gog.skipped + ubi.skipped,
+            steam.total + epic.total + gog.total + ubi.total,
         ));
         Ok(ScanResult {
-            added: steam.added + epic.added + gog.added,
-            skipped: steam.skipped + epic.skipped + gog.skipped,
-            total: steam.total + epic.total + gog.total,
+            added: steam.added + epic.added + gog.added + ubi.added,
+            skipped: steam.skipped + epic.skipped + gog.skipped + ubi.skipped,
+            total: steam.total + epic.total + gog.total + ubi.total,
         })
     })
     .await
@@ -1082,6 +1233,7 @@ fn scan_folder_for_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mut
             date_added: now.clone(),
             steam_app_id: None,
             epic_app_name: None,
+            ubisoft_game_id: None,
             tags: vec![],
             sort_order: 0,
             deleted_at: None,

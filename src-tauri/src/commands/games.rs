@@ -36,6 +36,7 @@ pub fn create_game(state: State<DbState>, payload: CreateGamePayload) -> Result<
         date_added: now,
         steam_app_id: payload.steam_app_id,
         epic_app_name: payload.epic_app_name,
+        ubisoft_game_id: payload.ubisoft_game_id,
         tags: vec![],
         sort_order: 0,
         deleted_at: None,
@@ -404,13 +405,14 @@ pub fn get_library_growth(state: State<DbState>) -> Result<Vec<LibraryGrowthEntr
     for (month, platform, cnt) in rows {
         let entry = month_map.entry(month.clone()).or_insert(LibraryGrowthEntry {
             month,
-            steam: 0, epic: 0, gog: 0, custom: 0,
+            steam: 0, epic: 0, gog: 0, custom: 0, ubisoft: 0,
         });
         match platform.as_str() {
-            "steam"  => entry.steam  += cnt,
-            "epic"   => entry.epic   += cnt,
-            "gog"    => entry.gog    += cnt,
-            "custom" => entry.custom += cnt,
+            "steam"   => entry.steam   += cnt,
+            "epic"    => entry.epic    += cnt,
+            "gog"     => entry.gog     += cnt,
+            "custom"  => entry.custom  += cnt,
+            "ubisoft" => entry.ubisoft += cnt,
             _ => {}
         }
     }

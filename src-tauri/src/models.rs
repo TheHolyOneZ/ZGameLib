@@ -39,6 +39,8 @@ pub struct Game {
     pub igdb_skipped: bool,
     #[serde(default)]
     pub not_installed: bool,
+    #[serde(default)]
+    pub ubisoft_game_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,6 +72,8 @@ pub struct CreateGamePayload {
     pub cover_path: Option<String>,
     pub steam_app_id: Option<String>,
     pub epic_app_name: Option<String>,
+    #[serde(default)]
+    pub ubisoft_game_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -161,6 +165,7 @@ pub struct LibraryGrowthEntry {
     pub epic: i64,
     pub gog: i64,
     pub custom: i64,
+    pub ubisoft: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

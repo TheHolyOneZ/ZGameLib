@@ -38,6 +38,7 @@ fn row_to_game(row: &rusqlite::Row) -> rusqlite::Result<Game> {
         release_year: row.get(25).unwrap_or(None),
         igdb_skipped: row.get::<_, i64>(26).unwrap_or(0) != 0,
         not_installed: row.get::<_, i64>(27).unwrap_or(0) != 0,
+        ubisoft_game_id: row.get(28).unwrap_or(None),
     })
 }
 
@@ -48,7 +49,8 @@ const GAME_SELECT: &str =
             COALESCE(is_pinned, 0), deleted_at, COALESCE(custom_fields, '{}'),
             hltb_main_mins, hltb_extra_mins,
             genre, developer, publisher, release_year,
-            COALESCE(igdb_skipped, 0), COALESCE(not_installed, 0)
+            COALESCE(igdb_skipped, 0), COALESCE(not_installed, 0),
+            ubisoft_game_id
      FROM games";
 
 pub fn get_all_games(conn: &Connection) -> anyhow::Result<Vec<Game>> {
@@ -107,8 +109,8 @@ pub fn insert_game(conn: &Connection, game: &Game) -> anyhow::Result<()> {
                             rating, is_favorite, status, playtime_mins, last_played, date_added,
                             steam_app_id, epic_app_name, sort_order, tags, is_pinned, custom_fields,
                             hltb_main_mins, hltb_extra_mins, genre, developer, publisher, release_year,
-                            not_installed)
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24,?25,?26)",
+                            not_installed, ubisoft_game_id)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24,?25,?26,?27)",
         params![
             game.id, game.name, game.platform, game.exe_path, game.install_dir,
             game.cover_path, game.description, game.rating,
@@ -117,7 +119,7 @@ pub fn insert_game(conn: &Connection, game: &Game) -> anyhow::Result<()> {
             game.sort_order, tags, game.is_pinned as i64, cf,
             game.hltb_main_mins, game.hltb_extra_mins,
             game.genre, game.developer, game.publisher, game.release_year,
-            game.not_installed as i64
+            game.not_installed as i64, game.ubisoft_game_id
         ],
     )?;
     Ok(())

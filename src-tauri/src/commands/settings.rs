@@ -144,7 +144,7 @@ pub fn import_library(state: State<DbState>, path: String) -> Result<ImportResul
     let mut added = 0;
     let mut skipped = 0;
 
-    const VALID_PLATFORMS: &[&str] = &["steam", "epic", "gog", "custom"];
+    const VALID_PLATFORMS: &[&str] = &["steam", "epic", "gog", "custom", "ubisoft"];
 
     for mut game in games {
         if game.name.is_empty() || game.name.len() > 255 { skipped += 1; continue; }
@@ -588,6 +588,7 @@ pub fn pull_uninstalled_steam_games(state: State<DbState>, api_key: String, stea
             date_added: now.clone(),
             steam_app_id: Some(appid),
             epic_app_name: None,
+            ubisoft_game_id: None,
             tags: vec![],
             sort_order: 0,
             deleted_at: None,

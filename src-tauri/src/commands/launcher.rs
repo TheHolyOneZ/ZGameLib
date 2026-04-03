@@ -799,6 +799,114 @@ pub fn launch_epic_game(
 }
 
 #[tauri::command]
+pub fn launch_ubisoft_game(
+    app: AppHandle,
+    state: State<DbState>,
+    active_pids: State<ActivePids>,
+    game_id: String,
+    game_db_id: String,
+) -> Result<(), String> {
+    let (exe_path, install_dir, game_name, minimize, exclude_idle) = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let game = queries::get_game_by_id(&conn, &game_db_id).ok().flatten();
+        let exe = game.as_ref().and_then(|g| g.exe_path.clone());
+        let dir = game.as_ref().and_then(|g| g.install_dir.clone()).or_else(|| {
+            let exe_ref = exe.as_ref()?;
+            let parent = std::path::Path::new(exe_ref).parent()?;
+            if parent.components().count() <= 1 { return None; }
+            Some(parent.to_string_lossy().to_string())
+        });
+        let name = game.as_ref().map(|g| g.name.clone()).unwrap_or_default();
+        let min = queries::get_setting(&conn, "minimize_on_launch")
+            .map(|v| v == "true").unwrap_or(false);
+        let idle = queries::get_setting(&conn, "exclude_idle_time")
+            .map(|v| v != "false").unwrap_or(true);
+        (exe, dir, name, min, idle)
+    };
+
+    if active_pids.game_active.load(Ordering::SeqCst) {
+        let running_name = {
+            let ap = app.state::<ActivePids>();
+            ap.running_game_name.lock().ok()
+                .map(|n| if n.is_empty() { "another game".to_string() } else { n.clone() })
+                .unwrap_or_else(|| "another game".to_string())
+        };
+        let _ = app.emit("game-already-running", &running_name);
+        #[cfg(windows)]
+        show_native_alert("ZGameLib", &format!("\"{}\" is already being tracked.\nClose it first or use Stop Tracking.", running_name));
+        return Err(format!("GAME_ALREADY_RUNNING:{}", running_name));
+    }
+
+    let uri = format!("ubisoft://launch/{}", game_id);
+    open::that(&uri).map_err(|e| format!("Failed to launch Ubisoft game: {}", e))?;
+
+    let now = Utc::now().to_rfc3339();
+    {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let _ = conn.execute(
+            "UPDATE games SET last_played = ?1 WHERE id = ?2",
+            rusqlite::params![now, game_db_id],
+        );
+    }
+
+    if minimize {
+        let app_min = app.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            if let Some(win) = app_min.get_webview_window("main") {
+                let _ = win.minimize();
+            }
+        });
+    }
+
+    active_pids.game_active.store(true, Ordering::SeqCst);
+    if let Ok(mut name) = active_pids.running_game_name.lock() {
+        *name = game_name.clone();
+    }
+
+    let app_clone = app.clone();
+    let gid = game_db_id.clone();
+    let pids = active_pids.pids.clone();
+    let started_at = now.clone();
+
+    std::thread::spawn(move || {
+        #[cfg(windows)]
+        {
+            let exe_hint = exe_path.as_ref().and_then(|e| {
+                std::path::Path::new(e).file_name().map(|n| n.to_string_lossy().to_string())
+            });
+            if let Some(dir) = install_dir {
+                track_by_directory(app_clone, gid, started_at, dir, pids, exclude_idle, 300, None, exe_hint);
+            } else if let Some(exe) = exe_path {
+                let exe_name = std::path::Path::new(&exe)
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_lowercase())
+                    .unwrap_or_default();
+                if !exe_name.is_empty() {
+                    let mut pid: Option<u32> = None;
+                    for _ in 0..180 {
+                        if let Some(p) = find_pid_by_exe_name(&exe_name) {
+                            pid = Some(p);
+                            break;
+                        }
+                        std::thread::sleep(std::time::Duration::from_secs(1));
+                    }
+                    if let Some(p) = pid {
+                        track_by_pid(app_clone, gid, started_at, p, pids, exclude_idle);
+                        return;
+                    }
+                }
+                track_by_timeout(app_clone, gid, started_at);
+            } else {
+                track_by_timeout(app_clone, gid, started_at);
+            }
+        }
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn open_game_folder(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let game = queries::get_game_by_id(&conn, &id)
