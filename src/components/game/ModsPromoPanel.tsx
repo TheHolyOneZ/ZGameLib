@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { api } from "@/lib/tauri";
+import { useUIStore } from "@/store/useUIStore";
 
 interface PromoCard {
   id: string;
@@ -87,7 +88,7 @@ export function PromoCards() {
   return (
     <div className="flex flex-col gap-3">
       <div className="mb-1">
-        <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-semibold">
+        <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-semibold">
           From the developer
         </p>
         <h2 className="text-[15px] font-bold text-slate-300 mt-0.5">Related Projects</h2>
@@ -164,7 +165,7 @@ export function PromoCards() {
         </motion.div>
       ))}
 
-      <p className="text-[9.5px] text-slate-700 text-center mt-1">
+      <p className="text-[9.5px] text-slate-600 text-center mt-1">
         These projects are made by the same developer — all free and open source.
       </p>
     </div>
@@ -178,10 +179,12 @@ export default function ModsPromoPanel() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed left-0 top-0 bottom-0 right-[500px] z-[35] overflow-y-auto flex flex-col justify-center px-8 py-10"
-      style={{ background: "rgba(6,4,12,0.6)", backdropFilter: "blur(2px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) useUIStore.getState().setDetailOpen(false); }}
+      className="fixed left-0 top-0 bottom-0 right-[580px] z-[35] overflow-y-auto hidden xl:flex flex-col justify-center items-center px-8 py-10"
     >
-      <PromoCards />
+      <div className="w-full max-w-[380px]" onClick={(e) => e.stopPropagation()}>
+        <PromoCards />
+      </div>
     </motion.div>
   );
 }

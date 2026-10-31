@@ -2,14 +2,15 @@ import { AnimatePresence, motion, Reorder } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useGameStore } from "@/store/useGameStore";
-import { useFilteredGames, useScan } from "@/hooks/useGames";
+import { useFilteredGames, useScan, usePullUninstalled } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import GameCard from "./GameCard";
 import GameListRow from "./GameListRow";
 import BatchActionBar from "./BatchActionBar";
 import EmptyState from "@/components/ui/EmptyState";
 import { useUIStore } from "@/store/useUIStore";
-import { SearchIcon } from "@/components/ui/Icons";
+import { SearchIcon, GamepadIcon, ScanIcon, PlusIcon, DownloadIcon } from "@/components/ui/Icons";
+import { cn } from "@/lib/utils";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12, scale: 0.97 },
@@ -17,17 +18,19 @@ const itemVariants = {
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
 };
 
-function SkeletonGrid({ columns }: { columns: number }) {
+function gridTemplate(columns: number, cardSize: number) {
+  return columns === 0 ? `repeat(auto-fill, minmax(${cardSize}px, 1fr))` : `repeat(${columns}, minmax(0, 1fr))`;
+}
+
+function SkeletonGrid({ columns, cardSize }: { columns: number; cardSize: number }) {
   return (
-    <div
-      className="p-6 grid gap-4"
-      style={{ gridTemplateColumns: columns === 0 ? "repeat(auto-fill, minmax(180px, 1fr))" : `repeat(${columns}, minmax(0, 1fr))` }}
-    >
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div
-          key={i}
-          className="aspect-[3/4] rounded-2xl glass-strong animate-pulse"
-        />
+    <div className="px-8 py-6 grid gap-x-5 gap-y-6" style={{ gridTemplateColumns: gridTemplate(columns, cardSize) }}>
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i}>
+          <div className="aspect-[3/4] rounded-2xl bg-white/[0.04] animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+          <div className="h-3 w-3/4 rounded bg-white/[0.04] mt-3 animate-pulse" />
+          <div className="h-2.5 w-1/3 rounded bg-white/[0.03] mt-2 animate-pulse" />
+        </div>
       ))}
     </div>
   );
@@ -70,9 +73,9 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
               p === page
                 ? {
                     background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-700)))",
-                    border: "1px solid rgba(var(--accent-400), 0.3)",
+                    border: "1px solid rgb(var(--accent-400) / 0.3)",
                     color: "white",
-                    boxShadow: "0 0 16px rgba(var(--accent-500), 0.25)",
+                    boxShadow: "0 0 16px rgb(var(--accent-500) / 0.25)",
                   }
                 : {
                     background: "rgba(255,255,255,0.03)",
@@ -102,9 +105,13 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 export default function GameGrid({ isLoading = false }: { isLoading?: boolean }) {
   const games = useFilteredGames();
   const { scan } = useScan();
+  const { pullUninstalled } = usePullUninstalled();
   const allGamesRaw = useGameStore((s) => s.games);
   const viewMode = useGameStore((s) => s.viewMode);
   const sortKey = useGameStore((s) => s.sortKey);
+  const cardSize = useGameStore((s) => s.cardSize);
+  const filterRules = useGameStore((s) => s.filterRules);
+  const clearFilterRules = useGameStore((s) => s.clearFilterRules);
   const setGames = useGameStore((s) => s.setGames);
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const search = useGameStore((s) => s.search);
@@ -116,7 +123,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     queryFn: () => api.getSettings(),
     staleTime: 5 * 60 * 1000,
   });
-  const gridColumns = appSettings?.grid_columns ?? 6;
+  const gridColumns = appSettings?.grid_columns ?? 0;
   const paginationEnabled = appSettings?.pagination_enabled ?? false;
   const pageSize = appSettings?.pagination_page_size ?? 24;
 
@@ -125,10 +132,19 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
   useEffect(() => { setPage(1); }, [search, filters, paginationEnabled, pageSize]);
 
   if (isLoading && games.length === 0) {
-    return <SkeletonGrid columns={gridColumns} />;
+    return <SkeletonGrid columns={gridColumns} cardSize={cardSize} />;
   }
 
-  const hasActiveFilters = search.trim() !== "" || filters.platform !== "all" || filters.status !== "all" || filters.favoritesOnly || filters.minRating > 0 || filters.tags.length > 0 || filters.dateAddedFrom !== null || filters.dateAddedTo !== null;
+  const hasActiveFilters = search.trim() !== "" || filters.platform !== "all" || filters.status !== "all" || filters.favoritesOnly || filters.minRating > 0 || filters.tags.length > 0 || filters.dateAddedFrom !== null || filters.dateAddedTo !== null || filters.hasCover !== null || filters.notInstalledOnly || filterRules.length > 0;
+
+  if (games.length === 0 && filters.favoritesOnly && !search.trim() && filters.platform === "all" && filters.status === "all" && filterRules.length === 0) {
+    return (
+      <EmptyState
+        title="No favorites yet"
+        description="Click the heart on any game, or press F with a game open, to pin it here."
+      />
+    );
+  }
 
   if (games.length === 0 && allGamesRaw.length > 0 && hasActiveFilters) {
     return (
@@ -149,7 +165,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => { resetFilters(); setSearch(""); }}
+          onClick={() => { const fav = filters.favoritesOnly; resetFilters(); if (fav) useGameStore.getState().setFilter("favoritesOnly", true); clearFilterRules(); setSearch(""); }}
           className="btn-primary mt-2"
         >
           Clear Filters
@@ -159,68 +175,54 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
   }
 
   if (games.length === 0) {
-    const onboardingDone = appSettings?.onboarding_completed ?? false;
-
-    if (onboardingDone) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center py-20 gap-6 text-center px-6"
-        >
-          <div className="relative">
-            <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="w-20 h-20 rounded-2xl glass-strong flex items-center justify-center"
-              style={{ boxShadow: "0 0 40px rgb(var(--accent-500) / 0.15), 0 16px 40px rgba(0,0,0,0.3)", border: "1px solid rgb(var(--accent-500) / 0.15)" }}
-            >
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-accent-400"><rect x="3" y="7" width="18" height="13" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M9 14H10M9 11H10M14 14H15M14 11H15M12 7V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            </motion.div>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-300 mb-1">Your library is empty</h3>
-            <p className="text-sm text-slate-600 max-w-sm leading-relaxed">Get started by scanning for games or adding one manually.</p>
-          </div>
-          <div className="grid grid-cols-3 gap-3 w-full max-w-md">
-            {[
-              { label: "Scan Steam / Epic / GOG / Ubisoft", desc: "Auto-detect installed games", onClick: () => scan() },
-              { label: "Add a game manually", desc: "Pick an exe or folder", onClick: () => setAddGameOpen(true) },
-              { label: "Browse Steam library", desc: "Import owned games", onClick: () => setAddGameOpen(true) },
-            ].map((card, i) => (
-              <motion.button
-                key={i}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={card.onClick}
-                className="flex flex-col items-start gap-1 p-3 rounded-xl text-left transition-all"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-              >
-                <span className="text-[12px] font-medium text-slate-300">{card.label}</span>
-                <span className="text-[10px] text-slate-600">{card.desc}</span>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-      );
-    }
-
     return (
-      <EmptyState
-        title="No games found"
-        description="Add your first game or run a scan to import your Steam and Epic library."
-        action={
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setAddGameOpen(true)}
-            className="btn-primary mt-2"
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col items-center justify-center py-16 gap-8 text-center px-8"
+      >
+        <div className="relative">
+          <div className="absolute inset-0 blur-3xl opacity-60" style={{ background: "radial-gradient(circle, rgb(var(--accent-500) / 0.6), transparent 70%)" }} />
+          <motion.div
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            className="relative w-24 h-24 rounded-[28px] flex items-center justify-center"
+            style={{ background: "linear-gradient(140deg, rgb(var(--accent-400)), rgb(var(--accent-700)))", boxShadow: "0 20px 50px -12px rgb(var(--accent-500) / 0.8), inset 0 1px 0 rgba(255,255,255,0.3)" }}
           >
-            Add Game
-          </motion.button>
-        }
-      />
+            <GamepadIcon size={44} className="text-white" />
+          </motion.div>
+        </div>
+        <div>
+          <h3 className="text-[28px] font-bold text-white">Let's build your library</h3>
+          <p className="text-[14px] text-slate-400 max-w-md leading-relaxed mt-2">ZGameLib finds games from Steam, Epic, GOG and Ubisoft Connect automatically. You can also add any game by pointing at its executable.</p>
+        </div>
+        <div className="grid grid-cols-3 gap-4 w-full max-w-3xl">
+          {[
+            { icon: <ScanIcon size={20} />, label: "Scan this PC", desc: "Detect installed games from every launcher", onClick: () => scan(), primary: true },
+            { icon: <PlusIcon size={20} />, label: "Add manually", desc: "Pick an .exe, shortcut or folder", onClick: () => setAddGameOpen(true) },
+            { icon: <DownloadIcon size={20} />, label: "Import owned Steam games", desc: "Uses your Steam API key from Settings", onClick: () => pullUninstalled() },
+          ].map((card, i) => (
+            <motion.button
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.07 }}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={card.onClick}
+              className={cn("flex flex-col items-start gap-3 p-5 rounded-2xl text-left transition-colors", card.primary ? "border-gradient" : "")}
+              style={{ background: card.primary ? "linear-gradient(160deg, rgb(var(--accent-500) / 0.2), rgba(255,255,255,0.03))" : "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <span className={cn("w-10 h-10 rounded-xl flex items-center justify-center", card.primary ? "bg-accent-500 text-white" : "bg-white/[0.06] text-accent-300")}>{card.icon}</span>
+              <span>
+                <span className="block text-[14px] font-semibold text-white">{card.label}</span>
+                <span className="block text-[12px] text-slate-400 mt-1 leading-snug">{card.desc}</span>
+              </span>
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
     );
   }
 
@@ -240,8 +242,9 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
           const updated = newOrder.map((g, i) => ({ ...g, sort_order: i }));
           setGames([...updated, ...allGamesRaw.filter((g) => !idSet.has(g.id))]);
         }}
-        className="flex flex-col gap-0.5 p-4"
+        className="flex flex-col gap-1 px-6 pt-3 pb-10"
       >
+        <p className="text-[12px] text-slate-500 px-2 pb-2">Drag games to set your own order.</p>
         {visibleGames.map((g) => (
           <Reorder.Item key={g.id} value={g} className="list-none">
             <GameListRow game={g} />
@@ -257,18 +260,19 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
   if (viewMode === "list") {
     return (
       <>
-        <div className="flex flex-col gap-0.5 p-4 page-enter">
-          <div className="flex items-center gap-4 px-4 py-2.5 text-[10px] text-slate-700 font-semibold uppercase tracking-[0.15em]"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+        <div className="flex flex-col gap-1 px-6 pt-3 pb-10 page-enter">
+          <div className="flex items-center gap-4 px-4 py-2.5 text-[10px] text-slate-500 font-semibold uppercase tracking-[0.15em]"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="w-5 shrink-0" />
             <div className="w-10 shrink-0" />
             <div className="flex-1">Name</div>
             <div className="hidden lg:block w-40">Tags</div>
+            <div className="hidden md:block w-24 text-right">Last played</div>
             <div className="hidden md:block w-20 text-right">Playtime</div>
             <div className="w-14 text-right">Rating</div>
-            <div className="w-24" />
+            <div className="w-[104px]" />
           </div>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence initial={false}>
             {visibleGames.map((g) => (
               <GameListRow key={g.id} game={g} />
             ))}
@@ -277,7 +281,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
         {paginationEnabled && totalPages > 1 && (
           <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
         )}
-        <BatchActionBar />
+        <BatchActionBar visibleIds={games.map((g) => g.id)} />
       </>
     );
   }
@@ -286,16 +290,17 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     <>
       <div
         data-tour="game-grid"
-        className="p-6 grid gap-4"
-        style={{ gridTemplateColumns: gridColumns === 0 ? "repeat(auto-fill, minmax(180px, 1fr))" : `repeat(${gridColumns}, minmax(0, 1fr))` }}
+        className="px-8 pt-5 pb-10 grid gap-x-5 gap-y-6"
+        style={{ gridTemplateColumns: gridTemplate(gridColumns, cardSize) }}
       >
         {visibleGames.map((g, idx) => (
           <motion.div
             key={g.id}
             data-tour={idx === 0 ? "game-card-first" : undefined}
             variants={itemVariants}
-            initial="hidden"
+            initial={idx < 40 ? "hidden" : false}
             animate="show"
+            transition={{ delay: Math.min(idx, 24) * 0.012 }}
           >
             <GameCard game={g} />
           </motion.div>
@@ -304,7 +309,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
       {paginationEnabled && totalPages > 1 && (
         <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
       )}
-      <BatchActionBar />
+      <BatchActionBar visibleIds={games.map((g) => g.id)} />
     </>
   );
 }

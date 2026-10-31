@@ -9,19 +9,20 @@ import { useCover, setCoverCache, clearCoverCache } from "@/hooks/useCover";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
-import { cn, formatPlaytime, formatDate, COVER_PLACEHOLDER } from "@/lib/utils";
+import { cn, formatPlaytime, formatDate, timeAgo, PLATFORM_LABELS } from "@/lib/utils";
 import StarRating from "@/components/ui/StarRating";
 import GameNotes from "./GameNotes";
 import ModLoaderPanel from "./ModLoaderPanel";
-import Badge from "@/components/ui/Badge";
 import PlatformBadge from "@/components/ui/PlatformBadge";
+import GameCover from "@/components/ui/GameCover";
 import CoverSearchModal from "@/components/modals/CoverSearchModal";
 import {
   CloseIcon, HeartIcon, PlayIcon, FolderIcon, TrashIcon,
   CheckIcon, TagIcon, ClockIcon, StarIcon, ImageIcon, SearchIcon,
-  CopyIcon, ExternalLinkIcon, PlusIcon,
+  CopyIcon, ExternalLinkIcon, PlusIcon, StopIcon, ChevronLeftIcon, ChevronRightIcon,
+  CollectionIcon, SparkleIcon, DownloadIcon, PinIcon,
 } from "@/components/ui/Icons";
-import type { Session, Collection, Game } from "@/lib/types";
+import type { Session, Collection, Game, GameStatus } from "@/lib/types";
 
 function GenreIcon() {
   return (
@@ -60,32 +61,29 @@ function CalIcon() {
       <rect x="3" y="5" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.5"/>
       <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
       <path d="M8 3V7M16 3V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M8 15H8.01M12 15H12.01M16 15H16.01M8 19H8.01M12 19H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   );
 }
 
-function InfoCircleIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M12 11V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="12" cy="7.5" r="0.75" fill="currentColor"/>
-    </svg>
-  );
-}
+const PLACEHOLDER_GAME: Game = {
+  id: "", name: "", platform: "custom", cover_path: null, exe_path: null, install_dir: null, description: null, rating: null,
+  status: "none", is_favorite: false, is_pinned: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null,
+  epic_app_name: null, ubisoft_game_id: null, tags: [], sort_order: 0, deleted_at: null, custom_fields: {}, hltb_main_mins: null,
+  hltb_extra_mins: null, genre: null, developer: null, publisher: null, release_year: null, igdb_skipped: false, not_installed: false,
+};
 
-function ClearIcon() {
+function SectionTitle({ icon, children, action }: { icon?: ReactNode; children: ReactNode; action?: ReactNode }) {
   return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-      <path d="M3 6H21M8 6V4H16V6M19 6L18 20C18 21.1 17.1 22 16 22H8C6.9 22 6 21.1 6 20L5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <div className="flex items-center gap-2 mb-3">
+      {icon && <span className="text-slate-500">{icon}</span>}
+      <span className="section-label">{children}</span>
+      <div className="flex-1" />
+      {action}
+    </div>
   );
 }
 
 function IgdbMetadataCard({ game, onClear }: { game: Game; onClear: () => void }) {
-  const [showTip, setShowTip] = useState(false);
-
   const fields: { label: string; value: string | number | null | undefined; icon: ReactNode }[] = [
     { label: "Genre", value: game.genre, icon: <GenreIcon /> },
     { label: "Developer", value: game.developer, icon: <DevIcon /> },
@@ -94,50 +92,164 @@ function IgdbMetadataCard({ game, onClear }: { game: Game; onClear: () => void }
   ].filter((f) => f.value != null && f.value !== "");
 
   return (
-    <div className="rounded-2xl border border-white/[0.06]" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)" }}>
-      <div className="flex items-center justify-between px-4 pt-3 pb-2.5">
-        <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] font-semibold">IGDB Metadata</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={onClear}
-            className="w-5 h-5 rounded flex items-center justify-center text-slate-600 hover:text-red-400 transition-colors"
-            title="Remove IGDB data"
-          >
-            <ClearIcon />
-          </button>
-          <div className="relative">
-            <button
-              onMouseEnter={() => setShowTip(true)}
-              onMouseLeave={() => setShowTip(false)}
-              onClick={() => setShowTip((v) => !v)}
-              className="w-5 h-5 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
-            >
-              <InfoCircleIcon />
-            </button>
-            {showTip && (
-              <div className="absolute right-0 top-7 z-50 w-[220px] rounded-xl border border-white/[0.08] shadow-2xl p-3 text-[11px] text-slate-400 leading-relaxed" style={{ background: "rgba(12,12,18,0.98)" }}>
-                Data sourced from IGDB by game name. If another title shares a similar name, the wrong match may have been returned — double-check and re-fetch if needed.
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="surface overflow-hidden">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+        <span className="section-label !text-[10px]">Details from IGDB</span>
+        <button
+          onClick={onClear}
+          className="text-[11px] text-slate-500 hover:text-red-400 transition-colors"
+          title="Data is matched by name. Remove it if the match is wrong."
+        >
+          Remove
+        </button>
       </div>
-      <div className="flex flex-wrap border-t border-white/[0.05]">
+      <div className="grid grid-cols-2">
         {fields.map((f, i) => (
           <div
             key={f.label}
-            className="flex items-start gap-2.5 px-4 py-3 min-w-0"
-            style={{
-              width: fields.length === 1 ? "100%" : "50%",
-              borderTop: i >= 2 ? "1px solid rgba(255,255,255,0.05)" : undefined,
-              borderLeft: i % 2 === 1 ? "1px solid rgba(255,255,255,0.05)" : undefined,
-            }}
+            className={cn("flex items-start gap-2.5 px-4 py-3 min-w-0 border-t border-white/[0.05]", i % 2 === 1 && "border-l", fields.length === 1 && "col-span-2")}
           >
             <span className="text-slate-500 shrink-0 mt-0.5">{f.icon}</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-semibold mb-0.5">{f.label}</p>
-              <p className="text-[12px] text-slate-200 font-medium leading-snug break-words">{f.value}</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold">{f.label}</p>
+              <p className="text-[12.5px] text-slate-100 font-medium leading-snug break-words mt-0.5">{f.value}</p>
             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function useScreenshotUrl(path: string) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    api.readImageBase64(path)
+      .then((data) => { if (!cancelled) setUrl(data); })
+      .catch(() => { if (!cancelled) setUrl(""); });
+    return () => { cancelled = true; };
+  }, [path]);
+  return url || null;
+}
+
+function ScreenshotThumb({ path, onOpen }: { path: string; onOpen: () => void }) {
+  const dataUrl = useScreenshotUrl(path);
+  const addToast = useUIStore((s) => s.addToast);
+  const folderPath = path.replace(/[\\/][^\\/]+$/, "");
+
+  const action = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); };
+  const btn = "p-1.5 rounded-lg bg-black/50 hover:bg-black/70 text-slate-200 hover:text-white transition-colors backdrop-blur";
+
+  return (
+    <div className="break-inside-avoid rounded-xl overflow-hidden mb-2 ring-1 ring-white/[0.06] hover:ring-accent-400/40 transition-all relative group cursor-zoom-in" onClick={onOpen}>
+      {dataUrl ? <img src={dataUrl} alt="" className="w-full h-auto block" /> : <div className="w-full aspect-video bg-white/[0.04] animate-pulse" />}
+      {dataUrl && (
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-1 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}>
+          <button onClick={action(async () => { await navigator.clipboard.writeText(path); addToast("Path copied", "success"); })} title="Copy path" className={btn}><CopyIcon size={11} /></button>
+          <button onClick={action(() => { api.openUrl(path).catch(() => {}); })} title="Open file" className={btn}><ExternalLinkIcon size={11} /></button>
+          <button onClick={action(() => { api.openUrl(folderPath).catch(() => {}); })} title="Open folder" className={btn}><FolderIcon size={11} /></button>
+          <button
+            onClick={action(() => {
+              const a = document.createElement("a");
+              a.href = dataUrl;
+              a.download = path.split(/[\\/]/).pop() ?? "screenshot.jpg";
+              a.click();
+            })}
+            title="Save a copy"
+            className={btn}
+          >
+            <DownloadIcon size={11} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScreenshotLightbox({ shots, index, setIndex }: { shots: string[]; index: number; setIndex: (i: number | null) => void }) {
+  const dataUrl = useScreenshotUrl(shots[index]);
+  const len = shots.length;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-16"
+      style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(10px)" }}
+      onClick={() => setIndex(null)}
+    >
+      <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[12px] text-slate-400 tabular-nums">{index + 1} / {len}</span>
+      <button onClick={(e) => { e.stopPropagation(); setIndex((index - 1 + len) % len); }} className="absolute left-5 top-1/2 -translate-y-1/2 btn-icon w-11 h-11"><ChevronLeftIcon size={18} /></button>
+      {dataUrl ? (
+        <motion.img key={index} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} src={dataUrl} alt="" className="max-w-full max-h-full rounded-xl object-contain shadow-2xl" onClick={(e) => e.stopPropagation()} />
+      ) : (
+        <div className="w-96 h-56 animate-pulse bg-white/5 rounded-xl" />
+      )}
+      <button onClick={(e) => { e.stopPropagation(); setIndex((index + 1) % len); }} className="absolute right-5 top-1/2 -translate-y-1/2 btn-icon w-11 h-11"><ChevronRightIcon size={18} /></button>
+      <button onClick={() => setIndex(null)} className="absolute top-5 right-5 btn-icon"><CloseIcon size={15} /></button>
+    </motion.div>
+  );
+}
+
+function HistoryTab({ sessions, loading }: { sessions: Session[] | null; loading: boolean }) {
+  if (loading || sessions === null) {
+    return <div className="flex justify-center py-16"><div className="w-5 h-5 rounded-full border-2 border-accent-500/30 border-t-accent-500 animate-spin" /></div>;
+  }
+  if (sessions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <ClockIcon size={30} className="text-slate-600 mb-3" />
+        <p className="text-[13.5px] text-slate-300">No sessions recorded yet</p>
+        <p className="text-[12px] text-slate-500 mt-1">Sessions are tracked when you launch games from ZGameLib</p>
+      </div>
+    );
+  }
+  const total = sessions.reduce((a, s) => a + s.duration_mins, 0);
+  const longest = Math.max(...sessions.map((s) => s.duration_mins), 1);
+  const recent = [...sessions].slice(0, 24).reverse();
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { label: "Sessions", value: String(sessions.length) },
+          { label: "Average", value: formatPlaytime(Math.round(total / sessions.length)) },
+          { label: "Longest", value: formatPlaytime(longest) },
+        ].map((s) => (
+          <div key={s.label} className="surface px-3.5 py-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold">{s.label}</p>
+            <p className="text-[16px] font-bold text-white mt-0.5 tabular-nums">{s.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="surface p-4">
+        <p className="section-label !text-[10px] mb-3">Last {recent.length} sessions</p>
+        <div className="flex items-end gap-1 h-20">
+          {recent.map((s) => (
+            <div key={s.id} className="flex-1 max-w-[28px] group relative flex flex-col justify-end h-full">
+              <div
+                className="w-full rounded-t-[3px] bg-accent-500/70 group-hover:bg-accent-400 transition-colors"
+                style={{ height: `${Math.max(4, (s.duration_mins / longest) * 100)}%` }}
+              />
+              <span className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-bg-elevated border border-white/10 text-[9.5px] text-slate-200 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                {formatPlaytime(s.duration_mins)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {sessions.map((s) => (
+          <div key={s.id} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.04] flex flex-col items-center justify-center shrink-0">
+              <span className="text-[8.5px] uppercase text-slate-500 font-semibold leading-none">{new Date(s.started_at).toLocaleDateString(undefined, { month: "short" })}</span>
+              <span className="text-[13px] font-bold text-white leading-none mt-0.5">{new Date(s.started_at).getDate()}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12.5px] text-slate-200">{new Date(s.started_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: new Date(s.started_at).getFullYear() === new Date().getFullYear() ? undefined : "numeric" })}</p>
+              <p className="text-[11px] text-slate-500">{new Date(s.started_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</p>
+            </div>
+            <span className="text-[12.5px] text-slate-200 font-semibold tabular-nums">{formatPlaytime(s.duration_mins)}</span>
           </div>
         ))}
       </div>
@@ -147,11 +259,10 @@ function IgdbMetadataCard({ game, onClear }: { game: Game; onClear: () => void }
 
 export default function GameDetail() {
   const selectedGameId = useGameStore((s) => s.selectedGameId);
-  const games = useGameStore((s) => s.games);
-  const game = games.find((g) => g.id === selectedGameId) ?? null;
+  const game = useGameStore((s) => s.games.find((g) => g.id === s.selectedGameId) ?? null);
   const isOpen = useUIStore((s) => s.isDetailOpen);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
-  const { update, remove, toggleFavorite } = useGames();
+  const { update, remove, toggleFavorite, togglePinned } = useGames();
   const openConfirm = useUIStore((s) => s.openConfirm);
   const addToast = useUIStore((s) => s.addToast);
   const activeGameId = useUIStore((s) => s.activeGameId);
@@ -176,6 +287,8 @@ export default function GameDetail() {
   const [pendingTags, setPendingTags] = useState<Set<string>>(new Set());
   const [showCollectionMenu, setShowCollectionMenu] = useState(false);
   const [igdbFetching, setIgdbFetching] = useState(false);
+  const [hltbFetching, setHltbFetching] = useState(false);
+  const [newFieldKey, setNewFieldKey] = useState<string | null>(null);
   const pendingTagTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const collectionMenuRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -190,7 +303,7 @@ export default function GameDetail() {
 
   const { data: gameCollections = [], refetch: refetchGameCollections } = useQuery<Collection[]>({
     queryKey: ["game-collections", selectedGameId],
-    queryFn: () => api.getCollectionsForGame(game?.id ?? ""),
+    queryFn: () => api.getCollectionsForGame(selectedGameId ?? ""),
     enabled: !!selectedGameId,
   });
 
@@ -208,18 +321,18 @@ export default function GameDetail() {
     setDescExpanded(false);
     setLightboxIndex(null);
     setShowCollectionMenu(false);
+    setEditingName(false);
+    setEditingDesc(false);
+    setNewFieldKey(null);
     pendingTagTimers.current.forEach((t) => clearTimeout(t));
     pendingTagTimers.current.clear();
     setPendingTags(new Set());
-    if (selectedGameId) qc.invalidateQueries({ queryKey: ["games"] });
-  }, [selectedGameId, qc]);
+  }, [selectedGameId]);
 
   useEffect(() => {
     if (!showCollectionMenu) return;
     const handler = (e: MouseEvent) => {
-      if (collectionMenuRef.current && !collectionMenuRef.current.contains(e.target as Node)) {
-        setShowCollectionMenu(false);
-      }
+      if (collectionMenuRef.current && !collectionMenuRef.current.contains(e.target as Node)) setShowCollectionMenu(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -229,45 +342,59 @@ export default function GameDetail() {
     if (lightboxIndex === null || !screenshots) return;
     const len = screenshots.length;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") setLightboxIndex((i) => i !== null ? (i - 1 + len) % len : null);
-      else if (e.key === "ArrowRight") setLightboxIndex((i) => i !== null ? (i + 1) % len : null);
-      else if (e.key === "Escape") setLightboxIndex(null);
+      if (e.key === "ArrowLeft") setLightboxIndex((i) => (i !== null ? (i - 1 + len) % len : null));
+      else if (e.key === "ArrowRight") setLightboxIndex((i) => (i !== null ? (i + 1) % len : null));
+      else if (e.key === "Escape") { e.stopPropagation(); setLightboxIndex(null); }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
   }, [lightboxIndex, screenshots]);
+
+  useEffect(() => {
+    if (!coverLightbox) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setCoverLightbox(false); } };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [coverLightbox]);
 
   useEffect(() => {
     const gameId = game?.id;
     if (!gameId) return;
     const promise = listen<string>("game-session-ended", async (event) => {
-      if (event.payload === gameId && sessions !== null) {
+      if (event.payload === gameId) {
         const data = await api.getSessions(gameId).catch(() => null);
-        if (data) setSessions(data);
+        if (data) setSessions((prev) => (prev === null ? prev : data));
       }
     });
     return () => { promise.then((f) => f()); };
-  }, [game?.id, sessions]);
+  }, [game?.id]);
 
-  const dummyGame = { id: "", name: "", platform: "custom" as const, cover_path: null, exe_path: null, install_dir: null, description: null, rating: null, status: "none" as const, is_favorite: false, is_pinned: false, playtime_mins: 0, last_played: null, date_added: "", steam_app_id: null, epic_app_name: null, tags: [], sort_order: 0, deleted_at: null, custom_fields: {} as Record<string, string>, hltb_main_mins: null, hltb_extra_mins: null, genre: null, developer: null, publisher: null, release_year: null };
-  const coverUrl = useCover(game ?? dummyGame);
+  useEffect(() => {
+    return () => { pendingTagTimers.current.forEach((t) => clearTimeout(t)); };
+  }, []);
+
+  const coverUrl = useCover(game ?? PLACEHOLDER_GAME);
 
   if (!game) return null;
 
   const close = () => setDetailOpen(false);
+  const running = activeGameId === game.id;
+  const statusConfig = customStatuses.find((s) => s.key === game.status);
+
+  const refreshGames = async () => {
+    const allGames = await api.getAllGames();
+    useGameStore.getState().setGames(allGames);
+  };
 
   const handleChangeCover = async () => {
-    const selected = await open({
-      filters: [{ name: "Image", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif"] }],
-    });
+    const selected = await open({ filters: [{ name: "Image", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif"] }] });
     if (typeof selected === "string") {
       try {
         const newPath = await api.setGameCover(game.id, selected);
         if (game.cover_path) clearCoverCache(game.cover_path);
         const dataUri = await api.readImageBase64(newPath);
         setCoverCache(newPath, dataUri);
-        const allGames = await api.getAllGames();
-        useGameStore.getState().setGames(allGames);
+        await refreshGames();
         addToast("Cover image updated", "success");
       } catch (e) {
         addToast(String(e), "error");
@@ -282,41 +409,38 @@ export default function GameDetail() {
     });
   };
 
+  const handleStop = () => {
+    openConfirm(`Stop "${game.name}"?`, async () => {
+      try { await api.stopGame(); useUIStore.getState().setActiveGameId(null); }
+      catch (e) { addToast(String(e), "error"); }
+    }, "Stop Game");
+  };
+
   const loadSessions = async () => {
     if (loadingSessions) return;
     setLoadingSessions(true);
-    try {
-      const data = await api.getSessions(game.id);
-      setSessions(data);
-    } catch {
-      setSessions([]);
-    } finally {
-      setLoadingSessions(false);
-    }
+    try { setSessions(await api.getSessions(game.id)); }
+    catch { setSessions([]); }
+    finally { setLoadingSessions(false); }
   };
 
   const loadScreenshots = async () => {
     if (!game.steam_app_id || loadingShots) return;
     setLoadingShots(true);
-    try {
-      const shots = await api.getGameScreenshots(game.steam_app_id);
-      setScreenshots(shots);
-    } catch {
-      setScreenshots([]);
-    } finally {
-      setLoadingShots(false);
-    }
+    try { setScreenshots(await api.getGameScreenshots(game.steam_app_id)); }
+    catch { setScreenshots([]); }
+    finally { setLoadingShots(false); }
   };
 
   const handleDelete = () => {
-    openConfirm(`Remove "${game.name}" from library?`, () => {
+    openConfirm(`Move "${game.name}" to the trash? You can restore it from Settings.`, () => {
       remove(game.id);
       close();
-    });
+    }, "Move to Trash");
   };
 
   const saveName = () => {
-    if (nameVal.trim()) update({ id: game.id, name: nameVal.trim() }, { onSuccess: flashSaved });
+    if (nameVal.trim() && nameVal.trim() !== game.name) update({ id: game.id, name: nameVal.trim() }, { onSuccess: flashSaved });
     setEditingName(false);
   };
 
@@ -326,9 +450,10 @@ export default function GameDetail() {
   };
 
   const addTag = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && tagInput.trim()) {
-      const t = tagInput.trim().toLowerCase();
-      if (!game.tags.includes(t)) update({ id: game.id, tags: [...game.tags, t] });
+    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+      e.preventDefault();
+      const t = tagInput.trim().replace(/,$/, "").toLowerCase();
+      if (t && !game.tags.includes(t)) update({ id: game.id, tags: [...game.tags, t] }, { onSuccess: flashSaved });
       setTagInput("");
     }
   };
@@ -336,12 +461,12 @@ export default function GameDetail() {
   const removeTag = (t: string) => {
     setPendingTags((prev) => new Set([...prev, t]));
     const timer = setTimeout(() => {
-      update({ id: game.id, tags: game.tags.filter((x) => x !== t) });
+      const current = useGameStore.getState().games.find((g) => g.id === game.id);
+      if (current) update({ id: game.id, tags: current.tags.filter((x) => x !== t) });
       setPendingTags((prev) => { const next = new Set(prev); next.delete(t); return next; });
       pendingTagTimers.current.delete(t);
-    }, 5000);
+    }, 4000);
     pendingTagTimers.current.set(t, timer);
-    addToast(`Tag "${t}" removed — click to undo`, "info");
   };
 
   const undoRemoveTag = (t: string) => {
@@ -355,20 +480,13 @@ export default function GameDetail() {
     setIgdbFetching(true);
     try {
       const settings = await api.getSettings();
-      const clientId = settings.igdb_client_id;
-      const clientSecret = settings.igdb_client_secret;
-      if (!clientId || !clientSecret) {
+      if (!settings.igdb_client_id || !settings.igdb_client_secret) {
         addToast("Set IGDB credentials in Settings → Integrations", "error");
         return;
       }
-      const data = await api.fetchIgdbMetadata(game.id, game.name, clientId, clientSecret);
-      if (data) {
-        const allGames = await api.getAllGames();
-        useGameStore.getState().setGames(allGames);
-        addToast("IGDB metadata fetched", "success");
-      } else {
-        addToast("No IGDB data found", "info");
-      }
+      const data = await api.fetchIgdbMetadata(game.id, game.name, settings.igdb_client_id, settings.igdb_client_secret);
+      if (data) { await refreshGames(); addToast("IGDB metadata fetched", "success"); }
+      else addToast("No IGDB data found", "info");
     } catch {
       addToast("Could not fetch IGDB metadata", "error");
     } finally {
@@ -378,29 +496,32 @@ export default function GameDetail() {
 
   const handleIgdbFetch = () => {
     if (game.igdb_skipped) {
-      openConfirm(
-        "This game was flagged after its IGDB data was cleared — the search may return the wrong match again. Fetch anyway?",
-        doIgdbFetch
-      );
+      openConfirm("This game's IGDB data was removed before, so the search may return the wrong match again. Fetch anyway?", doIgdbFetch, "Fetch");
     } else {
       doIgdbFetch();
     }
   };
 
+  const handleHltb = async () => {
+    setHltbFetching(true);
+    try {
+      const data = await api.fetchHltbData(game.id, game.name);
+      if (data) {
+        useGameStore.getState().updateGame({ ...game, hltb_main_mins: data.main_mins, hltb_extra_mins: data.extra_mins });
+        addToast("HowLongToBeat data fetched", "success");
+      } else addToast("No HowLongToBeat data found", "info");
+    } catch {
+      addToast("Could not fetch HowLongToBeat data", "error");
+    } finally {
+      setHltbFetching(false);
+    }
+  };
+
   const handleClearIgdb = () => {
-    openConfirm(
-      `Remove IGDB data for "${game.name}"? The game will be flagged — you'll be asked to confirm before any future IGDB fetch.`,
-      async () => {
-        try {
-          await api.clearIgdbData(game.id);
-          const allGames = await api.getAllGames();
-          useGameStore.getState().setGames(allGames);
-          addToast("IGDB data removed", "success");
-        } catch {
-          addToast("Failed to remove IGDB data", "error");
-        }
-      }
-    );
+    openConfirm(`Remove IGDB data for "${game.name}"? You'll be asked to confirm before any future IGDB fetch for this game.`, async () => {
+      try { await api.clearIgdbData(game.id); await refreshGames(); addToast("IGDB data removed", "success"); }
+      catch { addToast("Failed to remove IGDB data", "error"); }
+    }, "Remove");
   };
 
   const toggleCollection = async (col: Collection) => {
@@ -415,815 +536,525 @@ export default function GameDetail() {
       }
       refetchGameCollections();
       qc.invalidateQueries({ queryKey: ["collections"] });
+      qc.invalidateQueries({ queryKey: ["collection-games", col.id] });
     } catch (e) {
       addToast(String(e), "error");
     }
   };
 
+  const commitNewField = () => {
+    const key = newFieldKey?.trim();
+    if (key && !(key in game.custom_fields)) update({ id: game.id, custom_fields: { ...game.custom_fields, [key]: "" } });
+    setNewFieldKey(null);
+  };
+
+  const hltbMain = game.hltb_main_mins;
+  const hltbPct = hltbMain ? Math.min(100, Math.round((game.playtime_mins / hltbMain) * 100)) : 0;
+
+  const tabs = [
+    { key: "info" as const, label: "Overview" },
+    ...(game.steam_app_id ? [{ key: "screenshots" as const, label: screenshots !== null ? `Screenshots · ${screenshots.length}` : "Screenshots" }] : []),
+    ...(game.install_dir ? [{ key: "mods" as const, label: "Mods" }] : []),
+    { key: "history" as const, label: sessions !== null ? `History · ${sessions.length}` : "History" },
+  ];
+
   return (
     <>
-    {showCoverSearch && (
-      <CoverSearchModal
-        gameId={game.id}
-        gameName={game.name}
-        currentCoverPath={game.cover_path}
-        onClose={() => setShowCoverSearch(false)}
-      />
-    )}
-    <AnimatePresence>
-      {coverLightbox && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setCoverLightbox(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(20px)" }}
-        >
-          <motion.img
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.85, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
-            src={coverUrl || COVER_PLACEHOLDER}
-            alt={game.name}
-            className="max-h-[85vh] max-w-[60vw] rounded-2xl object-contain shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </motion.div>
+      {showCoverSearch && (
+        <CoverSearchModal gameId={game.id} gameName={game.name} currentCoverPath={game.cover_path} onClose={() => setShowCoverSearch(false)} />
       )}
-    </AnimatePresence>
-    <AnimatePresence>
-      {isOpen && (
-        <>
+      <AnimatePresence>
+        {coverLightbox && coverUrl && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            onClick={close}
-            className="fixed inset-0 z-30"
-            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}
-          />
-          <motion.div
-            ref={panelRef}
-            data-tour="game-detail"
-            initial={{ x: "100%", opacity: 0.5 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 30, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 w-[500px] z-40 flex flex-col overflow-hidden"
-            style={{
-              background: "rgba(10, 8, 16, 0.92)",
-              backdropFilter: "blur(40px) saturate(200%)",
-              borderLeft: "1px solid rgba(255,255,255,0.04)",
-              boxShadow: "-20px 0 60px rgba(0,0,0,0.5), 0 0 40px rgb(var(--accent-500) /0.05)",
-            }}
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key !== "Tab") return;
-              const sel = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-              const focusable = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(sel) ?? []).filter((el) => !el.hasAttribute("disabled"));
-              if (!focusable.length) return;
-              const first = focusable[0];
-              const last = focusable[focusable.length - 1];
-              if (e.shiftKey) {
-                if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-              } else {
-                if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-              }
-            }}
+            onClick={() => setCoverLightbox(false)}
+            className="fixed inset-0 z-[70] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(20px)" }}
           >
-            <div className="relative h-60 shrink-0 overflow-hidden group/cover cursor-pointer" onClick={() => setCoverLightbox(true)}>
-              <motion.img
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                src={coverUrl || COVER_PLACEHOLDER}
-                alt={game.name}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).src = COVER_PLACEHOLDER; }}
-              />
-              <div className="absolute inset-0" style={{
-                background: "linear-gradient(to bottom, rgba(10,8,16,0.2) 0%, rgba(10,8,16,0.5) 50%, rgba(10,8,16,1) 100%)"
-              }} />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 z-10"
-                style={{ background: "rgba(0,0,0,0.5)" }}
-              >
-                <div className="flex flex-col items-center gap-3" onClick={(e) => { e.stopPropagation(); handleChangeCover(); }}>
-                  <div className="flex items-center gap-2 text-white/80 text-sm font-medium">
-                    <ImageIcon size={18} />
-                    Change Cover
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowCoverSearch(true); }}
-                    className="flex items-center gap-1.5 text-[11px] text-accent-300 hover:text-white transition-colors bg-accent-600/30 px-3 py-1 rounded-lg border border-accent-500/30"
-                  >
-                    <SearchIcon size={11} />
-                    Search Online
-                  </button>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={(e) => { e.stopPropagation(); close(); }}
-                className="absolute top-4 right-4 btn-icon z-20"
-              >
-                <CloseIcon size={14} />
-              </motion.button>
-              <div className="absolute top-4 left-4 z-20">
-                <PlatformBadge platform={game.platform} />
-              </div>
-            </div>
-
-            <div
-              className="flex shrink-0 px-6 items-center"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              src={coverUrl}
+              alt={game.name}
+              className="max-h-[85vh] max-w-[60vw] rounded-2xl object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {lightboxIndex !== null && screenshots && screenshots.length > 0 && (
+          <ScreenshotLightbox shots={screenshots} index={lightboxIndex} setIndex={setLightboxIndex} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={close}
+              className="fixed inset-0 z-30"
+              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
+            />
+            <motion.div
+              ref={panelRef}
+              data-tour="game-detail"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 34, stiffness: 320 }}
+              className="fixed right-0 top-0 bottom-0 w-[580px] max-w-[92vw] z-40 flex flex-col overflow-hidden"
+              style={{
+                background: "rgb(var(--bg-base) / 0.97)",
+                borderLeft: "1px solid rgba(255,255,255,0.06)",
+                boxShadow: "-30px 0 80px rgba(0,0,0,0.6)",
+              }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key !== "Tab") return;
+                const sel = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                const focusable = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(sel) ?? []).filter((el) => !el.hasAttribute("disabled"));
+                if (!focusable.length) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+              }}
             >
-              {[
-                { key: "info" as const, label: "Info" },
-                ...(game.steam_app_id ? [{ key: "screenshots" as const, label: screenshots !== null ? `Screenshots (${screenshots.length})` : "Screenshots" }] : []),
-                ...(game.install_dir ? [{ key: "mods" as const, label: "Mods" }] : []),
-                { key: "history" as const, label: sessions !== null ? `History (${sessions.length})` : "History" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  data-tour={`detail-tab-${tab.key}`}
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    if (tab.key === "screenshots" && screenshots === null) loadScreenshots();
-                    if (tab.key === "history" && sessions === null) loadSessions();
-                  }}
-                  className={cn(
-                    "px-4 py-3 text-[12px] font-medium border-b-2 transition-all -mb-px",
-                    activeTab === tab.key
-                      ? "text-accent-400 border-accent-500"
-                      : "text-slate-600 border-transparent hover:text-slate-400"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-              <AnimatePresence>
-                {showSaved && (
-                  <motion.span
-                    initial={{ opacity: 0, x: 6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="ml-auto text-[11px] text-emerald-400 font-medium pr-1 shrink-0"
-                  >
-                    Saved ✓
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
+              <div className="relative shrink-0 overflow-hidden">
+                <div className="absolute inset-0">
+                  <div className="absolute -inset-10 blur-[44px] opacity-70 saturate-150">
+                    <GameCover game={game} eager />
+                  </div>
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgb(var(--bg-base) / 0.35) 0%, rgb(var(--bg-base) / 0.75) 60%, rgb(var(--bg-base)) 100%)" }} />
+                </div>
 
-            {activeTab === "screenshots" && (
-              <div className="flex-1 overflow-y-auto p-4">
-                {loadingShots && (
-                  <div className="flex justify-center py-12">
-                    <div className="w-5 h-5 rounded-full border-2 border-accent-500/30 border-t-accent-500 animate-spin" />
+                <div className="relative flex items-center justify-between px-5 pt-4">
+                  <div className="flex items-center gap-2">
+                    <PlatformBadge platform={game.platform} />
+                    {game.not_installed && <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-black/30 border border-white/10 text-slate-300">Not installed</span>}
                   </div>
-                )}
-                {!loadingShots && screenshots !== null && screenshots.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <ImageIcon size={28} className="text-slate-700 mb-3" />
-                    <p className="text-[13px] text-slate-600">No screenshots found</p>
-                    <p className="text-[11px] text-slate-700 mt-1">Take screenshots in-game with F12</p>
-                  </div>
-                )}
-                {!loadingShots && screenshots && screenshots.length > 0 && (
-                  <>
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-[11px] text-slate-600">{screenshots.length} screenshot{screenshots.length !== 1 ? "s" : ""}</p>
-                      <button
-                        onClick={() => {
-                          const folder = screenshots[0].replace(/[\\/][^\\/]+$/, "");
-                          api.openUrl(folder).catch(() => {});
-                        }}
-                        className="btn-ghost text-[11px] py-1 px-2.5"
-                      >
-                        <FolderIcon size={11} />
-                        Open Folder
-                      </button>
-                    </div>
-                    <div className="columns-2 gap-2">
-                      {screenshots.map((path, i) => (
-                        <ScreenshotThumb key={i} path={path} onOpen={() => setLightboxIndex(i)} />
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-1.5">
                     <AnimatePresence>
-                      {lightboxIndex !== null && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="fixed inset-0 z-[60] flex items-center justify-center p-6"
-                          style={{ background: "rgba(0,0,0,0.92)" }}
-                          onClick={() => setLightboxIndex(null)}
-                        >
-                          <span
-                            className="absolute top-4 right-4 text-[11px] text-slate-500 font-mono"
-                          >
-                            {lightboxIndex + 1} / {screenshots.length}
-                          </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => i !== null ? (i - 1 + screenshots.length) % screenshots.length : null); }}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-white font-bold text-lg"
-                            style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
-                          >
-                            {"<"}
-                          </button>
-                          <ScreenshotLightboxImg path={screenshots[lightboxIndex]} onClick={(e) => e.stopPropagation()} />
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => i !== null ? (i + 1) % screenshots.length : null); }}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-white font-bold text-lg"
-                            style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
-                          >
-                            {">"}
-                          </button>
-                          <button
-                            onClick={() => setLightboxIndex(null)}
-                            className="absolute top-4 left-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-                          >
-                            <CloseIcon size={16} />
-                          </button>
-                        </motion.div>
+                      {showSaved && (
+                        <motion.span initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-emerald-300 font-medium mr-1">
+                          <CheckIcon size={11} /> Saved
+                        </motion.span>
                       )}
                     </AnimatePresence>
-                  </>
-                )}
-              </div>
-            )}
-
-            {activeTab === "mods" && game.install_dir && (
-              <div className="flex-1 overflow-y-auto p-6">
-                <ModLoaderPanel installDir={game.install_dir} exePath={game.exe_path} />
-              </div>
-            )}
-
-            {activeTab === "history" && (
-              <div className="flex-1 overflow-y-auto p-6">
-                {loadingSessions && (
-                  <div className="flex justify-center py-12">
-                    <div className="w-5 h-5 rounded-full border-2 border-accent-500/30 border-t-accent-500 animate-spin" />
+                    <button onClick={() => togglePinned(game.id)} className={cn("btn-icon w-8 h-8 !bg-black/25", game.is_pinned && "!text-accent-300")} title={game.is_pinned ? "Unpin" : "Pin to library"}>
+                      <PinIcon size={13} filled={game.is_pinned} />
+                    </button>
+                    <button onClick={close} className="btn-icon w-8 h-8 !bg-black/25" title="Close (Esc)"><CloseIcon size={13} /></button>
                   </div>
-                )}
-                {!loadingSessions && sessions !== null && sessions.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <ClockIcon size={28} className="text-slate-700 mb-3" />
-                    <p className="text-[13px] text-slate-600">No sessions recorded yet</p>
-                    <p className="text-[11px] text-slate-700 mt-1">Sessions are tracked when you launch games</p>
-                  </div>
-                )}
-                {!loadingSessions && sessions && sessions.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-1">
-                      {sessions.length} session{sessions.length !== 1 ? "s" : ""} recorded
-                    </p>
-                    {sessions.map((s) => (
-                      <div
-                        key={s.id}
-                        className="glass rounded-xl px-4 py-3 flex items-center justify-between"
-                      >
-                        <div>
-                          <p className="text-[12px] text-slate-300 font-medium">
-                            {new Date(s.started_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                          </p>
-                          <p className="text-[10px] text-slate-600 mt-0.5">
-                            {new Date(s.started_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <ClockIcon size={11} className="text-accent-500" />
-                          <span className="text-[12px] text-slate-400 font-medium">
-                            {s.duration_mins < 60
-                              ? `${s.duration_mins}m`
-                              : `${Math.floor(s.duration_mins / 60)}h ${s.duration_mins % 60}m`}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "info" && (
-            <div className="flex flex-col gap-5 p-6 flex-1 overflow-y-auto">
-              <div className="flex items-start gap-3">
-                {editingName ? (
-                  <div className="flex gap-2 flex-1">
-                    <input
-                      autoFocus
-                      value={nameVal}
-                      onChange={(e) => setNameVal(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && saveName()}
-                      onBlur={saveName}
-                      className="input-glass flex-1 text-lg font-bold"
-                    />
-                  </div>
-                ) : (
-                  <h2
-                    className="text-xl font-bold text-white flex-1 cursor-text hover:text-accent-200 transition-colors leading-tight"
-                    onClick={() => { setNameVal(game.name); setEditingName(true); }}
-                  >
-                    {game.name}
-                  </h2>
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={async () => {
-                    try {
-                      const data = await api.fetchHltbData(game.id, game.name);
-                      if (data) {
-                        useGameStore.getState().updateGame({ ...game, hltb_main_mins: data.main_mins, hltb_extra_mins: data.extra_mins });
-                        addToast("HLTB data fetched", "success");
-                      } else {
-                        addToast("No HLTB data found", "info");
-                      }
-                    } catch {
-                      addToast("Could not fetch HLTB data", "error");
-                    }
-                  }}
-                  data-tour="hltb-btn"
-                  className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-accent-400 glass transition-all duration-200"
-                  title="Fetch HowLongToBeat estimate"
-                >
-                  <ClockIcon size={15} />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleIgdbFetch}
-                  disabled={igdbFetching}
-                  data-tour="igdb-btn"
-                  className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-accent-400 glass transition-all duration-200 disabled:opacity-40"
-                  title="Fetch IGDB metadata"
-                >
-                  {igdbFetching ? (
-                    <div className="w-3.5 h-3.5 rounded-full border-2 border-accent-500/30 border-t-accent-500 animate-spin" />
-                  ) : (
-                    <SearchIcon size={15} />
-                  )}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.85 }}
-                  onClick={() => toggleFavorite(game.id)}
-                  className={cn(
-                    "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300",
-                    game.is_favorite
-                      ? "text-pink-400 bg-pink-500/15 border border-pink-500/25 glow-inner"
-                      : "text-slate-600 hover:text-pink-400 glass"
-                  )}
-                >
-                  <HeartIcon size={16} filled={game.is_favorite} />
-                </motion.button>
-              </div>
-
-              <div className="flex gap-2">
-                <motion.button
-                  data-tour="play-btn"
-                  whileHover={{ scale: activeGameId === game.id ? 1 : 1.02 }}
-                  whileTap={{ scale: activeGameId === game.id ? 1 : 0.98 }}
-                  onClick={activeGameId === game.id ? undefined : handlePlay}
-                  className={cn(
-                    "btn-primary flex-1 justify-center py-3 transition-all",
-                    activeGameId === game.id && "bg-green-600 hover:bg-green-600 cursor-default",
-                    gameStarted && activeGameId !== game.id && "bg-green-600 hover:bg-green-500",
-                  )}
-                  style={{ boxShadow: activeGameId === game.id ? "0 0 25px rgba(34,197,94,0.3)" : gameStarted ? "0 0 25px rgba(34,197,94,0.3)" : "0 0 25px rgb(var(--accent-500) /0.2)" }}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    {activeGameId === game.id ? (
-                      <motion.span key="playing" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex items-center gap-1.5">
-                        <span className="relative flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75" /><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" /></span>
-                        Playing
-                      </motion.span>
-                    ) : gameStarted ? (
-                      <motion.span key="started" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex items-center gap-1.5">
-                        <CheckIcon size={14} />
-                        Game Started
-                      </motion.span>
-                    ) : (
-                      <motion.span key="play" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex items-center gap-1.5">
-                        <PlayIcon size={14} />
-                        Play
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.92 }}
-                  onClick={() => api.openGameFolder(game.id).catch(() => {})}
-                  className="btn-icon w-10 h-10"
-                  title="Open game folder"
-                >
-                  <FolderIcon size={15} />
-                </motion.button>
-                <div className="relative shrink-0" ref={collectionMenuRef}>
-                  <motion.button
-                    whileTap={{ scale: 0.92 }}
-                    onClick={() => setShowCollectionMenu((v) => !v)}
-                    className={cn("btn-icon w-10 h-10", showCollectionMenu && "text-accent-400 border-accent-500/30 bg-accent-500/10")}
-                    title="Add to Collection"
-                  >
-                    <PlusIcon size={15} />
-                  </motion.button>
-                  <AnimatePresence>
-                    {showCollectionMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute bottom-full mb-2 right-0 min-w-[180px] glass rounded-xl border border-white/8 shadow-xl z-50 overflow-hidden"
-                      >
-                        <p className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold px-3 pt-2.5 pb-1.5">Collections</p>
-                        {allCollections.length === 0 ? (
-                          <p className="text-[12px] text-slate-600 px-3 pb-3">No collections yet</p>
-                        ) : (
-                          <div className="flex flex-col pb-1.5">
-                            {allCollections.map((col) => {
-                              const active = gameCollections.some((c) => c.id === col.id);
-                              return (
-                                <button
-                                  key={col.id}
-                                  onClick={() => toggleCollection(col)}
-                                  className={cn(
-                                    "flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors hover:bg-white/5",
-                                    active ? "text-accent-300" : "text-slate-400"
-                                  )}
-                                >
-                                  <span className={cn("w-3.5 h-3.5 rounded flex items-center justify-center border", active ? "bg-accent-600/40 border-accent-500/50" : "border-white/15")}>
-                                    {active && <CheckIcon size={9} />}
-                                  </span>
-                                  {col.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
-                <motion.button
-                  whileTap={{ scale: 0.92 }}
-                  onClick={handleDelete}
-                  className="btn-icon w-10 h-10 text-red-500/50 hover:text-red-400"
-                  style={{ borderColor: "rgba(239,68,68,0.06)" }}
-                  title="Remove game"
-                >
-                  <TrashIcon size={15} />
-                </motion.button>
-              </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: <ClockIcon size={13} className="text-accent-400" />, label: "Playtime", value: formatPlaytime(game.playtime_mins) },
-                  { icon: <StarIcon size={13} filled className="text-accent-400" />, label: "Rating", value: game.rating !== null ? `${game.rating}/10` : "Unrated" },
-                  { icon: <span className="text-[11px]">+</span>, label: "Added", value: formatDate(game.date_added) },
-                ].map((s, i) => (
-                  <div key={i} className="glass rounded-xl p-3 text-center group hover:border-accent-500/20 transition-all duration-300">
-                    <div className="flex items-center justify-center gap-1 mb-1.5 text-slate-500">
-                      {s.icon}
+                <div className="relative flex gap-5 px-5 pt-4 pb-5">
+                  <div className="relative w-[132px] shrink-0 group/cover">
+                    <div className="aspect-[3/4] rounded-2xl overflow-hidden ring-1 ring-white/15 cursor-zoom-in" style={{ boxShadow: "0 24px 50px -16px rgba(0,0,0,0.95)" }} onClick={() => coverUrl && setCoverLightbox(true)}>
+                      <GameCover game={game} eager />
                     </div>
-                    <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-0.5">{s.label}</p>
-                    <p className="text-[13px] font-semibold text-slate-200">{s.value}</p>
+                    <div className="absolute inset-x-1.5 bottom-1.5 flex gap-1 opacity-0 group-hover/cover:opacity-100 transition-opacity">
+                      <button onClick={handleChangeCover} className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg bg-black/70 backdrop-blur text-[10.5px] font-medium text-white hover:bg-black/85" title="Choose an image file">
+                        <ImageIcon size={11} /> File
+                      </button>
+                      <button onClick={() => setShowCoverSearch(true)} className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg bg-accent-600/80 backdrop-blur text-[10.5px] font-medium text-white hover:bg-accent-500" title="Search covers online">
+                        <SearchIcon size={11} /> Search
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              {(game.hltb_main_mins || game.hltb_extra_mins) && (
-                <div className="col-span-2 flex items-center gap-3 py-2 px-3 rounded-xl glass">
-                  <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.12em]">HLTB</span>
-                  {game.hltb_main_mins && (
-                    <span className="text-[12px] text-slate-400">Main: <span className="text-slate-200 font-medium">{Math.round(game.hltb_main_mins / 60 * 10) / 10}h</span></span>
-                  )}
-                  {game.hltb_extra_mins && (
-                    <span className="text-[12px] text-slate-400 ml-2">+Extra: <span className="text-slate-200 font-medium">{Math.round(game.hltb_extra_mins / 60 * 10) / 10}h</span></span>
-                  )}
-                </div>
-              )}
-
-              {(game.genre || game.developer || game.publisher || game.release_year) && (
-                <IgdbMetadataCard game={game} onClear={handleClearIgdb} />
-              )}
-
-              <div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-2.5">Your Rating</p>
-                <StarRating value={game.rating} onChange={(v) => update({ id: game.id, rating: v }, { onSuccess: flashSaved })} size="md" />
-              </div>
-
-              <div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-2.5">Status</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <motion.button
-                    whileTap={{ scale: 0.93 }}
-                    onClick={() => update({ id: game.id, status: "none" })}
-                    className={cn(
-                      "px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-all duration-300",
-                      game.status === "none"
-                        ? "bg-accent-600/20 border-accent-500/40 text-accent-300 glow-sm"
-                        : "glass text-slate-500 hover:text-slate-300 hover:border-white/12"
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    {editingName ? (
+                      <input
+                        autoFocus
+                        value={nameVal}
+                        onChange={(e) => setNameVal(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") { e.stopPropagation(); setEditingName(false); } }}
+                        onBlur={saveName}
+                        className="input-glass text-[20px] font-bold h-11 py-0"
+                      />
+                    ) : (
+                      <h2
+                        className="text-[24px] font-bold text-white leading-tight cursor-text hover:text-accent-100 transition-colors line-clamp-2"
+                        onClick={() => { setNameVal(game.name); setEditingName(true); }}
+                        title="Click to rename"
+                      >
+                        {game.name}
+                      </h2>
                     )}
-                  >
-                    Unset
-                  </motion.button>
-                  {customStatuses.map((s) => (
-                    <motion.button
-                      key={s.key}
-                      whileTap={{ scale: 0.93 }}
-                      onClick={() => update({ id: game.id, status: s.key as import("@/lib/types").GameStatus })}
-                      className={cn(
-                        "px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-all duration-300 flex items-center gap-1.5",
-                        game.status === s.key
-                          ? "bg-accent-600/20 border-accent-500/40 text-accent-300 glow-sm"
-                          : "glass text-slate-500 hover:text-slate-300 hover:border-white/12"
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px] text-slate-300/80">
+                      {statusConfig && game.status !== "none" && (
+                        <span className="flex items-center gap-1.5 font-medium" style={{ color: statusConfig.color }}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusConfig.color }} />{statusConfig.label}
+                        </span>
                       )}
+                      {game.genre && <span>{game.genre}</span>}
+                      {game.release_year && <span>{game.release_year}</span>}
+                      {game.developer && <span className="truncate">{game.developer}</span>}
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-auto pt-4">
+                      {running ? (
+                        <button onClick={handleStop} data-tour="play-btn" className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-[14px] font-semibold text-white bg-emerald-600/90 hover:bg-red-500/90 transition-colors group/stop">
+                          <span className="relative flex h-2.5 w-2.5 group-hover/stop:hidden"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" /><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" /></span>
+                          <StopIcon size={13} className="hidden group-hover/stop:block" />
+                          <span className="group-hover/stop:hidden">Playing</span>
+                          <span className="hidden group-hover/stop:inline">Stop</span>
+                        </button>
+                      ) : (
+                        <button data-tour="play-btn" onClick={handlePlay} className={cn("btn-primary flex-1 h-11 justify-center text-[14px]", gameStarted && "!bg-emerald-600")}>
+                          {gameStarted ? <><CheckIcon size={15} /> Launched</> : game.not_installed ? <><DownloadIcon size={15} /> Install</> : <><PlayIcon size={15} /> Play</>}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => toggleFavorite(game.id)}
+                        className={cn("btn-icon w-11 h-11", game.is_favorite && "!text-pink-400 !border-pink-500/30 !bg-pink-500/10")}
+                        title={game.is_favorite ? "Remove from favorites (F)" : "Add to favorites (F)"}
+                      >
+                        <HeartIcon size={16} filled={game.is_favorite} />
+                      </button>
+                      <div className="relative" ref={collectionMenuRef}>
+                        <button
+                          onClick={() => setShowCollectionMenu((v) => !v)}
+                          className={cn("btn-icon w-11 h-11", (showCollectionMenu || gameCollections.length > 0) && "!text-accent-300 !border-accent-500/30")}
+                          title="Collections"
+                        >
+                          <CollectionIcon size={16} />
+                        </button>
+                        <AnimatePresence>
+                          {showCollectionMenu && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                              transition={{ duration: 0.14 }}
+                              className="absolute top-full mt-2 right-0 min-w-[210px] glass-strong rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5"
+                            >
+                              <p className="section-label !text-[10px] px-2.5 pt-1.5 pb-1">Collections</p>
+                              {allCollections.length === 0 ? (
+                                <p className="text-[12px] text-slate-500 px-2.5 pb-2">No collections yet — create one on the Collections page.</p>
+                              ) : (
+                                allCollections.map((col) => {
+                                  const active = gameCollections.some((c) => c.id === col.id);
+                                  return (
+                                    <button key={col.id} onClick={() => toggleCollection(col)} className={cn("w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-left transition-colors hover:bg-white/[0.06]", active ? "text-white" : "text-slate-300")}>
+                                      <span className={cn("w-4 h-4 rounded-md flex items-center justify-center border", active ? "bg-accent-500 border-accent-400" : "border-white/20")}>
+                                        {active && <CheckIcon size={10} className="text-white" />}
+                                      </span>
+                                      <span className="flex-1 truncate">{col.name}</span>
+                                    </button>
+                                  );
+                                })
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      <button onClick={() => api.openGameFolder(game.id).catch((e) => addToast(String(e), "error"))} className="btn-icon w-11 h-11" title="Open game folder">
+                        <FolderIcon size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative flex items-center gap-1 px-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      data-tour={`detail-tab-${tab.key}`}
+                      onClick={() => {
+                        setActiveTab(tab.key);
+                        if (tab.key === "screenshots" && screenshots === null) loadScreenshots();
+                        if (tab.key === "history" && sessions === null) loadSessions();
+                      }}
+                      className={cn("relative px-3.5 py-3 text-[12.5px] font-medium transition-colors", activeTab === tab.key ? "text-white" : "text-slate-500 hover:text-slate-300")}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
-                      {s.label}
-                    </motion.button>
+                      {tab.label}
+                      {activeTab === tab.key && <motion.span layoutId="detail-tab" className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full bg-accent-400" />}
+                    </button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-2.5 flex items-center gap-1.5">
-                  <TagIcon size={11} className="text-slate-600" /> Tags
-                </p>
-                <div className="flex flex-wrap gap-1.5 mb-2.5">
-                  <AnimatePresence>
-                    {game.tags.map((t) => {
-                      const pending = pendingTags.has(t);
-                      return (
-                        <motion.button
-                          key={t}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: pending ? 0.45 : 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => pending ? undoRemoveTag(t) : removeTag(t)}
-                          className={cn(
-                            "px-3 py-1 rounded-full text-[11px] transition-all duration-200 group flex items-center gap-1",
-                            pending
-                              ? "glass text-slate-600 border-red-500/15 line-through"
-                              : "glass text-slate-400 hover:text-red-400 hover:border-red-500/25"
-                          )}
-                          title={pending ? "Click to undo" : "Click to remove"}
-                        >
-                          {t}
-                          <span className={cn("text-[9px]", pending ? "text-accent-500 no-underline" : "text-slate-700 group-hover:text-red-400")}>
-                            {pending ? "↩" : "x"}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
-                  </AnimatePresence>
-                </div>
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={addTag}
-                  placeholder="Add tag (Enter)"
-                  className="input-glass text-[12px] py-2"
-                />
-              </div>
-
-              <div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-2.5">Description</p>
-                {editingDesc ? (
-                  <div className="flex flex-col gap-2">
-                    <textarea
-                      autoFocus
-                      value={descVal}
-                      onChange={(e) => setDescVal(e.target.value)}
-                      rows={4}
-                      className="input-glass resize-none text-[13px] leading-relaxed"
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button onClick={() => setEditingDesc(false)} className="btn-ghost text-[12px] py-1.5">Cancel</button>
-                      <button onClick={saveDesc} className="btn-primary text-[12px] py-1.5">Save</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <motion.p
-                      whileHover={{ borderColor: "rgb(var(--accent-500) /0.2)" }}
-                      onClick={() => { setDescVal(game.description ?? ""); setEditingDesc(true); }}
-                      className={cn(
-                        "text-[13px] cursor-text leading-relaxed rounded-xl p-4 glass transition-all duration-300 min-h-[64px]",
-                        game.description ? "text-slate-300" : "text-slate-700 italic"
-                      )}
-                    >
-                      {game.description
-                        ? (!descExpanded && game.description.length > 200
-                            ? game.description.slice(0, 200) + "…"
-                            : game.description)
-                        : "Click to add a description..."}
-                    </motion.p>
-                    {game.description && game.description.length > 200 && (
-                      <button
-                        onClick={() => setDescExpanded((v) => !v)}
-                        className="mt-1 text-[11px] text-accent-400 hover:text-accent-300 transition-colors"
-                      >
-                        {descExpanded ? "Show less" : "Show more"}
-                      </button>
+              <div className="flex-1 overflow-y-auto">
+                {activeTab === "screenshots" && (
+                  <div className="p-5">
+                    {loadingShots && <div className="flex justify-center py-16"><div className="w-5 h-5 rounded-full border-2 border-accent-500/30 border-t-accent-500 animate-spin" /></div>}
+                    {!loadingShots && screenshots !== null && screenshots.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <ImageIcon size={30} className="text-slate-600 mb-3" />
+                        <p className="text-[13.5px] text-slate-300">No screenshots found</p>
+                        <p className="text-[12px] text-slate-500 mt-1">Press F12 in-game to take Steam screenshots</p>
+                      </div>
+                    )}
+                    {!loadingShots && screenshots && screenshots.length > 0 && (
+                      <>
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-[12px] text-slate-400">{screenshots.length} screenshot{screenshots.length !== 1 ? "s" : ""}</p>
+                          <button onClick={() => api.openUrl(screenshots[0].replace(/[\\/][^\\/]+$/, "")).catch(() => {})} className="btn-ghost text-[11.5px] py-1.5 px-3">
+                            <FolderIcon size={12} /> Open Folder
+                          </button>
+                        </div>
+                        <div className="columns-2 gap-2">
+                          {screenshots.map((path, i) => <ScreenshotThumb key={path} path={path} onOpen={() => setLightboxIndex(i)} />)}
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
-              </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em]">Custom Fields</span>
-                  <button
-                    onClick={() => {
-                      const key = prompt("Field name:");
-                      if (!key?.trim()) return;
-                      update({ id: game.id, custom_fields: { ...game.custom_fields, [key.trim()]: "" } });
-                    }}
-                    className="text-[10px] text-slate-600 hover:text-accent-400 transition-colors"
-                  >
-                    + Add
-                  </button>
-                </div>
-                {Object.entries(game.custom_fields).map(([key, val]) => (
-                  <div key={key} className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] text-slate-500 w-24 shrink-0 truncate">{key}</span>
-                    <input
-                      defaultValue={val}
-                      onBlur={(e) => {
-                        if (e.target.value !== val) {
-                          update({ id: game.id, custom_fields: { ...game.custom_fields, [key]: e.target.value } });
+                {activeTab === "mods" && game.install_dir && (
+                  <div className="p-5"><ModLoaderPanel installDir={game.install_dir} exePath={game.exe_path} /></div>
+                )}
+
+                {activeTab === "history" && (
+                  <div className="p-5"><HistoryTab sessions={sessions} loading={loadingSessions} /></div>
+                )}
+
+                {activeTab === "info" && (
+                  <div className="flex flex-col gap-6 p-5">
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[
+                        { icon: <ClockIcon size={12} />, label: "Playtime", value: game.playtime_mins > 0 ? formatPlaytime(game.playtime_mins) : "—" },
+                        { icon: <PlayIcon size={11} />, label: "Last played", value: game.last_played ? timeAgo(game.last_played) : "Never" },
+                        { icon: <PlusIcon size={12} />, label: "Added", value: formatDate(game.date_added) },
+                      ].map((s) => (
+                        <div key={s.label} className="surface px-3.5 py-3">
+                          <p className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold">{s.icon}{s.label}</p>
+                          <p className="text-[14.5px] font-semibold text-white mt-1 truncate">{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="surface p-4">
+                      <div className="flex items-center gap-2">
+                        <ClockIcon size={13} className="text-slate-500" />
+                        <span className="section-label">How Long To Beat</span>
+                        <div className="flex-1" />
+                        <button
+                          data-tour="hltb-btn"
+                          onClick={handleHltb}
+                          disabled={hltbFetching}
+                          className="text-[11.5px] text-accent-300 hover:text-accent-200 disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          {hltbFetching && <span className="w-3 h-3 rounded-full border-2 border-accent-500/30 border-t-accent-400 animate-spin" />}
+                          {hltbMain ? "Refresh" : "Fetch estimate"}
+                        </button>
+                      </div>
+                      {hltbMain ? (
+                        <div className="mt-3">
+                          <div className="flex items-baseline justify-between text-[12px]">
+                            <span className="text-slate-300">
+                              Main story <span className="text-white font-semibold">{Math.round((hltbMain / 60) * 10) / 10}h</span>
+                              {game.hltb_extra_mins && <span className="text-slate-500"> · Main + extras {Math.round((game.hltb_extra_mins / 60) * 10) / 10}h</span>}
+                            </span>
+                            <span className={cn("font-semibold tabular-nums", hltbPct >= 100 ? "text-emerald-300" : "text-accent-200")}>{hltbPct}%</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden mt-2">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${hltbPct}%` }}
+                              transition={{ duration: 0.8, ease: "easeOut" }}
+                              className="h-full rounded-full"
+                              style={{ background: hltbPct >= 100 ? "linear-gradient(90deg, #10b981, #34d399)" : "linear-gradient(90deg, rgb(var(--accent-600)), rgb(var(--accent-400)))" }}
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-1.5">
+                            {hltbPct >= 100 ? "You've put in more time than the average main story run." : `About ${formatPlaytime(Math.max(0, hltbMain - game.playtime_mins))} left for the main story.`}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-[12px] text-slate-500 mt-2">See how long this game takes to beat and track your progress against it.</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <SectionTitle icon={<StarIcon size={12} />}>Your Rating</SectionTitle>
+                      <StarRating value={game.rating} onChange={(v) => update({ id: game.id, rating: v }, { onSuccess: flashSaved })} size="md" />
+                    </div>
+
+                    <div>
+                      <SectionTitle>Status</SectionTitle>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[{ key: "none", label: "None", color: "#64748b" }, ...customStatuses].map((s) => {
+                          const active = game.status === s.key;
+                          return (
+                            <button
+                              key={s.key}
+                              onClick={() => update({ id: game.id, status: s.key as GameStatus }, { onSuccess: flashSaved })}
+                              className={cn("chip", active && "!text-white")}
+                              style={active ? { background: `${s.color}26`, borderColor: `${s.color}80` } : undefined}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
+                              {s.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <SectionTitle icon={<TagIcon size={12} />}>Tags</SectionTitle>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <AnimatePresence>
+                          {game.tags.map((t) => {
+                            const pending = pendingTags.has(t);
+                            return (
+                              <motion.button
+                                key={t}
+                                layout
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: pending ? 0.5 : 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                onClick={() => (pending ? undoRemoveTag(t) : removeTag(t))}
+                                className={cn("chip group !py-1", pending && "line-through")}
+                                title={pending ? "Click to undo" : "Click to remove"}
+                              >
+                                #{t}
+                                <span className={cn("text-[10px]", pending ? "text-accent-300 no-underline" : "text-slate-600 group-hover:text-red-400")}>{pending ? "undo" : "✕"}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </AnimatePresence>
+                        <input
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={addTag}
+                          placeholder={game.tags.length ? "Add tag…" : "Add a tag and press Enter…"}
+                          className="flex-1 min-w-[140px] bg-transparent text-[12.5px] text-slate-200 placeholder-slate-600 outline-none px-2 py-1.5 rounded-lg focus:bg-white/[0.04]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <SectionTitle
+                        icon={<SparkleIcon size={12} />}
+                        action={
+                          <button data-tour="igdb-btn" onClick={handleIgdbFetch} disabled={igdbFetching} className="text-[11.5px] text-accent-300 hover:text-accent-200 disabled:opacity-50 flex items-center gap-1.5">
+                            {igdbFetching && <span className="w-3 h-3 rounded-full border-2 border-accent-500/30 border-t-accent-400 animate-spin" />}
+                            {game.genre || game.developer ? "Refresh from IGDB" : "Fetch from IGDB"}
+                          </button>
                         }
-                      }}
-                      className="input-glass text-[11px] py-1 flex-1"
-                    />
-                    <button
-                      onClick={() => {
-                        const next = { ...game.custom_fields };
-                        delete next[key];
-                        update({ id: game.id, custom_fields: next });
-                      }}
-                      className="text-slate-700 hover:text-red-400 transition-colors shrink-0"
-                    >
-                      <TrashIcon size={11} />
+                      >
+                        About
+                      </SectionTitle>
+                      {editingDesc ? (
+                        <div className="flex flex-col gap-2">
+                          <textarea autoFocus value={descVal} onChange={(e) => setDescVal(e.target.value)} rows={5} className="input-glass resize-none text-[13px] leading-relaxed" />
+                          <div className="flex gap-2 justify-end">
+                            <button onClick={() => setEditingDesc(false)} className="btn-ghost text-[12px] py-1.5">Cancel</button>
+                            <button onClick={saveDesc} className="btn-primary text-[12px] py-1.5">Save</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <p
+                            onClick={() => { setDescVal(game.description ?? ""); setEditingDesc(true); }}
+                            className={cn("text-[13px] cursor-text leading-relaxed rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.03] -mx-1 whitespace-pre-line", game.description ? "text-slate-300" : "text-slate-500 italic")}
+                          >
+                            {game.description
+                              ? !descExpanded && game.description.length > 280 ? game.description.slice(0, 280) + "…" : game.description
+                              : "Click to add a description…"}
+                          </p>
+                          {game.description && game.description.length > 280 && (
+                            <button onClick={() => setDescExpanded((v) => !v)} className="text-[11.5px] text-accent-300 hover:text-accent-200 px-3">{descExpanded ? "Show less" : "Show more"}</button>
+                          )}
+                        </div>
+                      )}
+                      {(game.genre || game.developer || game.publisher || game.release_year) && (
+                        <div className="mt-3"><IgdbMetadataCard game={game} onClear={handleClearIgdb} /></div>
+                      )}
+                    </div>
+
+                    <div>
+                      <SectionTitle action={newFieldKey === null ? <button onClick={() => setNewFieldKey("")} className="text-[11.5px] text-accent-300 hover:text-accent-200">+ Add field</button> : undefined}>
+                        Custom Fields
+                      </SectionTitle>
+                      <div className="flex flex-col gap-1.5">
+                        {Object.entries(game.custom_fields).map(([key, val]) => (
+                          <div key={key} className="flex items-center gap-2 group/field">
+                            <span className="text-[12px] text-slate-400 w-28 shrink-0 truncate" title={key}>{key}</span>
+                            <input
+                              defaultValue={val}
+                              onBlur={(e) => { if (e.target.value !== val) update({ id: game.id, custom_fields: { ...game.custom_fields, [key]: e.target.value } }, { onSuccess: flashSaved }); }}
+                              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                              placeholder="Value…"
+                              className="input-glass text-[12px] h-8 py-0 flex-1"
+                            />
+                            <button
+                              onClick={() => { const next = { ...game.custom_fields }; delete next[key]; update({ id: game.id, custom_fields: next }); }}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover/field:opacity-100 transition-all shrink-0"
+                              title="Remove field"
+                            >
+                              <TrashIcon size={12} />
+                            </button>
+                          </div>
+                        ))}
+                        {newFieldKey !== null && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              autoFocus
+                              value={newFieldKey}
+                              onChange={(e) => setNewFieldKey(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") commitNewField(); if (e.key === "Escape") { e.stopPropagation(); setNewFieldKey(null); } }}
+                              placeholder="Field name, e.g. Save location"
+                              className="input-glass text-[12px] h-8 py-0 flex-1"
+                            />
+                            <button onClick={commitNewField} disabled={!newFieldKey.trim()} className="btn-primary h-8 py-0 text-[12px]">Add</button>
+                            <button onClick={() => setNewFieldKey(null)} className="btn-icon w-8 h-8"><CloseIcon size={11} /></button>
+                          </div>
+                        )}
+                        {Object.keys(game.custom_fields).length === 0 && newFieldKey === null && (
+                          <p className="text-[12px] text-slate-600">Track anything — save locations, mods, completion %, keys…</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <GameNotes gameId={game.id} />
+
+                    {(game.steam_app_id || game.epic_app_name || game.ubisoft_game_id || game.install_dir || game.exe_path) && (
+                      <div className="surface p-4 space-y-2">
+                        <p className="section-label !text-[10px] mb-1">Technical</p>
+                        {[
+                          { label: "Platform", value: PLATFORM_LABELS[game.platform] },
+                          { label: "Steam App ID", value: game.steam_app_id },
+                          { label: "Epic App", value: game.epic_app_name },
+                          { label: "Ubisoft ID", value: game.ubisoft_game_id },
+                          { label: "Install folder", value: game.install_dir, mono: true },
+                          { label: "Executable", value: game.exe_path, mono: true },
+                        ].filter((r) => r.value).map((r) => (
+                          <div key={r.label} className="flex gap-3 text-[12px] group/row">
+                            <span className="text-slate-500 w-28 shrink-0">{r.label}</span>
+                            <span className={cn("text-slate-300 truncate flex-1", r.mono && "font-mono text-[11px]")} title={r.value ?? undefined}>{r.value}</span>
+                            <button
+                              onClick={async () => { await navigator.clipboard.writeText(r.value ?? ""); addToast("Copied", "success"); }}
+                              className="text-slate-600 hover:text-slate-200 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                              title="Copy"
+                            >
+                              <CopyIcon size={11} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <button onClick={handleDelete} className="flex items-center justify-center gap-2 h-10 rounded-xl text-[12.5px] font-medium text-red-400/80 hover:text-red-300 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/25 transition-colors">
+                      <TrashIcon size={13} /> Move to Trash
                     </button>
                   </div>
-                ))}
+                )}
               </div>
-
-              <GameNotes gameId={game.id} />
-
-              {(game.steam_app_id || game.epic_app_name || game.ubisoft_game_id || game.install_dir) && (
-                <div className="glass rounded-xl p-4 space-y-1.5">
-                  <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-2">Info</p>
-                  {game.steam_app_id && (
-                    <p className="text-[11px] text-slate-600 flex gap-2">
-                      <span className="text-slate-500 shrink-0">Steam ID</span>
-                      <span className="text-slate-400 truncate">{game.steam_app_id}</span>
-                    </p>
-                  )}
-                  {game.epic_app_name && (
-                    <p className="text-[11px] text-slate-600 flex gap-2">
-                      <span className="text-slate-500 shrink-0">Epic</span>
-                      <span className="text-slate-400 truncate">{game.epic_app_name}</span>
-                    </p>
-                  )}
-                  {game.ubisoft_game_id && (
-                    <p className="text-[11px] text-slate-600 flex gap-2">
-                      <span className="text-slate-500 shrink-0">Ubisoft ID</span>
-                      <span className="text-slate-400 truncate">{game.ubisoft_game_id}</span>
-                    </p>
-                  )}
-                  {game.install_dir && (
-                    <p className="text-[11px] text-slate-600 flex gap-2">
-                      <span className="text-slate-500 shrink-0">Path</span>
-                      <span className="text-slate-400 truncate font-mono text-[10px]">{game.install_dir}</span>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-            )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
-
-  function ScreenshotThumb({ path, onOpen }: { path: string; onOpen?: () => void }) {
-    const [hovered, setHovered] = useState(false);
-    const dataUrl = useScreenshotUrl(path);
-    const addToast = useUIStore((s) => s.addToast);
-
-    const folderPath = path.replace(/[\\/][^\\/]+$/, "");
-
-    const copyPath = async (e: React.MouseEvent) => {
-      e.stopPropagation();
-      await navigator.clipboard.writeText(path);
-      addToast("Path copied", "success");
-    };
-
-    const openFile = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      api.openUrl(path).catch(() => {});
-    };
-
-    const openFolder = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      api.openUrl(folderPath).catch(() => {});
-    };
-
-    const exportScreenshot = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!dataUrl) return;
-      const a = document.createElement("a");
-      const fileName = path.split(/[\\/]/).pop() ?? "screenshot.jpg";
-      a.href = dataUrl;
-      a.download = fileName;
-      a.click();
-    };
-
-    return (
-      <>
-        <div
-          className="break-inside-avoid rounded-xl overflow-hidden mb-2 border border-white/5 hover:border-accent-500/30 transition-colors relative group"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          <motion.div whileHover={{ scale: 1.02 }} onClick={() => onOpen?.()} className="cursor-zoom-in">
-            {dataUrl ? (
-              <img src={dataUrl} alt="" className="w-full h-auto block" />
-            ) : (
-              <div className="w-full aspect-video bg-white/3 animate-pulse" />
-            )}
-          </motion.div>
-          <AnimatePresence>
-            {hovered && dataUrl && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-1 p-1.5"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }}
-              >
-                <button onClick={copyPath} title="Copy path" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
-                  <CopyIcon size={11} />
-                </button>
-                <button onClick={openFile} title="Open file" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
-                  <ExternalLinkIcon size={11} />
-                </button>
-                <button onClick={openFolder} title="Open folder" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
-                  <FolderIcon size={11} />
-                </button>
-                <button onClick={exportScreenshot} title="Export / download" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
-                  <ImageIcon size={11} />
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); onOpen?.(); }} title="View fullscreen" className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-colors">
-                  <SearchIcon size={11} />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </>
-    );
-  }
-}
-
-function ScreenshotLightboxImg({ path, onClick }: { path: string; onClick: (e: React.MouseEvent) => void }) {
-  const dataUrl = useScreenshotUrl(path);
-  if (!dataUrl) return <div className="w-64 h-40 animate-pulse bg-white/5 rounded-xl" />;
-  return (
-    <motion.img
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0 }}
-      transition={{ type: "spring", stiffness: 350, damping: 28 }}
-      src={dataUrl}
-      alt=""
-      className="max-w-full max-h-full rounded-xl object-contain"
-      onClick={onClick}
-    />
-  );
-}
-
-function useScreenshotUrl(path: string) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    api.readImageBase64(path)
-      .then((data) => { if (!cancelled) setUrl(data); })
-      .catch(() => { if (!cancelled) setUrl(""); });
-    return () => { cancelled = true; };
-  }, [path]);
-  return url || null;
 }

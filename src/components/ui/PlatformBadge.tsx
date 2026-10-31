@@ -3,7 +3,7 @@ import { SteamIcon, EpicIcon, GogIcon, CustomGameIcon, UbisoftIcon } from "@/com
 import Badge from "@/components/ui/Badge";
 import type { Platform } from "@/lib/types";
 
-const PLATFORM_ICONS: Record<Platform, React.ComponentType<{ size?: number; className?: string }>> = {
+export const PLATFORM_ICONS: Record<Platform, React.ComponentType<{ size?: number; className?: string }>> = {
   steam: SteamIcon,
   epic: EpicIcon,
   gog: GogIcon,

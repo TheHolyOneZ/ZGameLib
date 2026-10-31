@@ -1,8 +1,10 @@
 import { useState, useEffect, type RefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUIStore } from "@/store/useUIStore";
 
 export default function ScrollToTop({ scrollRef }: { scrollRef: RefObject<HTMLDivElement> }) {
   const [visible, setVisible] = useState(false);
+  const detailOpen = useUIStore((s) => s.isDetailOpen);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -14,7 +16,7 @@ export default function ScrollToTop({ scrollRef }: { scrollRef: RefObject<HTMLDi
 
   return (
     <AnimatePresence>
-      {visible && (
+      {visible && !detailOpen && (
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}

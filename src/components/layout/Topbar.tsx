@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
-import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon } from "@/components/ui/Icons";
+import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon, SearchIcon, TvIcon, DownloadIcon } from "@/components/ui/Icons";
 
 export default function Topbar() {
   const hiddenIds = useGameStore((s) => s.hiddenIds);
@@ -17,6 +17,8 @@ export default function Topbar() {
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const addToast = useUIStore((s) => s.addToast);
   const openConfirm = useUIStore((s) => s.openConfirm);
+  const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
+  const setBigPicture = useUIStore((s) => s.setBigPicture);
   const { scan, isScanning } = useScan();
   const { pullUninstalled, isPulling } = usePullUninstalled();
   const [scanMenuOpen, setScanMenuOpen] = useState(false);
@@ -103,149 +105,149 @@ export default function Topbar() {
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 px-4 py-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-      <div className="flex items-center">
-        {isPortable && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide text-amber-300 bg-amber-500/10 border border-amber-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-            Portable
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-      <motion.button
-        data-tour="log-btn"
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
-        onClick={() => setLogPanelOpen(!logPanelOpen)}
-        className={cn("btn-icon relative", logPanelOpen && "text-emerald-400")}
-        title="Scan log"
-        aria-label="Toggle scan log"
+    <div className="flex items-center gap-3 px-6 h-[60px] shrink-0 relative z-20" style={{ borderBottom: "1px solid rgba(255,255,255,0.045)" }}>
+      <button
+        onClick={() => setCommandPaletteOpen(true)}
+        className="group flex items-center gap-2.5 h-9 pl-3 pr-2 rounded-xl text-[13px] text-slate-500 hover:text-slate-300 transition-all w-[320px] max-w-[40vw]"
+        style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.07)" }}
       >
-        <TerminalIcon size={14} />
-        {logCount > 0 && !logPanelOpen && (
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
-        )}
-      </motion.button>
-
-      <div className="w-px h-5 bg-white/6 shrink-0" />
-
-      <motion.button
-        data-tour="dedup-btn"
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.93 }}
-        onClick={handleRemoveDuplicates}
-        className="btn-icon"
-        title="Remove duplicate games"
-        aria-label="Remove duplicate games"
-      >
-        <LayersIcon size={14} />
-      </motion.button>
-
-      <motion.button
-        data-tour="igdb-scan-btn"
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.93 }}
-        onClick={handleIgdbScanAll}
-        disabled={igdbScanning}
-        className="btn-icon relative disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Fetch IGDB metadata for all games without it"
-        aria-label="Scan all games with IGDB"
-      >
-        <motion.span
-          animate={igdbScanning ? { rotate: 360 } : {}}
-          transition={igdbScanning ? { duration: 1.8, repeat: Infinity, ease: "linear" } : {}}
-          className="flex items-center"
+        <SearchIcon size={14} className="text-slate-500 group-hover:text-accent-300 transition-colors" />
+        <span className="flex-1 text-left truncate">Jump to a game or command…</span>
+        <span className="kbd">Ctrl K</span>
+      </button>
+      {isPortable && (
+        <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold tracking-wide text-amber-300 bg-amber-500/10 border border-amber-500/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+          Portable
+        </span>
+      )}
+      <div className="flex-1" />
+      <div className="flex items-center gap-1.5">
+        <button
+          data-tour="log-btn"
+          onClick={() => setLogPanelOpen(!logPanelOpen)}
+          className={cn("btn-icon relative", logPanelOpen && "text-emerald-400 border-emerald-500/30")}
+          title="Scan log"
+          aria-label="Toggle scan log"
         >
-          <SparkleIcon size={14} />
-        </motion.span>
-        {igdbScanning && (
-          <span className="absolute -bottom-0.5 -right-0.5 text-[8px] font-bold leading-none text-accent-300 bg-[#0d0d12] rounded px-0.5">
-            {igdbProgress}/{igdbTotal}
-          </span>
-        )}
-      </motion.button>
+          <TerminalIcon size={15} />
+          {logCount > 0 && !logPanelOpen && (
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          )}
+        </button>
+        <button
+          data-tour="dedup-btn"
+          onClick={handleRemoveDuplicates}
+          className="btn-icon"
+          title="Hide duplicate games"
+          aria-label="Remove duplicate games"
+        >
+          <LayersIcon size={15} />
+        </button>
+        <button
+          data-tour="igdb-scan-btn"
+          onClick={handleIgdbScanAll}
+          disabled={igdbScanning}
+          className="btn-icon relative disabled:cursor-wait"
+          title={igdbScanning ? `Fetching IGDB metadata ${igdbProgress}/${igdbTotal}` : "Fetch IGDB metadata for all games without it"}
+          aria-label="Scan all games with IGDB"
+        >
+          <motion.span
+            animate={igdbScanning ? { rotate: 360 } : { rotate: 0 }}
+            transition={igdbScanning ? { duration: 1.8, repeat: Infinity, ease: "linear" } : { duration: 0 }}
+            className={cn("flex items-center", igdbScanning && "text-accent-300")}
+          >
+            <SparkleIcon size={15} />
+          </motion.span>
+          {igdbScanning && (
+            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8.5px] font-bold leading-none text-accent-200 bg-bg-elevated border border-accent-500/30 rounded px-1 py-0.5 tabular-nums whitespace-nowrap">
+              {igdbProgress}/{igdbTotal}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setBigPicture(true)}
+          className="btn-icon"
+          title="Big Picture Mode (Ctrl+B)"
+          aria-label="Enter Big Picture mode"
+        >
+          <TvIcon size={16} />
+        </button>
+      </div>
 
-      <div className="w-px h-5 bg-white/6 shrink-0" />
+      <div className="w-px h-6 bg-white/[0.07] shrink-0 mx-1" />
 
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <div className="relative" ref={scanMenuRef} data-tour="scan-btn">
-          <div className="flex items-stretch">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+          <div className="flex items-stretch h-9">
+            <button
               onClick={() => { scan(); setScanMenuOpen(false); }}
               disabled={isScanning || isPulling}
-              className="btn-ghost text-[12px] py-2 pl-3 pr-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 rounded-r-none border-r border-white/8"
+              className="btn-ghost h-9 text-[12.5px] py-0 pl-3 pr-3 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-none"
               title="Scan installed games"
             >
               <motion.span
-                animate={isScanning ? { rotate: 360 } : {}}
-                transition={isScanning ? { duration: 1.5, repeat: Infinity, ease: "linear" } : {}}
+                animate={isScanning ? { rotate: 360 } : { rotate: 0 }}
+                transition={isScanning ? { duration: 1.5, repeat: Infinity, ease: "linear" } : { duration: 0 }}
                 className="flex items-center"
               >
-                <ScanIcon size={13} />
+                <ScanIcon size={14} />
               </motion.span>
-              {isScanning ? "Scanning…" : isPulling ? "Pulling…" : "Scan Games"}
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              {isScanning ? "Scanning…" : isPulling ? "Pulling…" : "Scan"}
+            </button>
+            <button
               onClick={() => setScanMenuOpen((v) => !v)}
               disabled={isScanning || isPulling}
-              className="btn-ghost text-[12px] py-2 px-1.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed rounded-l-none"
+              className="btn-ghost h-9 py-0 px-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-none border-l-0"
               title="More scan options"
             >
-              <ChevronDownIcon size={11} />
-            </motion.button>
+              <ChevronDownIcon size={12} />
+            </button>
           </div>
           <AnimatePresence>
             {scanMenuOpen && (
               <motion.div
                 data-tour="scan-dropdown"
-                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                initial={{ opacity: 0, y: -6, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                transition={{ duration: 0.12 }}
-                className="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-white/8 bg-bg-elevated shadow-2xl z-50 overflow-hidden py-1"
+                exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                transition={{ duration: 0.14 }}
+                className="absolute right-0 top-full mt-2 w-72 rounded-2xl glass-strong shadow-2xl z-50 overflow-hidden p-1.5"
               >
                 <button
                   onClick={() => { scan(); setScanMenuOpen(false); }}
                   disabled={isScanning || isPulling}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] text-slate-200 hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-left"
+                  className="w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-[12.5px] text-slate-200 hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-left"
                 >
-                  <ScanIcon size={13} className="text-slate-400 shrink-0" />
+                  <span className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0"><ScanIcon size={14} className="text-slate-300" /></span>
                   <div>
-                    <div className="font-medium">Scan Installed Games</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Detect games from Steam, Epic, GOG, Ubisoft</div>
+                    <div className="font-semibold">Scan Installed Games</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Steam, Epic, GOG and Ubisoft Connect</div>
                   </div>
                 </button>
                 <button
                   onClick={() => { pullUninstalled(); setScanMenuOpen(false); }}
                   disabled={isScanning || isPulling}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] text-slate-200 hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-left"
+                  className="w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-[12.5px] text-slate-200 hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-left"
                 >
-                  <ScanIcon size={13} className="text-accent-400 shrink-0" />
+                  <span className="w-8 h-8 rounded-lg bg-accent-500/15 flex items-center justify-center shrink-0"><DownloadIcon size={14} className="text-accent-300" /></span>
                   <div>
-                    <div className="font-medium">Pull Uninstalled Steam Games</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Import owned but uninstalled games</div>
+                    <div className="font-semibold">Pull Uninstalled Steam Games</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Import games you own but haven't installed</div>
                   </div>
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        <motion.button
+        <button
           data-tour="add-game-btn"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
           onClick={() => setAddGameOpen(true)}
-          className="btn-primary text-[12px] py-2 px-3 shrink-0"
+          className="btn-primary h-9 text-[12.5px] py-0 px-3.5"
         >
-          <PlusIcon size={13} />
+          <PlusIcon size={14} />
           Add Game
-        </motion.button>
-      </div>
+        </button>
       </div>
     </div>
   );

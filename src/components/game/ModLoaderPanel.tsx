@@ -121,7 +121,7 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
     <div className="flex flex-col gap-5">
 
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold">Mod Loaders</p>
+        <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold">Mod Loaders</p>
         {loaders.map((loader) => {
           const isInstalling = op === loader.installOp;
           const isUninstalling = op === loader.uninstallOp;
@@ -141,7 +141,7 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
                 )} />
                 <div>
                   <p className="text-[13px] font-semibold text-slate-200">{loader.label}</p>
-                  <p className="text-[10px] text-slate-600">
+                  <p className="text-[10px] text-slate-500">
                     {loader.installed ? "Installed" : loader.desc}
                   </p>
                 </div>
@@ -186,7 +186,7 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
       {anyInstalled && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold">
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold">
               Mods ({status.mods.length})
             </p>
             <div className="flex gap-2">
@@ -228,7 +228,7 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
               style={{ borderStyle: "dashed", borderColor: "rgba(255,255,255,0.06)" }}
             >
               <p className="text-[13px] text-slate-500 mb-1">No mods installed</p>
-              <p className="text-[11px] text-slate-700">Click "Add Mod" to drop a .dll mod in</p>
+              <p className="text-[11px] text-slate-600">Click "Add Mod" to drop a .dll mod in</p>
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
@@ -243,12 +243,12 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
                   >
                     <div className="flex flex-col min-w-0">
                       <p className="text-[12px] font-medium text-slate-300 truncate">{mod.name}</p>
-                      <p className="text-[10px] text-slate-600">{(mod.size_bytes / 1024).toFixed(1)} KB</p>
+                      <p className="text-[10px] text-slate-500">{(mod.size_bytes / 1024).toFixed(1)} KB</p>
                     </div>
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => handleDeleteMod(mod)}
-                      className="text-slate-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-[11px] ml-3 shrink-0"
+                      className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-[11px] ml-3 shrink-0"
                     >
                       Remove
                     </motion.button>

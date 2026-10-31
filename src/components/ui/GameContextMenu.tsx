@@ -106,7 +106,7 @@ function CollectionsSubmenu({
       data-ctx-submenu="true"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="fixed z-[10000] min-w-[180px] py-1.5 glass-strong rounded-xl border border-white/[0.06] shadow-2xl"
+      className="fixed z-[10000] min-w-[200px] p-1.5 glass-strong rounded-2xl shadow-2xl"
       style={pos ? { left: pos.x, top: pos.y } : { left: -9999, top: -9999 }}
     >
       <p className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold px-3.5 pt-1 pb-1.5">Collections</p>
@@ -119,7 +119,7 @@ function CollectionsSubmenu({
             <button
               key={col.id}
               onClick={() => { toggle(col); onClose(); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-slate-300 hover:text-white hover:bg-white/[0.07] transition-colors"
             >
               <span className={`w-3.5 h-3.5 rounded flex items-center justify-center border shrink-0 ${active ? "bg-accent-600/40 border-accent-500/50 text-accent-300" : "border-white/15"}`}>
                 {active && <CheckIcon size={9} />}
@@ -169,7 +169,7 @@ function ContextMenuPortal({
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const addToast = useUIStore((s) => s.addToast);
-  const { toggleFavorite, togglePinned, remove } = useGames();
+  const { toggleFavorite, togglePinned, remove, update } = useGames();
   const { launch } = useLaunchGame();
 
   useEffect(() => {
@@ -218,12 +218,12 @@ function ContextMenuPortal({
     catch { addToast("Failed to copy name", "error"); }
   };
 
-  const rowCls = "w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors duration-150";
+  const rowCls = "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-300 hover:text-white hover:bg-white/[0.07] transition-colors duration-150";
 
   return createPortal(
     <div
       ref={menuRef}
-      className="fixed z-[9999] min-w-[190px] py-1.5 glass-strong rounded-xl border border-white/[0.06] shadow-2xl"
+      className="fixed z-[9999] min-w-[220px] p-1.5 glass-strong rounded-2xl shadow-2xl"
       style={{ left: adjusted.x, top: adjusted.y, animation: "ctx-menu-in 0.12s ease-out" }}
     >
       <button onClick={() => { handlePlay(); onClose(); }} className={`${rowCls} hover:text-cyan-400`}>
@@ -251,6 +251,21 @@ function ContextMenuPortal({
         View Details
       </button>
 
+      <div className="my-1 mx-2 border-t border-white/[0.06]" />
+      <div className="px-3.5 pt-1 pb-1.5">
+        <p className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold mb-1.5">Rate</p>
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+            <button
+              key={n}
+              onClick={() => { update({ id: game.id, rating: n }); onClose(); }}
+              className={`w-[18px] h-6 rounded-md text-[10px] font-bold transition-colors ${game.rating === n ? "bg-accent-500 text-white" : game.rating !== null && n <= game.rating ? "bg-accent-500/25 text-accent-100" : "bg-white/[0.05] text-slate-400 hover:bg-accent-500/40 hover:text-white"}`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="my-1 mx-2 border-t border-white/[0.06]" />
 
       <button

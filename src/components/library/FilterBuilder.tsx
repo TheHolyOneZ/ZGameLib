@@ -160,13 +160,13 @@ function ValueInput({ field, value, onChange }: { field: FilterField; value: str
   if (field === "rating") return (
     <div className="relative">
       <input type="number" min={1} max={10} value={value} onChange={(e) => onChange(e.target.value)} placeholder="e.g. 7" className={inputCls} />
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 pointer-events-none">/10</span>
+      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 pointer-events-none">/10</span>
     </div>
   );
   if (field === "playtime") return (
     <div className="relative">
       <input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} placeholder="e.g. 60" className={inputCls} />
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 pointer-events-none">min</span>
+      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 pointer-events-none">min</span>
     </div>
   );
   if (field === "date_added") return (
@@ -210,7 +210,7 @@ export default function FilterBuilder() {
       {filterRules.length === 0 ? (
         <div className="px-2 py-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.07)" }}>
           <p className="text-[11px] text-slate-400 font-medium mb-1">Custom Filter Rules</p>
-          <p className="text-[10px] text-slate-600 leading-relaxed">Build conditions like <span className="text-slate-500">"Rating at least 8"</span> or <span className="text-slate-500">"Platform is Steam"</span>. Multiple rules can be combined.</p>
+          <p className="text-[10px] text-slate-500 leading-relaxed">Build conditions like <span className="text-slate-500">"Rating at least 8"</span> or <span className="text-slate-500">"Platform is Steam"</span>. Multiple rules can be combined.</p>
         </div>
       ) : (
         <div className="px-2 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -229,7 +229,7 @@ export default function FilterBuilder() {
               ANY rule
             </button>
           </div>
-          <p className="text-[10px] text-slate-600 mt-1.5 leading-relaxed">
+          <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
             {filterLogic === "and"
               ? "Every condition below must be true for a game to appear."
               : "A game appears if it matches at least one condition below."}
@@ -251,7 +251,7 @@ export default function FilterBuilder() {
               <div className="flex items-center justify-between px-2.5 pt-2 pb-1">
                 <div className="flex items-center gap-1.5">
                   {filterRules.length > 1 && (
-                    <span className="text-[9px] font-bold text-slate-700 uppercase tracking-wider">
+                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">
                       {filterLogic === "and" ? (idx === 0 ? "WHERE" : "AND") : (idx === 0 ? "WHERE" : "OR")}
                     </span>
                   )}
@@ -273,7 +273,7 @@ export default function FilterBuilder() {
                 </div>
                 <button
                   onClick={() => removeFilterRule(rule.id)}
-                  className="w-5 h-5 flex items-center justify-center rounded-md text-slate-700 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
+                  className="w-5 h-5 flex items-center justify-center rounded-md text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
                   title="Remove this rule"
                 >
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -282,7 +282,7 @@ export default function FilterBuilder() {
                 </button>
               </div>
 
-              <p className="text-[10px] text-slate-600 px-2.5 pb-1">{FIELD_META[rule.field].hint}</p>
+              <p className="text-[10px] text-slate-500 px-2.5 pb-1">{FIELD_META[rule.field].hint}</p>
 
               <div className="flex items-center gap-1.5 px-2.5 pb-2">
                 <select

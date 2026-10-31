@@ -167,7 +167,7 @@ export default function TourCard({ step, stepIndex, totalSteps, onNext, onBack, 
         <div className="flex items-center gap-2 px-5 pb-4 pt-3">
           <button
             onClick={onSkip}
-            className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors mr-auto"
+            className="text-[11px] text-slate-500 hover:text-slate-400 transition-colors mr-auto"
           >
             Skip tour
           </button>

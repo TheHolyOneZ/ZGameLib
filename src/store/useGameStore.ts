@@ -44,6 +44,9 @@ interface GameStore {
   viewMode: ViewMode;
   setViewMode: (m: ViewMode) => void;
 
+  cardSize: number;
+  setCardSize: (n: number) => void;
+
   filters: Filters;
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   resetFilters: () => void;
@@ -106,8 +109,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   sortAsc: true,
   setSortAsc: (sortAsc) => set({ sortAsc }),
 
-  viewMode: "grid",
-  setViewMode: (viewMode) => set({ viewMode }),
+  viewMode: (() => {
+    try { return (localStorage.getItem("zgamelib-view-mode") as ViewMode) || "grid"; } catch { return "grid"; }
+  })(),
+  setViewMode: (viewMode) => {
+    try { localStorage.setItem("zgamelib-view-mode", viewMode); } catch {}
+    set({ viewMode });
+  },
+
+  cardSize: (() => {
+    try { return parseInt(localStorage.getItem("zgamelib-card-size") ?? "168", 10) || 168; } catch { return 168; }
+  })(),
+  setCardSize: (cardSize) => {
+    try { localStorage.setItem("zgamelib-card-size", String(cardSize)); } catch {}
+    set({ cardSize });
+  },
 
   filters: defaultFilters,
   setFilter: (key, value) =>

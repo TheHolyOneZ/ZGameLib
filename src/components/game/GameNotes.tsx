@@ -46,8 +46,8 @@ export default function GameNotes({ gameId }: { gameId: string }) {
 
   return (
     <div>
-      <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-semibold mb-3 flex items-center gap-1.5">
-        <NoteIcon size={11} className="text-slate-600" />
+      <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold mb-3 flex items-center gap-1.5">
+        <NoteIcon size={11} className="text-slate-500" />
         Notes
         {notes.length > 0 && (
           <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded-md text-slate-500 ml-1">{notes.length}</span>
@@ -106,7 +106,7 @@ export default function GameNotes({ gameId }: { gameId: string }) {
                     <p className="text-[13px] text-slate-300 leading-relaxed whitespace-pre-wrap">{note.content}</p>
                   )}
                   <div className="flex items-center justify-between mt-2.5 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.03)" }}>
-                    <span className="text-[10px] text-slate-700">{formatDate(note.updated_at)}</span>
+                    <span className="text-[10px] text-slate-600">{formatDate(note.updated_at)}</span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <motion.button
                         whileTap={{ scale: 0.85 }}
@@ -158,7 +158,7 @@ export default function GameNotes({ gameId }: { gameId: string }) {
               exit={{ opacity: 0, height: 0 }}
               className="flex justify-between items-center"
             >
-              <span className="text-[10px] text-slate-700">Ctrl+Enter to save · supports **markdown**</span>
+              <span className="text-[10px] text-slate-600">Ctrl+Enter to save · supports **markdown**</span>
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}

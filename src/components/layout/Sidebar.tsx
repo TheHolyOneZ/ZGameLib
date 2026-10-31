@@ -1,56 +1,116 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import type { Platform } from "@/lib/types";
 import { useNavigate, useLocation } from "react-router-dom";
+import { api } from "@/lib/tauri";
+import { useQuery } from "@tanstack/react-query";
+import GameCover from "@/components/ui/GameCover";
 import {
   GamepadIcon, LibraryIcon, HeartIcon, ClockIcon, ChartIcon,
-  SettingsIcon, SteamIcon, EpicIcon, CustomGameIcon,
-  SparkleIcon, SpinIcon, GogIcon, UbisoftIcon, ChevronLeftIcon, ImageIcon, DownloadIcon,
+  SettingsIcon, SpinIcon, ChevronLeftIcon,
+  TvIcon, CollectionIcon, WrappedIcon, ChevronDownIcon, StopIcon,
 } from "@/components/ui/Icons";
 
-function WrappedIcon({ size = 16, className }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-import FilterBuilder from "@/components/library/FilterBuilder";
-
-function FolderIcon({ size = 16, className }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M3 7C3 5.9 3.9 5 5 5H9.6C10.1 5 10.6 5.2 10.9 5.6L12 7H19C20.1 7 21 7.9 21 9V18C21 19.1 20.1 20 19 20H5C3.9 20 3 19.1 3 18V7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
 const STORAGE_KEY = "zgamelib-sidebar-collapsed";
+
+function SectionHeader({ label, open, onToggle, dot }: { label: string; open?: boolean; onToggle?: () => void; dot?: boolean }) {
+  return (
+    <button
+      onClick={onToggle}
+      disabled={!onToggle}
+      className="w-full flex items-center gap-2 px-3 pt-4 pb-1.5 group"
+    >
+      <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-[0.16em] group-hover:text-slate-300 transition-colors">{label}</span>
+      {dot && <span className="w-1.5 h-1.5 rounded-full bg-accent-400" />}
+      <span className="flex-1" />
+      {onToggle && (
+        <motion.span animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.2 }} className="text-slate-600 group-hover:text-slate-400">
+          <ChevronDownIcon size={11} />
+        </motion.span>
+      )}
+    </button>
+  );
+}
+
+function NowPlaying({ collapsed }: { collapsed: boolean }) {
+  const activeGameId = useUIStore((s) => s.activeGameId);
+  const games = useGameStore((s) => s.games);
+  const game = games.find((g) => g.id === activeGameId);
+  const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
+  const setDetailOpen = useUIStore((s) => s.setDetailOpen);
+  if (!game) return null;
+
+  const stop = () => {
+    useUIStore.getState().openConfirm(`Stop "${game.name}"?`, async () => {
+      try { await api.stopGame(); useUIStore.getState().setActiveGameId(null); }
+      catch (e) { useUIStore.getState().addToast(String(e), "error"); }
+    }, "Stop Game");
+  };
+
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => { setSelectedGameId(game.id); setDetailOpen(true); }}
+        title={`Now playing: ${game.name}`}
+        className="relative w-10 h-10 mx-auto rounded-xl overflow-hidden ring-2 ring-emerald-400/60"
+      >
+        <GameCover game={game} />
+        <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-black" />
+      </button>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-1 rounded-2xl overflow-hidden relative"
+      style={{ border: "1px solid rgba(52,211,153,0.25)", background: "linear-gradient(160deg, rgba(16,185,129,0.14), rgba(16,185,129,0.03))" }}
+    >
+      <div className="flex items-center gap-3 p-2.5">
+        <button
+          onClick={() => { setSelectedGameId(game.id); setDetailOpen(true); }}
+          className="w-10 h-[52px] rounded-lg overflow-hidden shrink-0 ring-1 ring-white/10"
+        >
+          <GameCover game={game} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.14em]">Now Playing</span>
+          </div>
+          <p className="text-[12.5px] font-semibold text-white truncate mt-0.5">{game.name}</p>
+        </div>
+        <button onClick={stop} title="Stop game" className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-red-500/30 transition-colors shrink-0">
+          <StopIcon size={12} />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const games = useGameStore((s) => s.games);
-  const filters = useGameStore((s) => s.filters);
-  const setFilter = useGameStore((s) => s.setFilter);
   const resetFilters = useGameStore((s) => s.resetFilters);
-  const customStatuses = useUIStore((s) => s.customStatuses);
-  const filterRules = useGameStore((s) => s.filterRules);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-
+  const setBigPicture = useUIStore((s) => s.setBigPicture);
   const settingsDirty = useUIStore((s) => s.settingsDirty);
   const setSettingsUnsavedNav = useUIStore((s) => s.setSettingsUnsavedNav);
 
-  const guardedNavigate = (path: string) => {
+  const guardedNavigate = (path: string, state?: unknown) => {
     if (settingsDirty && location.pathname === "/settings" && path !== "/settings") {
-      setSettingsUnsavedNav({ path, proceed: () => { useUIStore.getState().setSettingsDirty(false); navigate(path); } });
+      setSettingsUnsavedNav({ path, proceed: () => { useUIStore.getState().setSettingsDirty(false); navigate(path, { state }); } });
       return;
     }
-    navigate(path);
+    navigate(path, { state });
   };
+  const { data: collections = [] } = useQuery({ queryKey: ["collections"], queryFn: () => api.getCollections() });
 
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
@@ -64,15 +124,10 @@ export default function Sidebar() {
     });
   };
 
-  const platformCounts = [
-    { key: "steam" as Platform, label: "Steam", icon: SteamIcon, count: games.filter((g) => g.platform === "steam").length },
-    { key: "epic" as Platform, label: "Epic Games", icon: EpicIcon, count: games.filter((g) => g.platform === "epic").length },
-    { key: "gog" as Platform, label: "GOG", icon: GogIcon, count: games.filter((g) => g.platform === "gog").length },
-    { key: "ubisoft" as Platform, label: "Ubisoft Connect", icon: UbisoftIcon, count: games.filter((g) => g.platform === "ubisoft").length },
-    { key: "custom" as Platform, label: "Custom", icon: CustomGameIcon, count: games.filter((g) => g.platform === "custom").length },
-  ];
+  const favCount = useMemo(() => games.filter((g) => g.is_favorite).length, [games]);
+  const recentCount = useMemo(() => games.filter((g) => g.last_played).length, [games]);
 
-  const navItem = (path: string, icon: React.ReactNode, label: string, dataTour?: string) => {
+  const navItem = (path: string, Icon: typeof LibraryIcon, label: string, count?: number, dataTour?: string) => {
     const isActive = location.pathname === path;
     return (
       <button
@@ -81,66 +136,68 @@ export default function Sidebar() {
         onClick={() => { resetFilters(); guardedNavigate(path); }}
         title={collapsed ? label : undefined}
         className={cn(
-          "w-full flex items-center rounded-xl text-[13px] transition-all duration-200 relative group",
-          collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5",
-          isActive
-            ? "border-l-2 border-accent-500 bg-accent-500/10 text-white font-medium"
-            : "border-l-2 border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]"
+          "w-full flex items-center rounded-xl text-[13px] font-medium transition-colors duration-200 relative group",
+          collapsed ? "justify-center h-10" : "gap-3 px-3 h-9",
+          isActive ? "text-white" : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.04]"
         )}
       >
-        <span className="relative z-10 flex items-center gap-3">
-          {icon}
-          <AnimatePresence initial={false}>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden whitespace-nowrap"
-              >
-                {label}
-              </motion.span>
-            )}
-          </AnimatePresence>
+        {isActive && (
+          <motion.span
+            layoutId="sidebar-active"
+            className="absolute inset-0 rounded-xl"
+            style={{
+              background: "linear-gradient(90deg, rgb(var(--accent-500) / 0.24), rgb(var(--accent-500) / 0.06))",
+              boxShadow: "inset 0 0 0 1px rgb(var(--accent-400) / 0.22)",
+            }}
+            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+          />
+        )}
+        {isActive && !collapsed && (
+          <motion.span layoutId="sidebar-active-bar" className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-accent-400" />
+        )}
+        <span className={cn("relative z-10 shrink-0", isActive ? "text-accent-300" : "text-slate-500 group-hover:text-slate-300")}>
+          <Icon size={17} />
         </span>
+        {!collapsed && (
+          <>
+            <span className="relative z-10 flex-1 text-left truncate">{label}</span>
+            {count !== undefined && count > 0 && (
+              <span className={cn("relative z-10 text-[11px] tabular-nums", isActive ? "text-accent-200" : "text-slate-600")}>{count}</span>
+            )}
+          </>
+        )}
       </button>
     );
   };
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 62 : 240 }}
-      transition={{ type: "spring", stiffness: 400, damping: 35 }}
-      className="shrink-0 flex flex-col h-full glass-sidebar py-5 px-3 gap-1 overflow-y-auto overflow-x-hidden"
+      animate={{ width: collapsed ? 72 : 252 }}
+      transition={{ type: "spring", stiffness: 420, damping: 38 }}
+      className="shrink-0 flex flex-col h-full glass-sidebar relative z-10"
     >
-      <div className={cn("flex mb-6", collapsed ? "flex-col items-center gap-2" : "items-center gap-3 px-3")}>
+      <div className={cn("flex items-center pt-5 pb-4", collapsed ? "flex-col gap-3 px-2" : "gap-3 px-5")}>
         <motion.div
-          whileHover={{ rotate: 8, scale: 1.05 }}
+          whileHover={{ rotate: -8, scale: 1.06 }}
           transition={{ type: "spring", stiffness: 400 }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center glow-sm shrink-0"
-          style={{ background: "linear-gradient(135deg, rgb(var(--accent-600)) 0%, rgb(var(--accent-400)) 100%)" }}
+          className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0 relative"
+          style={{
+            background: "linear-gradient(140deg, rgb(var(--accent-400)) 0%, rgb(var(--accent-600)) 55%, rgb(var(--accent-800)) 100%)",
+            boxShadow: "0 8px 24px -6px rgb(var(--accent-500) / 0.7), inset 0 1px 0 rgba(255,255,255,0.25)",
+          }}
         >
-          <GamepadIcon size={18} className="text-white" />
+          <GamepadIcon size={20} className="text-white" />
         </motion.div>
-        <AnimatePresence initial={false}>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 overflow-hidden"
-            >
-              <span className="font-bold text-[15px] text-white tracking-tight whitespace-nowrap">ZGameLib</span>
-              <span className="block text-[10px] text-slate-600 -mt-0.5 whitespace-nowrap">Personal Library</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!collapsed && (
+          <div className="flex-1 min-w-0">
+            <span className="font-display font-bold text-[17px] text-white tracking-tight block leading-none">ZGameLib</span>
+            <span className="block text-[11px] text-slate-500 mt-1">{games.length} games in library</span>
+          </div>
+        )}
         <button
           onClick={toggleCollapsed}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="flex items-center justify-center w-7 h-7 rounded-xl text-slate-600 hover:text-slate-300 hover:bg-white/5 transition-all duration-200 shrink-0"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200 shrink-0"
         >
           <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.25 }}>
             <ChevronLeftIcon size={14} />
@@ -148,223 +205,79 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <div className="flex flex-col gap-0.5">
-        {navItem("/", <LibraryIcon size={16} />, "Library")}
-        {navItem("/favorites", <HeartIcon size={16} />, "Favorites")}
-        {navItem("/recent", <ClockIcon size={16} />, "Recently Played")}
-        {navItem("/collections", <FolderIcon size={16} />, "Collections", "nav-collections")}
-        {navItem("/stats", <ChartIcon size={16} />, "Stats", "nav-stats")}
-        {navItem("/wrapped", <WrappedIcon size={16} />, "Year in Review", "nav-wrapped")}
-        {navItem("/spin", <SpinIcon size={16} />, "Game Spin", "nav-spin")}
-        {navItem("/settings", <SettingsIcon size={16} />, "Settings", "nav-settings")}
+      <div className={cn("flex-1 overflow-y-auto overflow-x-hidden scrollbar-none pb-3", collapsed ? "px-3" : "px-3")}>
+        <div className="flex flex-col gap-0.5">
+          {!collapsed && <SectionHeader label="Library" />}
+          {navItem("/", LibraryIcon, "All Games", games.length)}
+          {navItem("/favorites", HeartIcon, "Favorites", favCount)}
+          {navItem("/recent", ClockIcon, "Recently Played", recentCount)}
+          {navItem("/collections", CollectionIcon, "Collections", undefined, "nav-collections")}
+          {!collapsed ? <SectionHeader label="Discover" /> : <div className="h-3" />}
+          {navItem("/stats", ChartIcon, "Statistics", undefined, "nav-stats")}
+          {navItem("/wrapped", WrappedIcon, "Year in Review", undefined, "nav-wrapped")}
+          {navItem("/spin", SpinIcon, "Game Spin", undefined, "nav-spin")}
+        </div>
+
+        {!collapsed && collections.length > 0 && (
+          <div className="mt-1">
+            <SectionHeader label="Collections" />
+            <div className="flex flex-col gap-0.5">
+              {collections.slice(0, 6).map((c) => {
+                const active = location.pathname === "/collections" && (location.state as { collectionId?: string } | null)?.collectionId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => { resetFilters(); guardedNavigate("/collections", { collectionId: c.id }); }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 h-8 rounded-lg text-[12.5px] transition-colors",
+                      active ? "text-white bg-white/[0.06]" : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.04]"
+                    )}
+                  >
+                    <span className="w-[17px] flex justify-center">
+                      <span className="w-2 h-2 rounded-[3px]" style={{ background: `hsl(${(c.name.length * 47 + c.name.charCodeAt(0) * 13) % 360} 70% 62%)` }} />
+                    </span>
+                    <span className="flex-1 text-left truncate">{c.name}</span>
+                    <span className="text-[11px] text-slate-600 tabular-nums">{c.game_count}</span>
+                  </button>
+                );
+              })}
+              {collections.length > 6 && (
+                <button onClick={() => guardedNavigate("/collections")} className="px-3 h-8 text-left text-[12px] text-slate-500 hover:text-slate-200">
+                  +{collections.length - 6} more
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      <AnimatePresence initial={false}>
-        {!collapsed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="flex flex-col gap-1"
-          >
-            <div className="glass rounded-xl p-3 mt-5 mx-1">
-              <div className="flex items-center gap-2 mb-2">
-                <SparkleIcon size={12} className="text-accent-400" />
-                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Overview</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className="text-lg font-bold text-white">{games.length}</span>
-                  <span className="block text-[10px] text-slate-600">Games</span>
-                </div>
-                <div>
-                  <span className="text-lg font-bold text-accent-400">{games.filter(g => g.is_favorite).length}</span>
-                  <span className="block text-[10px] text-slate-600">Favorites</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 mb-1" data-tour="sidebar-platform">
-              <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
-                <span className="w-3 h-px bg-slate-800" />
-                Platforms
-                <span className="flex-1 h-px bg-slate-800" />
-              </p>
-              <div className="flex flex-col gap-0.5">
-                <button
-                  onClick={() => { setFilter("platform", "all"); if (location.pathname !== "/") guardedNavigate("/"); }}
-                  className={cn(
-                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300",
-                    filters.platform === "all"
-                      ? "text-accent-300 bg-accent-500/10 border border-accent-500/20"
-                      : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border border-transparent"
-                  )}
-                >
-                  <LibraryIcon size={14} />
-                  <span className="flex-1 text-left">All</span>
-                  <span className={cn("text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md", games.length > 0 ? "text-slate-500 bg-white/4" : "text-slate-700")}>
-                    {games.length}
-                  </span>
-                </button>
-                {platformCounts.map((p) => (
-                  <button
-                    key={p.key}
-                    onClick={() => { setFilter("platform", filters.platform === p.key ? "all" : p.key); if (location.pathname !== "/") guardedNavigate("/"); }}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300",
-                      filters.platform === p.key
-                        ? "text-accent-300 bg-accent-500/10 border border-accent-500/20"
-                        : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border border-transparent"
-                    )}
-                  >
-                    <p.icon size={14} />
-                    <span className="flex-1 text-left">{p.label}</span>
-                    <span className={cn("text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md", p.count > 0 ? "text-slate-500 bg-white/4" : "text-slate-700")}>
-                      {p.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-3 mb-1">
-              <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
-                <span className="w-3 h-px bg-slate-800" />
-                Status
-                <span className="flex-1 h-px bg-slate-800" />
-              </p>
-              <div className="flex flex-col gap-0.5">
-                {customStatuses.map((s) => {
-                  const count = games.filter((g) => g.status === s.key).length;
-                  return (
-                    <button
-                      key={s.key}
-                      onClick={() => { setFilter("status", filters.status === s.key ? "all" : s.key as import("@/lib/types").GameStatus); if (location.pathname !== "/") guardedNavigate("/"); }}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
-                        filters.status === s.key
-                          ? "text-accent-300 bg-accent-500/10 border-accent-500/20"
-                          : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border-transparent"
-                      )}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
-                      <span className="flex-1 text-left">{s.label}</span>
-                      {count > 0 && <span className="text-[11px] text-slate-600 tabular-nums">{count}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-3 mb-1">
-              <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
-                <span className="w-3 h-px bg-slate-800" />
-                Cover Art
-                <span className="flex-1 h-px bg-slate-800" />
-              </p>
-              <div className="flex flex-col gap-0.5">
-                <button
-                  onClick={() => { setFilter("hasCover", filters.hasCover === true ? null : true); if (location.pathname !== "/") guardedNavigate("/"); }}
-                  className={cn(
-                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
-                    filters.hasCover === true
-                      ? "text-accent-300 bg-accent-500/10 border-accent-500/20"
-                      : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border-transparent"
-                  )}
-                >
-                  <ImageIcon size={14} />
-                  <span className="flex-1 text-left">Has Cover</span>
-                  <span className={cn("text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md", "text-slate-500 bg-white/4")}>
-                    {games.filter(g => g.cover_path !== null && g.cover_path !== undefined && g.cover_path !== "").length}
-                  </span>
-                </button>
-                <button
-                  onClick={() => { setFilter("hasCover", filters.hasCover === false ? null : false); if (location.pathname !== "/") guardedNavigate("/"); }}
-                  className={cn(
-                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
-                    filters.hasCover === false
-                      ? "text-accent-300 bg-accent-500/10 border-accent-500/20"
-                      : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border-transparent"
-                  )}
-                >
-                  <ImageIcon size={14} />
-                  <span className="flex-1 text-left">Missing Cover</span>
-                  <span className={cn("text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md", "text-slate-500 bg-white/4")}>
-                    {games.filter(g => !g.cover_path).length}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {games.some((g) => g.not_installed) && (
-              <div className="mt-3 mb-1">
-                <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
-                  <span className="w-3 h-px bg-slate-800" />
-                  Installation
-                  <span className="flex-1 h-px bg-slate-800" />
-                </p>
-                <div className="flex flex-col gap-0.5">
-                  <button
-                    onClick={() => { setFilter("notInstalledOnly", !filters.notInstalledOnly); if (location.pathname !== "/") guardedNavigate("/"); }}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all duration-300 border",
-                      filters.notInstalledOnly
-                        ? "text-accent-300 bg-accent-500/10 border-accent-500/20"
-                        : "text-slate-500 hover:text-slate-300 hover:bg-white/3 border-transparent"
-                    )}
-                  >
-                    <DownloadIcon size={14} />
-                    <span className="flex-1 text-left">Not Installed</span>
-                    <span className="text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md text-slate-500 bg-white/4">
-                      {games.filter((g) => g.not_installed).length}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-3 mb-1" data-tour="sidebar-advanced">
-              <button
-                onClick={() => setAdvancedOpen((v) => !v)}
-                className="w-full"
-              >
-                <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
-                  <span className="w-3 h-px bg-slate-800" />
-                  Advanced
-                  {filterRules.length > 0 && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent-500 ml-0.5" />
-                  )}
-                  <span className="flex-1 h-px bg-slate-800" />
-                  <motion.span
-                    animate={{ rotate: advancedOpen ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-slate-600"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="M6 9l6 6 6-6"/>
-                    </svg>
-                  </motion.span>
-                </p>
-              </button>
-              <AnimatePresence initial={false}>
-                {advancedOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <FilterBuilder />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      <div className={cn("shrink-0 flex flex-col gap-2 pb-4 pt-3 border-t border-white/[0.05]", collapsed ? "px-3" : "px-3")}>
+        <NowPlaying collapsed={collapsed} />
+        <motion.button
+          whileHover={{ scale: 1.015 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setBigPicture(true)}
+          title="Big Picture Mode (Ctrl+B)"
+          className={cn(
+            "relative overflow-hidden rounded-xl flex items-center text-[13px] font-semibold text-white group",
+            collapsed ? "h-10 justify-center" : "h-10 gap-3 px-3"
+          )}
+          style={{
+            background: "linear-gradient(110deg, rgb(var(--accent-600) / 0.5), rgb(var(--accent-800) / 0.35))",
+            border: "1px solid rgb(var(--accent-400) / 0.3)",
+          }}
+        >
+          <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "linear-gradient(110deg, rgb(var(--accent-500) / 0.35), transparent)" }} />
+          <TvIcon size={17} className="relative text-accent-200" />
+          {!collapsed && (
+            <>
+              <span className="relative flex-1 text-left">Big Picture</span>
+              <span className="relative kbd !h-5 !text-[9px] !bg-black/20">Ctrl B</span>
+            </>
+          )}
+        </motion.button>
+        {navItem("/settings", SettingsIcon, "Settings", undefined, "nav-settings")}
+      </div>
     </motion.aside>
   );
 }

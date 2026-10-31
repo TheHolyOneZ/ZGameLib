@@ -6,9 +6,9 @@ export default {
     extend: {
       colors: {
         bg: {
-          base: "#0a0a0f",
+          base: "rgb(var(--bg-base) / <alpha-value>)",
           surface: "#111118",
-          elevated: "#18181f",
+          elevated: "#16161f",
         },
         accent: {
           200: "rgb(var(--accent-200) / <alpha-value>)",
@@ -42,7 +42,8 @@ export default {
         card: "0 8px 32px rgba(0,0,0,0.4)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Inter Variable", "Inter", "system-ui", "sans-serif"],
+        display: ["Outfit Variable", "Inter Variable", "system-ui", "sans-serif"],
       },
       borderRadius: {
         card: "14px",

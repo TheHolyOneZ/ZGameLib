@@ -6,6 +6,7 @@ import { api } from "@/lib/tauri";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import type { Collection } from "@/lib/types";
+import { HeartIcon, CollectionIcon, TrashIcon, CloseIcon } from "@/components/ui/Icons";
 
 const STATUSES = [
   { key: "none", label: "None" },
@@ -16,7 +17,7 @@ const STATUSES = [
   { key: "on_hold", label: "On Hold" },
 ];
 
-export default function BatchActionBar() {
+export default function BatchActionBar({ visibleIds = [] }: { visibleIds?: string[] }) {
   const selectedIds = useGameStore((s) => s.selectedIds);
   const clearSelected = useGameStore((s) => s.clearSelected);
   const setGames = useGameStore((s) => s.setGames);
@@ -48,6 +49,16 @@ export default function BatchActionBar() {
   }, [showCollections]);
 
   const count = selectedIds.length;
+
+  useEffect(() => {
+    if (count === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      if (e.key === "Escape" && tag !== "INPUT" && tag !== "SELECT" && !useUIStore.getState().isDetailOpen) clearSelected();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [count, clearSelected]);
 
   const reload = async () => {
     const games = await api.getAllGames();
@@ -106,28 +117,52 @@ export default function BatchActionBar() {
     });
   };
 
+  const selectAllVisible = () => {
+    const ids = useGameStore.getState().selectedIds;
+    const next = new Set(ids);
+    visibleIds.forEach((id) => next.add(id));
+    useGameStore.setState({ selectedIds: [...next] });
+  };
+
+  const favoriteAll = async () => {
+    setLoading(true);
+    try {
+      const games = useGameStore.getState().games.filter((g) => selectedIds.includes(g.id) && !g.is_favorite);
+      await Promise.all(games.map((g) => api.toggleFavorite(g.id)));
+      await reload();
+      addToast(games.length ? `Added ${games.length} game${games.length !== 1 ? "s" : ""} to favorites` : "All selected games are already favorites", games.length ? "success" : "info");
+    } catch (err) {
+      addToast(String(err), "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fieldCls = "h-9 bg-white/[0.05] border border-white/10 rounded-xl px-3 text-[12.5px] text-slate-200 placeholder-slate-500 outline-none focus:border-accent-500/60 transition-colors";
+
   return (
     <AnimatePresence>
       {count > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 24 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl glass-strong border border-white/10 shadow-2xl"
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 24, scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 420, damping: 34 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 pl-4 pr-2 py-2 rounded-2xl glass-strong whitespace-nowrap"
+          style={{ boxShadow: "0 24px 60px -12px rgba(0,0,0,0.85), 0 0 0 1px rgb(var(--accent-400) / 0.25)" }}
         >
-          <span className="text-sm font-semibold text-white tabular-nums min-w-[60px]">
-            {count} selected
+          <span className="flex items-center gap-2 text-[13px] font-semibold text-white tabular-nums pr-1">
+            <span className="min-w-[24px] h-6 px-1.5 rounded-lg bg-accent-500 flex items-center justify-center text-[12px]">{count}</span>
+            selected
           </span>
+          {visibleIds.length > count && (
+            <button onClick={selectAllVisible} className="text-[12px] text-accent-300 hover:text-accent-200 px-1">Select all {visibleIds.length}</button>
+          )}
 
-          <div className="w-px h-5 bg-white/10" />
+          <div className="w-px h-6 bg-white/10 mx-1" />
 
-          <select
-            value={statusValue}
-            onChange={(e) => setStatusValue(e.target.value)}
-            className="bg-[#1a1825] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-accent-500/50 [&>option]:bg-[#1a1825] [&>option]:text-slate-200"
-          >
-            <option value="">Set Status</option>
+          <select value={statusValue} onChange={(e) => setStatusValue(e.target.value)} className={cn(fieldCls, "pr-7 cursor-pointer")}>
+            <option value="">Set status…</option>
             {STATUSES.map((s) => (
               <option key={s.key} value={s.key}>{s.label}</option>
             ))}
@@ -137,7 +172,7 @@ export default function BatchActionBar() {
             type="number"
             min={1}
             max={10}
-            placeholder="Rate (1-10)"
+            placeholder="Rating"
             value={ratingValue}
             onChange={(e) => {
               const val = e.target.value;
@@ -145,7 +180,7 @@ export default function BatchActionBar() {
               const n = parseInt(val, 10);
               if (!isNaN(n)) setRatingValue(String(Math.min(10, Math.max(1, n))));
             }}
-            className="w-24 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-accent-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className={cn(fieldCls, "w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none")}
           />
 
           <input
@@ -154,24 +189,33 @@ export default function BatchActionBar() {
             value={tagValue}
             onChange={(e) => setTagValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
-            className="w-24 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-accent-500/50"
+            className={cn(fieldCls, "w-24")}
           />
+
+          <button
+            onClick={handleApply}
+            disabled={loading || (!statusValue && !ratingValue && !tagValue)}
+            className="btn-primary h-9 py-0 px-4 text-[12.5px] disabled:opacity-40"
+          >
+            Apply
+          </button>
+
+          <div className="w-px h-6 bg-white/10 mx-1" />
+
+          <button onClick={favoriteAll} disabled={loading} className="btn-icon hover:!text-pink-300" title="Add all to favorites">
+            <HeartIcon size={14} />
+          </button>
 
           {allCollections.length > 0 && (
             <div className="relative" ref={collectionMenuRef}>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() => setShowCollections((v) => !v)}
                 disabled={loading}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
-                  showCollections
-                    ? "bg-accent-500/20 text-accent-300 border-accent-500/40"
-                    : "bg-white/5 text-slate-400 hover:text-slate-200 border-white/10 hover:border-white/20"
-                )}
+                className={cn("btn-icon", showCollections && "!text-accent-300 !border-accent-500/40")}
+                title="Add to collection"
               >
-                + Collection
-              </motion.button>
+                <CollectionIcon size={14} />
+              </button>
               <AnimatePresence>
                 {showCollections && (
                   <motion.div
@@ -179,53 +223,32 @@ export default function BatchActionBar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute bottom-full mb-2 left-0 min-w-[160px] rounded-xl border border-white/10 shadow-2xl z-50 overflow-hidden"
-                    style={{ background: "rgba(12, 10, 20, 0.96)", backdropFilter: "blur(20px)" }}
+                    className="absolute bottom-full mb-3 right-0 min-w-[200px] rounded-2xl glass-strong shadow-2xl z-50 overflow-hidden p-1.5"
                   >
-                    <p className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold px-3 pt-2.5 pb-1.5">Add all to</p>
-                    <div className="flex flex-col pb-1.5">
-                      {allCollections.map((col) => (
-                        <button
-                          key={col.id}
-                          onClick={() => handleAddToCollection(col)}
-                          className="flex items-center gap-2 px-3 py-2 text-[12px] text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-left"
-                        >
-                          {col.name}
-                          <span className="ml-auto text-[10px] text-slate-700 tabular-nums">{col.game_count}</span>
-                        </button>
-                      ))}
-                    </div>
+                    <p className="section-label !text-[10px] px-2.5 pt-1.5 pb-1">Add all to</p>
+                    {allCollections.map((col) => (
+                      <button
+                        key={col.id}
+                        onClick={() => handleAddToCollection(col)}
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
+                      >
+                        <span className="flex-1 truncate">{col.name}</span>
+                        <span className="text-[11px] text-slate-500 tabular-nums">{col.game_count}</span>
+                      </button>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           )}
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleApply}
-            disabled={loading || (!statusValue && !ratingValue && !tagValue)}
-            className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors", (!statusValue && !ratingValue && !tagValue) || loading ? "bg-accent-500/30 text-accent-300/50 cursor-not-allowed" : "bg-accent-500 text-white hover:bg-accent-400")}
-          >
-            Apply
-          </motion.button>
+          <button onClick={handleDelete} disabled={loading} className="btn-icon hover:!text-red-300 hover:!border-red-500/40" title="Move to trash">
+            <TrashIcon size={14} />
+          </button>
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleDelete}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-          >
-            Delete
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={clearSelected}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors text-lg leading-none"
-          >
-            ×
-          </motion.button>
+          <button onClick={clearSelected} className="btn-icon !bg-transparent !border-transparent" title="Clear selection (Esc)">
+            <CloseIcon size={13} />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>

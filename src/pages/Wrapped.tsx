@@ -48,10 +48,10 @@ function StatCard({ label, value, sub, delay, accent, icon }: { label: string; v
         <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgb(var(--accent-500) / 0.12)", border: "1px solid rgb(var(--accent-500) / 0.15)" }}>
           {icon}
         </div>
-        <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em]">{label}</span>
+        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.15em]">{label}</span>
       </div>
       <p className="text-3xl font-bold" style={{ color: accent ? "rgb(var(--accent-300))" : "white" }}>{value}</p>
-      {sub && <p className="text-[11px] text-slate-600 mt-1">{sub}</p>}
+      {sub && <p className="text-[11px] text-slate-500 mt-1">{sub}</p>}
     </motion.div>
   );
 }
@@ -68,7 +68,6 @@ function MonthsChart({ busiest }: { busiest: string | null }) {
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
             transition={{ delay: 0.05 * i, duration: 0.4 }}
-            style={{ transformOrigin: "bottom" }}
             className="w-full rounded-sm"
             style={{
               background: i === busiestIdx ? "rgb(var(--accent-400))" : "rgba(255,255,255,0.1)",
@@ -110,8 +109,7 @@ function PlatformDonut({ breakdown }: { breakdown: Record<string, number> }) {
               stroke={PLATFORM_COLORS[platform] ?? "#94a3b8"}
               strokeWidth="10"
               strokeDasharray={`${circumference * pct} ${circumference * (1 - pct)}`}
-              strokeDashoffset={-dashOffset * circumference / circumference * circumference + circumference}
-              style={{ strokeDashoffset: -dashOffset * (circumference) / 1 }}
+              strokeDashoffset={-dashOffset}
             />
           );
         })}
@@ -121,7 +119,7 @@ function PlatformDonut({ breakdown }: { breakdown: Record<string, number> }) {
           <div key={platform} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full shrink-0" style={{ background: PLATFORM_COLORS[platform] ?? "#94a3b8" }} />
             <span className="text-[11px] text-slate-400 capitalize">{platform}</span>
-            <span className="text-[11px] text-slate-600 ml-1">{count}</span>
+            <span className="text-[11px] text-slate-500 ml-1">{count}</span>
           </div>
         ))}
       </div>
@@ -146,7 +144,7 @@ export default function Wrapped() {
       <div className="flex items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Year in Review</h1>
-          <p className="text-sm text-slate-600 mt-0.5">Your gaming year, summarised.</p>
+          <p className="text-sm text-slate-500 mt-0.5">Your gaming year, summarised.</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {availableYears.map((y) => (
@@ -185,7 +183,7 @@ export default function Wrapped() {
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1 21 21 20.1 21 19V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V19C3 20.1 3.9 21 5 21Z" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <h3 className="text-lg font-semibold text-slate-400">No sessions for {year}</h3>
-          <p className="text-sm text-slate-600 max-w-xs leading-relaxed">Launch games from ZGameLib to start tracking your playtime — your year in review will appear here.</p>
+          <p className="text-sm text-slate-500 max-w-xs leading-relaxed">Launch games from ZGameLib to start tracking your playtime — your year in review will appear here.</p>
         </motion.div>
       )}
 
@@ -220,7 +218,7 @@ export default function Wrapped() {
               className="rounded-2xl p-5"
               style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em] mb-3">Most Played</div>
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.15em] mb-3">Most Played</div>
               <div className="flex items-start gap-3">
                 <GameCoverMini game={data.most_played} />
                 <div className="min-w-0">
@@ -242,7 +240,7 @@ export default function Wrapped() {
               className="rounded-2xl p-5"
               style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em] mb-3">Top Rated</div>
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.15em] mb-3">Top Rated</div>
               <div className="flex items-start gap-3">
                 <GameCoverMini game={data.top_rated} />
                 <div className="min-w-0">
@@ -296,7 +294,7 @@ export default function Wrapped() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgb(var(--accent-500) / 0.12)", border: "1px solid rgb(var(--accent-500) / 0.15)" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-accent-400"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M3 9H21M9 3V5M15 3V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 </div>
-                <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em]">Busiest Month</span>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.15em]">Busiest Month</span>
               </div>
               <p className="text-xl font-bold text-white mb-3">{data.busiest_month}</p>
               <MonthsChart busiest={data.busiest_month} />
@@ -315,7 +313,7 @@ export default function Wrapped() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgb(var(--accent-500) / 0.12)", border: "1px solid rgb(var(--accent-500) / 0.15)" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-accent-400"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><path d="M12 3C12 3 16 8 16 12C16 16 12 21 12 21" stroke="currentColor" strokeWidth="1.5"/><path d="M3 12H21" stroke="currentColor" strokeWidth="1.5"/></svg>
                 </div>
-                <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em]">Platform Split</span>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.15em]">Platform Split</span>
               </div>
               <PlatformDonut breakdown={data.platform_breakdown} />
             </motion.div>

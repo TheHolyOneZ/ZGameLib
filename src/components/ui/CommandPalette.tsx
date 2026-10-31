@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useCover } from "@/hooks/useCover";
+import GameCover from "@/components/ui/GameCover";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 import {
   SearchIcon, GamepadIcon, LibraryIcon, HeartIcon,
-  ChartIcon, SpinIcon, SettingsIcon, PlusIcon,
+  ChartIcon, SpinIcon, SettingsIcon, PlusIcon, TvIcon, ClockIcon, CollectionIcon, WrappedIcon,
 } from "@/components/ui/Icons";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo, formatPlaytime } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 
 type ActionItem = {
@@ -28,15 +28,15 @@ type GameItem = {
 type ResultItem = ActionItem | GameItem;
 
 function GameRow({ game, active }: { game: Game; active: boolean }) {
-  const src = useCover(game);
   return (
-    <div className={cn("flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors", active ? "bg-accent-500/10" : "hover:bg-white/[0.03]")}>
-      {src ? (
-        <img src={src} alt="" className="w-8 h-10 rounded-md object-cover shrink-0 border border-white/[0.05]" />
-      ) : (
-        <div className="w-8 h-10 rounded-md bg-white/5 shrink-0" />
-      )}
-      <span className="flex-1 text-[13px] text-slate-200 truncate">{game.name}</span>
+    <div className={cn("flex items-center gap-3 mx-2 px-3 py-2 rounded-xl cursor-pointer transition-colors", active ? "bg-accent-500/15" : "hover:bg-white/[0.04]")}>
+      <div className="w-8 h-11 rounded-md overflow-hidden shrink-0 ring-1 ring-white/10">
+        <GameCover game={game} eager />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={cn("text-[13.5px] truncate", active ? "text-white font-medium" : "text-slate-200")}>{game.name}</p>
+        <p className="text-[11px] text-slate-500">{game.last_played ? `Played ${timeAgo(game.last_played)}` : game.playtime_mins > 0 ? formatPlaytime(game.playtime_mins) : "Not played yet"}</p>
+      </div>
       <PlatformBadge platform={game.platform} />
     </div>
   );
@@ -78,6 +78,10 @@ export default function CommandPalette() {
     { type: "action", id: "add-game", label: "Add Game", icon: <PlusIcon size={14} />, action: () => { setAddGameOpen(true); setOpen(false); } },
     { type: "action", id: "library", label: "Library", icon: <LibraryIcon size={14} />, action: () => { guardedNavigate("/"); setOpen(false); } },
     { type: "action", id: "favorites", label: "Favorites", icon: <HeartIcon size={14} />, action: () => { guardedNavigate("/favorites"); setOpen(false); } },
+    { type: "action", id: "big-picture", label: "Big Picture Mode", icon: <TvIcon size={14} />, action: () => { setOpen(false); useUIStore.getState().setBigPicture(true); } },
+    { type: "action", id: "recent", label: "Recently Played", icon: <ClockIcon size={14} />, action: () => { guardedNavigate("/recent"); setOpen(false); } },
+    { type: "action", id: "collections", label: "Collections", icon: <CollectionIcon size={14} />, action: () => { guardedNavigate("/collections"); setOpen(false); } },
+    { type: "action", id: "wrapped", label: "Year in Review", icon: <WrappedIcon size={14} />, action: () => { guardedNavigate("/wrapped"); setOpen(false); } },
     { type: "action", id: "stats", label: "Stats", icon: <ChartIcon size={14} />, action: () => { guardedNavigate("/stats"); setOpen(false); } },
     { type: "action", id: "spin", label: "Game Spin", icon: <SpinIcon size={14} />, action: () => { guardedNavigate("/spin"); setOpen(false); } },
     { type: "action", id: "settings", label: "Settings", icon: <SettingsIcon size={14} />, action: () => { guardedNavigate("/settings"); setOpen(false); } },
@@ -87,6 +91,12 @@ export default function CommandPalette() {
     const q = query.toLowerCase();
     const filteredGames: GameItem[] = games
       .filter((g) => g.name.toLowerCase().includes(q))
+      .sort((a, b) => {
+        if (!q) return (b.last_played ?? "").localeCompare(a.last_played ?? "");
+        const as = a.name.toLowerCase().startsWith(q) ? 0 : 1;
+        const bs = b.name.toLowerCase().startsWith(q) ? 0 : 1;
+        return as - bs || a.name.localeCompare(b.name);
+      })
       .slice(0, 8)
       .map((g) => ({ type: "game", game: g }));
 
@@ -133,6 +143,10 @@ export default function CommandPalette() {
     setActiveIndex(0);
   }, [query]);
 
+  useEffect(() => {
+    listRef.current?.querySelector(`[data-cp-idx="${activeIndex}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -151,27 +165,22 @@ export default function CommandPalette() {
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-[580px] max-h-[480px] flex flex-col rounded-2xl overflow-hidden"
-            style={{
-              background: "rgba(12,10,20,0.96)",
-              backdropFilter: "blur(40px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
-            }}
+            className="w-[620px] max-h-[520px] flex flex-col rounded-3xl overflow-hidden glass-strong"
+            style={{ boxShadow: "0 40px 120px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04), 0 0 80px -30px rgb(var(--accent-500) / 0.5)" }}
           >
-            <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <SearchIcon size={16} className="text-slate-500 shrink-0" />
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <SearchIcon size={18} className="text-accent-300 shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search games or actions…"
-                className="flex-1 bg-transparent text-[14px] text-white placeholder-slate-600 outline-none"
+                className="flex-1 bg-transparent text-[16px] text-white placeholder-slate-500 outline-none"
               />
-              <kbd className="px-2 py-0.5 rounded-md text-[10px] font-mono text-slate-600 border border-white/8">ESC</kbd>
+              <kbd className="kbd">ESC</kbd>
             </div>
 
-            <div ref={listRef} className="overflow-y-auto flex-1">
+            <div ref={listRef} className="overflow-y-auto flex-1 py-2">
               {results.length === 0 ? (
                 <div className="flex items-center justify-center py-10">
                   <span className="text-[13px] text-slate-600">No results for '{query}'</span>
@@ -186,13 +195,13 @@ export default function CommandPalette() {
                       <>
                         {gameItems.length > 0 && (
                           <div>
-                            <div className="px-4 py-1.5">
-                              <span className="text-[10px] text-slate-700 uppercase tracking-[0.14em] font-semibold">Games</span>
+                            <div className="px-5 pt-2 pb-1.5">
+                              <span className="section-label !text-[10px]">Games</span>
                             </div>
                             {gameItems.map((item) => {
                               const i = idx++;
                               return (
-                                <div key={item.game.id} onClick={() => activate(item)}>
+                                <div key={item.game.id} data-cp-idx={i} onClick={() => activate(item)} onMouseMove={() => setActiveIndex(i)}>
                                   <GameRow game={item.game} active={activeIndex === i} />
                                 </div>
                               );
@@ -201,19 +210,21 @@ export default function CommandPalette() {
                         )}
                         {actionItems.length > 0 && (
                           <div>
-                            <div className="px-4 py-1.5">
-                              <span className="text-[10px] text-slate-700 uppercase tracking-[0.14em] font-semibold">Actions</span>
+                            <div className="px-5 pt-2 pb-1.5">
+                              <span className="section-label !text-[10px]">Actions</span>
                             </div>
                             {actionItems.map((item) => {
                               const i = idx++;
                               return (
                                 <div
                                   key={item.id}
+                                  data-cp-idx={i}
                                   onClick={() => activate(item)}
-                                  className={cn("flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors", activeIndex === i ? "bg-accent-500/10" : "hover:bg-white/[0.03]")}
+                                  onMouseMove={() => setActiveIndex(i)}
+                                  className={cn("flex items-center gap-3 mx-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors", activeIndex === i ? "bg-accent-500/15 text-white" : "text-slate-300")}
                                 >
-                                  <span className="text-slate-500 shrink-0">{item.icon}</span>
-                                  <span className="text-[13px] text-slate-300">{item.label}</span>
+                                  <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", activeIndex === i ? "bg-accent-500/25 text-accent-200" : "bg-white/[0.05] text-slate-400")}>{item.icon}</span>
+                                  <span className="text-[13.5px]">{item.label}</span>
                                 </div>
                               );
                             })}

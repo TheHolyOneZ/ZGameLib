@@ -2,11 +2,13 @@ import { useEffect, useRef } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import GameGrid from "@/components/library/GameGrid";
 import PageSearch from "@/components/layout/PageSearch";
+import PageHeader from "@/components/ui/PageHeader";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import { HeartIcon } from "@/components/ui/Icons";
 
 export default function Favorites() {
   const setFilter = useGameStore((s) => s.setFilter);
+  const count = useGameStore((s) => s.games.filter((g) => g.is_favorite).length);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,23 +18,14 @@ export default function Favorites() {
 
   return (
     <div className="h-full flex flex-col page-enter">
-      <div className="px-6 pt-6 pb-1 flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{
-            background: "linear-gradient(135deg, rgba(236,72,153,0.15), rgba(219,39,119,0.1))",
-            border: "1px solid rgba(236,72,153,0.12)",
-          }}
-        >
-          <HeartIcon size={18} className="text-pink-400" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-white">Favorites</h1>
-          <p className="text-[12px] text-slate-600">Games you love the most</p>
-        </div>
-      </div>
-      <PageSearch showSort showViewToggle />
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
+        <PageHeader
+          icon={<HeartIcon size={22} filled />}
+          tint="#ec4899"
+          title="Favorites"
+          subtitle={count === 0 ? "The games you love most, all in one place" : `${count} game${count !== 1 ? "s" : ""} you love the most`}
+        />
+        <PageSearch sticky hideFavoriteFilter />
         <GameGrid />
       </div>
       <ScrollToTop scrollRef={scrollRef} />

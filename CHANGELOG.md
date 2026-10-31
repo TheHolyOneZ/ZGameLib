@@ -1,5 +1,45 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Big Picture mode** — full-screen, controller-first interface with Home shelves, Library grid with filters and sorting, Favorites, Recent and Collections tabs, a cinematic game page, status and rating pickers, on-screen keyboard search, a quick menu and a launch splash
+- **Xbox, PlayStation and Nintendo controller support** — D-pad and left stick navigation, A/B/X/Y actions, LB/RB tab switching, LT/RT page jumps, Start/Options menu, rumble on launch; button prompts switch automatically between Xbox letters, PlayStation symbols and keyboard keys; friendly controller names (DualSense, DualShock 4, Xbox Series)
+- **Ways into Big Picture** — Ctrl+B, Start/Options on any connected controller, the sidebar button, the top bar, the command palette, or "Start in Big Picture" on launch; optional fullscreen and interface sounds
+- **Library home** — "Continue playing" hero with one-click Play/Stop, playtime stats and a weekly goal ring; Pinned, Play Next and Recently Played shelves with scroll arrows
+- **Filters popover** — platform, status, rating, favorites, missing cover, not installed and the rule builder in one place, with removable "Filtered by" chips in the toolbar
+- **Card size slider**, persistent grid/list choice, select-all and bulk favorite in the batch bar
+- **Collections** — cover mosaics, a hero header, an "Add games" picker, and quick links to every collection in the sidebar
+- **Game details** — hero header, HowLongToBeat progress bar against your playtime, session chart and stats in History, pin toggle, copyable technical info
+- **Statistics dashboard** — KPI tiles, weekly playtime chart, progress donut, platform hours, rating histogram, genres, Most Played, Top Rated and Pile of Shame lists that open the game directly
+- **Recently Played timeline** grouped by Today, Yesterday, This Week and month, with its own filter
+- **Settings navigation** with section jump list and a sticky "unsaved changes" bar; new Big Picture & Controllers section with live controller detection
+- Rate games from the right-click menu; Escape clears a multi-selection; covers lazy-load as they scroll into view; generated cover art for games without a cover
+
+### Changed
+
+- Complete visual redesign: new type (Inter and Outfit, now bundled), surfaces, buttons, inputs, chips, sidebar, top bar with command search, cards, dialogs and every page
+- Sidebar reduced to navigation, collections, Now Playing, Big Picture and Settings; filters moved to the library toolbar
+- Game Spin starts with the whole installed library selected
+- Secondary pages load on demand for a faster start
+
+### Fixed
+
+- Fonts never loaded because the content security policy blocked Google Fonts
+- Weekly goal summed lifetime playtime of any game played this week instead of this week's sessions
+- Many accent borders and glows used invalid `rgba(var(--accent), a)` syntax and never rendered
+- Screenshot thumbnails remounted and re-read every image on each re-render of the detail panel
+- Custom fields relied on `window.prompt`, which is unreliable in the desktop webview
+- "Remove from collection" never appeared in the right-click menu inside collections
+- Collections could be deleted without confirmation and showed stale game data after edits
+- Recently Played ignored the search box
+- "Clear filters" left missing-cover, not-installed and rule filters active
+- List view warning from animated rows, command palette not scrolling to the highlighted item, and TypeScript errors in Game Details, Year in Review and empty states
+
+---
+
+
 
 
 

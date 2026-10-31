@@ -141,7 +141,7 @@ export default function WhatsNewModal() {
             <div className="flex items-center gap-2 px-5 pb-5 pt-1">
               <button
                 onClick={handleViewChangelog}
-                className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors"
+                className="text-[11px] text-slate-500 hover:text-slate-400 transition-colors"
               >
                 View full changelog →
               </button>

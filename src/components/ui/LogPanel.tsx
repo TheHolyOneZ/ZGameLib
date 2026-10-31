@@ -67,13 +67,13 @@ export default function LogPanel() {
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[13px] font-semibold text-white tracking-tight">Scan Log</span>
-              <span className="text-[10px] text-slate-600 tabular-nums">{logs.length} entries</span>
+              <span className="text-[10px] text-slate-500 tabular-nums">{logs.length} entries</span>
             </div>
             <div className="flex items-center gap-1">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={clearLogs}
-                className="btn-icon text-slate-600 hover:text-red-400"
+                className="btn-icon text-slate-500 hover:text-red-400"
                 title="Clear logs"
               >
                 <TrashIcon size={13} />
@@ -97,7 +97,7 @@ export default function LogPanel() {
                 <span className={`text-[11px] font-mono font-bold ${LEVEL_COLOR[level]}`}>
                   {LEVEL_PREFIX[level]}
                 </span>
-                <span className="text-[10px] text-slate-600 capitalize">{level}</span>
+                <span className="text-[10px] text-slate-500 capitalize">{level}</span>
               </div>
             ))}
           </div>
@@ -105,14 +105,14 @@ export default function LogPanel() {
           <div className="flex-1 overflow-y-auto p-4 space-y-px">
             {logs.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-slate-600 text-[12px]">
+                <p className="text-slate-500 text-[12px]">
                   No logs yet — run a scan to see output.
                 </p>
               </div>
             ) : (
               logs.map((entry) => (
                 <div key={entry.id} className="flex gap-2.5 items-baseline font-mono text-[11px] leading-relaxed">
-                  <span className="text-slate-700 shrink-0 tabular-nums text-[10px]">
+                  <span className="text-slate-600 shrink-0 tabular-nums text-[10px]">
                     {entry.time}
                   </span>
                   <span className={`shrink-0 w-3 text-center font-bold ${LEVEL_COLOR[entry.level]}`}>

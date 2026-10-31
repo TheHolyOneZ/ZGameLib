@@ -2,82 +2,63 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertIcon } from "@/components/ui/Icons";
 import { useUIStore } from "@/store/useUIStore";
 
+const DANGER = /delete|remove|stop|quit|purge|empty/i;
+
 export default function ConfirmModal() {
   const dialog = useUIStore((s) => s.confirmDialog);
   const closeConfirm = useUIStore((s) => s.closeConfirm);
+  const bigPicture = useUIStore((s) => s.bigPicture);
+  const label = dialog?.confirmLabel ?? "Remove";
+  const danger = DANGER.test(label);
 
   return (
     <AnimatePresence>
-      {dialog?.open && (
-        <>
+      {dialog?.open && !bigPicture && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={closeConfirm}
+          onKeyDown={(e) => { if (e.key === "Escape") closeConfirm(); }}
+          className="fixed inset-0 z-[80] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeConfirm}
-            className="fixed inset-0 z-50"
-            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.88, y: 10 }}
+            initial={{ opacity: 0, scale: 0.94, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 400, damping: 28 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+            className="glass-strong rounded-3xl p-6 w-full max-w-[420px] mx-4"
+            style={{ boxShadow: "0 40px 90px -20px rgba(0,0,0,0.85)" }}
           >
-            <div
-              className="glass-strong rounded-3xl p-6 w-full max-w-sm pointer-events-auto mx-4"
-              style={{
-                boxShadow: "0 0 50px rgba(239,68,68,0.08), 0 30px 60px rgba(0,0,0,0.6)",
-                borderColor: "rgba(239,68,68,0.12)",
-              }}
-            >
-              <div className="flex items-start gap-4 mb-6">
-                <motion.div
-                  initial={{ rotate: -15 }}
-                  animate={{ rotate: 0 }}
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.15)" }}
-                >
-                  <AlertIcon size={20} className="text-red-400" />
-                </motion.div>
-                <div>
-                  <h3 className="text-[14px] font-semibold text-white mb-1">Confirm Action</h3>
-                  <p className="text-[13px] text-slate-400 leading-relaxed">{dialog.title}</p>
-                </div>
+            <div className="flex items-start gap-4 mb-6">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                style={danger
+                  ? { background: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.25)" }
+                  : { background: "rgb(var(--accent-500) / 0.15)", border: "1px solid rgb(var(--accent-400) / 0.3)" }}
+              >
+                <AlertIcon size={20} className={danger ? "text-red-400" : "text-accent-300"} />
               </div>
-              <div className="flex gap-3">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={closeConfirm}
-                  className="btn-ghost flex-1 justify-center"
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => { dialog.onConfirm(); closeConfirm(); }}
-                  className="flex-1 justify-center flex items-center gap-2 font-medium px-4 py-2.5 rounded-xl text-sm transition-all duration-200 cursor-pointer"
-                  style={{
-                    background: dialog.confirmLabel
-                      ? "linear-gradient(135deg, rgba(234,179,8,0.8), rgba(161,98,7,0.9))"
-                      : "linear-gradient(135deg, rgba(220,38,38,0.8), rgba(185,28,28,0.9))",
-                    border: dialog.confirmLabel
-                      ? "1px solid rgba(234,179,8,0.3)"
-                      : "1px solid rgba(239,68,68,0.3)",
-                    color: "white",
-                    boxShadow: dialog.confirmLabel
-                      ? "0 0 20px rgba(234,179,8,0.15)"
-                      : "0 0 20px rgba(239,68,68,0.15)",
-                  }}
-                >
-                  {dialog.confirmLabel ?? "Remove"}
-                </motion.button>
+              <div className="pt-0.5">
+                <h3 className="text-[15px] font-semibold text-white mb-1">Are you sure?</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">{dialog.title}</p>
               </div>
             </div>
+            <div className="flex gap-2.5">
+              <button onClick={closeConfirm} className="btn-ghost flex-1 justify-center">Cancel</button>
+              <button
+                autoFocus
+                onClick={() => { const fn = dialog.onConfirm; closeConfirm(); fn(); }}
+                className={danger ? "flex-1 justify-center flex items-center gap-2 font-semibold px-4 py-2.5 rounded-xl text-sm text-white transition-all hover:brightness-110" : "btn-primary flex-1 justify-center"}
+                style={danger ? { background: "linear-gradient(180deg, #ef4444, #b91c1c)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 8px 24px -8px rgba(239,68,68,0.6)" } : undefined}
+              >
+                {label}
+              </button>
+            </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

@@ -131,7 +131,7 @@ export default function AddGameModal() {
                   </div>
                   <div>
                     <h2 className="text-[15px] font-semibold text-white">Add Games</h2>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-slate-500">
                       {mode === "single" ? "Add a single game" : "Bulk scan a folder"}
                     </p>
                   </div>

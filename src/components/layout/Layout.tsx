@@ -21,6 +21,8 @@ import ModsPromoPanel from "@/components/game/ModsPromoPanel";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import TourModeSelector from "@/components/onboarding/TourModeSelector";
 import WhatsNewModal from "@/components/modals/WhatsNewModal";
+import BigPicture from "@/components/bigpicture/BigPicture";
+import GamepadLauncher from "@/components/bigpicture/GamepadLauncher";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
 
@@ -270,6 +272,7 @@ export default function Layout() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (useUIStore.getState().bigPicture) return;
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault();
         setCommandPaletteOpen(true);
@@ -279,7 +282,8 @@ export default function Layout() {
         return;
       }
       const tag = (document.activeElement as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
       if (e.key === "?") { setShowShortcuts((v) => !v); return; }
       if (e.key === "Escape") {
         if (showShortcuts) { setShowShortcuts(false); return; }
@@ -352,6 +356,8 @@ export default function Layout() {
         )}
       </AnimatePresence>
       <OnboardingTour />
+      <BigPicture />
+      <GamepadLauncher />
       <AnimatePresence>
         {pendingUpdate && (
           <UpdateBanner update={pendingUpdate} onDismiss={() => setPendingUpdate(null)} />
@@ -368,32 +374,35 @@ export default function Layout() {
             style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           >
             <motion.div
-              initial={{ scale: 0.92, y: 16 }}
+              initial={{ scale: 0.95, y: 12 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.92, y: 16 }}
+              exit={{ scale: 0.95, y: 12 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass rounded-2xl p-6 w-[380px]"
-              style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+              className="glass-strong rounded-3xl p-6 w-[440px]"
+              style={{ boxShadow: "0 40px 100px -20px rgba(0,0,0,0.85)" }}
             >
-              <p className="text-[13px] font-bold text-white mb-4">Keyboard Shortcuts</p>
-              <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-[17px] font-bold text-white font-display">Keyboard Shortcuts</p>
+                <span className="kbd">?</span>
+              </div>
+              <div className="grid grid-cols-1 gap-1">
                 {[
-                  ["Ctrl + K", "Open command palette"],
-                  ["/", "Focus search"],
-                  ["N", "Add game"],
+                  ["Ctrl K", "Command palette"],
+                  ["Ctrl B", "Big Picture mode"],
+                  ["/", "Filter games"],
+                  ["N", "Add a game"],
                   ["F", "Toggle favorite (game open)"],
-                  ["1–9, 0", "Quick rate game (0 = 10)"],
+                  ["1–9 / 0", "Rate open game (0 = 10)"],
                   ["S", "Focus scan button"],
-                  ["W", "Open Year in Review"],
-                  ["H", "Toggle hidden games"],
-                  ["Escape", "Close panel / overlay"],
-                  ["Ctrl + Enter", "Save note"],
-                  ["?", "Toggle this help"],
+                  ["W", "Year in Review"],
+                  ["H", "Show / hide hidden games"],
+                  ["Esc", "Close panel or overlay"],
+                  ["Ctrl Enter", "Save note"],
                 ].map(([key, label]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <span className="text-[12px] text-slate-400">{label}</span>
-                    <kbd className="px-2 py-0.5 rounded-md text-[11px] font-mono text-slate-300 glass border border-white/10">{key}</kbd>
+                  <div key={key} className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/[0.04]">
+                    <span className="text-[13px] text-slate-300">{label}</span>
+                    <span className="flex gap-1">{(key.startsWith("Ctrl") ? key.split(" ") : [key]).map((k, i) => <kbd key={i} className="kbd">{k}</kbd>)}</span>
                   </div>
                 ))}
               </div>

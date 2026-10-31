@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
@@ -239,7 +239,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
           <div className="mt-2 flex flex-col gap-1">
             <StarRow rating={game.rating} />
             {game.playtime_mins > 0 && (
-              <p className="text-[10px] text-slate-600">{formatPlaytime(game.playtime_mins)} played</p>
+              <p className="text-[10px] text-slate-500">{formatPlaytime(game.playtime_mins)} played</p>
             )}
           </div>
         </div>
@@ -265,7 +265,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
           <motion.button
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={onExclude}
-            className="text-[11px] text-slate-600 hover:text-red-400 transition-colors py-1 px-2 rounded-lg hover:bg-red-500/10 text-center"
+            className="text-[11px] text-slate-500 hover:text-red-400 transition-colors py-1 px-2 rounded-lg hover:bg-red-500/10 text-center"
           >
             <CloseIcon size={11} />
           </motion.button>
@@ -293,7 +293,7 @@ function HistoryRow({ game, time }: { game: Game; time: Date }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[11px] text-slate-300 truncate font-medium">{game.name}</p>
-        <p className="text-[10px] text-slate-600">{timeStr}</p>
+        <p className="text-[10px] text-slate-500">{timeStr}</p>
       </div>
       <SparkleIcon size={10} className="text-accent-500/40 shrink-0" />
     </motion.div>
@@ -317,6 +317,13 @@ export default function Spin() {
   const [spinCount, setSpinCount] = useState(0);
 
   const rotation = useMotionValue(0);
+  const initialised = useRef(false);
+
+  useEffect(() => {
+    if (initialised.current || allGames.length === 0) return;
+    initialised.current = true;
+    setSelected(new Set(allGames.filter((g) => !g.not_installed).map((g) => g.id)));
+  }, [allGames]);
 
   const selectorGames = useMemo(() => {
     let list = [...allGames];
@@ -428,7 +435,7 @@ export default function Spin() {
         </div>
         <div>
           <h1 className="text-[16px] font-bold text-white tracking-tight">Game Spin</h1>
-          <p className="text-[11px] text-slate-600">Can&apos;t decide? Let fate choose your next game</p>
+          <p className="text-[11px] text-slate-500">Can&apos;t decide? Let fate choose your next game</p>
         </div>
 
         <div className="ml-auto flex items-center gap-4">
@@ -452,7 +459,7 @@ export default function Spin() {
                   </div>
                 )}
               </div>
-              <span className="text-[11px] text-slate-600">
+              <span className="text-[11px] text-slate-500">
                 <span className="text-accent-400 font-semibold">{pool.length}</span> games
               </span>
             </div>
@@ -482,7 +489,7 @@ export default function Spin() {
 
           <div className="px-3 py-2.5 flex items-center gap-2 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
             <div className="relative flex-1">
-              <SearchIcon size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600" />
+              <SearchIcon size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -501,8 +508,8 @@ export default function Spin() {
           <div className="flex-1 overflow-y-auto px-2 py-1.5">
             {selectorGames.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <SearchIcon size={20} className="text-slate-700 mb-2" />
-                <p className="text-[12px] text-slate-700">No games found</p>
+                <SearchIcon size={20} className="text-slate-600 mb-2" />
+                <p className="text-[12px] text-slate-600">No games found</p>
               </div>
             ) : (
               selectorGames.map((game) => {
@@ -543,7 +550,7 @@ export default function Spin() {
 
           <div className="px-4 py-3 shrink-0 flex flex-col gap-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-[11px] text-slate-600">
+              <p className="text-[11px] text-slate-500">
                 <span className="text-slate-400 font-medium">{selected.size}</span> selected
               </p>
             </div>
@@ -577,7 +584,7 @@ export default function Spin() {
               {pool.length === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none z-30">
                   <p className="text-[14px] text-slate-400 font-semibold">No games selected</p>
-                  <p className="text-[12px] text-slate-600 mt-1">Pick games from the left panel</p>
+                  <p className="text-[12px] text-slate-500 mt-1">Pick games from the left panel</p>
                 </div>
               )}
               {pool.length === 1 && (
@@ -594,7 +601,7 @@ export default function Spin() {
               disabled={isSpinning || pool.length < 2}
               className={cn(
                 "relative px-12 py-4 rounded-2xl text-[15px] font-bold transition-all overflow-hidden",
-                pool.length >= 2 && !isSpinning ? "text-white cursor-pointer" : "text-slate-600 cursor-not-allowed"
+                pool.length >= 2 && !isSpinning ? "text-white cursor-pointer" : "text-slate-500 cursor-not-allowed"
               )}
               style={pool.length >= 2 && !isSpinning ? {
                 background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)), rgb(var(--accent-600)))",
@@ -643,7 +650,7 @@ export default function Spin() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col gap-1.5 w-full"
                 >
-                  <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-[0.14em] px-1">Recent spins</p>
+                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.14em] px-1">Recent spins</p>
                   <div className="flex flex-col gap-1">
                     {history.slice(0, 5).map((h, i) => (
                       <HistoryRow key={`${h.game.id}-${i}`} game={h.game} time={h.time} />

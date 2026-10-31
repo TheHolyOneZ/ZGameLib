@@ -78,13 +78,16 @@ interface UIStore {
 
   activeGameId: string | null;
   setActiveGameId: (id: string | null) => void;
+
+  bigPicture: boolean;
+  setBigPicture: (v: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
   toasts: [],
   addToast: (message, type = "success") => {
     const id = crypto.randomUUID();
-    set((s) => ({ toasts: [...s.toasts, { id, message, type }] }));
+    set((s) => ({ toasts: [...s.toasts.slice(-4), { id, message, type }] }));
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     }, 3500);
@@ -148,4 +151,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   activeGameId: null,
   setActiveGameId: (id) => set({ activeGameId: id }),
+
+  bigPicture: false,
+  setBigPicture: (v) => set({ bigPicture: v }),
 }));

@@ -247,7 +247,7 @@ export function getAllSteps(deps: TourDeps): TourStep[] {
     {
       id: "sidebar-platform",
       title: "Platform & Status Filters",
-      body: "Click any badge to filter instantly. Click again to deselect. Each badge shows a count so you know how many games match before you click.",
+      body: "Open Filters in the library toolbar and click any chip to filter instantly. Click again to deselect. Each chip shows a count so you know how many games match before you click.",
       target: '[data-tour="sidebar-platform"]',
       cardPosition: "right",
       chapter: "Filtering",
@@ -255,6 +255,8 @@ export function getAllSteps(deps: TourDeps): TourStep[] {
         navigate("/");
         setDetailOpen(false);
         await raf();
+        window.dispatchEvent(new Event("tour:filters-open"));
+        await wait(250);
       },
     },
 
@@ -265,6 +267,10 @@ export function getAllSteps(deps: TourDeps): TourStep[] {
       target: '[data-tour="sidebar-advanced"]',
       cardPosition: "right",
       chapter: "Filtering",
+      before: async () => {
+        window.dispatchEvent(new Event("tour:filters-rules"));
+        await wait(300);
+      },
     },
 
     {
@@ -277,6 +283,7 @@ export function getAllSteps(deps: TourDeps): TourStep[] {
       before: async () => {
         navigate("/");
         setDetailOpen(false);
+        window.dispatchEvent(new Event("tour:filters-close"));
         closeContextMenu();
         await raf();
         await wait(300);

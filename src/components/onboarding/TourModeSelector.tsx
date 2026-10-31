@@ -164,7 +164,7 @@ export default function TourModeSelector({ onStart, onSkip }: TourModeSelectorPr
                 </div>
                 <div className="text-[14px] font-bold text-white mb-0.5">{mode.label}</div>
                 <div className="text-[11px] text-slate-500 mb-2.5">{mode.tagline} · {mode.duration}</div>
-                <div className="text-[11px] text-slate-600 leading-relaxed">{mode.description}</div>
+                <div className="text-[11px] text-slate-500 leading-relaxed">{mode.description}</div>
                 <div
                   className="mt-3 text-[10px] font-semibold tabular-nums"
                   style={{ color: "rgb(var(--accent-400))" }}
@@ -184,7 +184,7 @@ export default function TourModeSelector({ onStart, onSkip }: TourModeSelectorPr
         >
           <button
             onClick={onSkip}
-            className="text-[12px] text-slate-600 hover:text-slate-400 transition-colors"
+            className="text-[12px] text-slate-500 hover:text-slate-400 transition-colors"
           >
             Skip — I'll explore on my own
           </button>

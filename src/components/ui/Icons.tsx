@@ -459,3 +459,113 @@ export function LayersIcon({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+export function TvIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.7"/>
+      <path d="M8 21H16M12 17V21" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M10 8.5V12.5L13.5 10.5L10 8.5Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+export function StopIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>
+    </svg>
+  );
+}
+
+export function ShuffleIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 3H21V8M4 20L21 3M21 16V21H16M15 15L21 21M4 4L9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+export function MenuIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 7H20M4 12H20M4 17H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+export function PowerIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3V12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M6.3 6.6A8 8 0 1 0 17.7 6.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+export function VolumeIcon({ size = 16, className, muted }: IconProps & { muted?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 9.5V14.5H8L13 19V5L8 9.5H4Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/>
+      {muted ? (
+        <path d="M17 9.5L21 14.5M21 9.5L17 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+      ) : (
+        <path d="M16.5 9C17.4 9.8 18 10.9 18 12C18 13.1 17.4 14.2 16.5 15M19 6.5C20.6 7.9 21.5 9.9 21.5 12C21.5 14.1 20.6 16.1 19 17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+      )}
+    </svg>
+  );
+}
+
+export function MaximizeIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 9V4H9M15 4H20V9M20 15V20H15M9 20H4V15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+export function CollectionIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="8" width="18" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.6"/>
+      <path d="M5.5 5H18.5M8 2.5H16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+export function WrappedIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+export function MoreIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <circle cx="5" cy="12" r="1.6" fill="currentColor"/>
+      <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+      <circle cx="19" cy="12" r="1.6" fill="currentColor"/>
+    </svg>
+  );
+}
+
+export function SlidersIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6H14M18 6H20M4 12H8M12 12H20M4 18H16M20 18H20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+      <circle cx="16" cy="6" r="2" stroke="currentColor" strokeWidth="1.7"/>
+      <circle cx="10" cy="12" r="2" stroke="currentColor" strokeWidth="1.7"/>
+      <circle cx="18" cy="18" r="2" stroke="currentColor" strokeWidth="1.7"/>
+    </svg>
+  );
+}
