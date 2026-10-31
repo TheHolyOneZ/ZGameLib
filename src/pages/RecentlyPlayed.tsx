@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
@@ -41,7 +42,7 @@ function FeaturedRecent({ game }: { game: Game }) {
         <GameCover game={game} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-semibold text-white truncate">{game.name}</p>
+        <p className="text-[14px] font-semibold text-white truncate">{displayName(game.name)}</p>
         <p className="text-[12px] text-slate-400 mt-0.5">{timeAgo(game.last_played)} · {formatPlaytime(game.playtime_mins)}</p>
         <p className="text-[11px] text-slate-500 mt-0.5">{PLATFORM_LABELS[game.platform]}</p>
       </div>

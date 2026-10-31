@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { PlayIcon, FolderIcon, HeartIcon, CopyIcon, SettingsIcon, PinIcon, TrashIcon, CheckIcon } from "@/components/ui/Icons";
+import { PlayIcon, FolderIcon, HeartIcon, CopyIcon, SettingsIcon, PinIcon, TrashIcon, CheckIcon, EyeIcon, EyeOffIcon } from "@/components/ui/Icons";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useGames } from "@/hooks/useGames";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
+import { displayName } from "@/lib/gameName";
 import type { Game, Collection } from "@/lib/types";
 
 interface MenuPosition { x: number; y: number; }
@@ -170,6 +171,7 @@ function ContextMenuPortal({
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const addToast = useUIStore((s) => s.addToast);
   const { toggleFavorite, togglePinned, remove, update } = useGames();
+  const isHidden = useGameStore((s) => s.hiddenIds.includes(game.id));
   const { launch } = useLaunchGame();
 
   useEffect(() => {
@@ -214,7 +216,7 @@ function ContextMenuPortal({
   };
 
   const handleCopyName = async () => {
-    try { await navigator.clipboard.writeText(game.name); addToast("Name copied to clipboard", "success"); }
+    try { await navigator.clipboard.writeText(displayName(game.name)); addToast("Name copied to clipboard", "success"); }
     catch { addToast("Failed to copy name", "error"); }
   };
 
@@ -245,6 +247,18 @@ function ContextMenuPortal({
       <button onClick={() => { handleCopyName(); onClose(); }} className={rowCls}>
         <span className="w-4 h-4 flex items-center justify-center shrink-0 opacity-70"><CopyIcon size={14} /></span>
         Copy Name
+      </button>
+      <button
+        onClick={() => {
+          const st = useGameStore.getState();
+          if (isHidden) { st.unhideGames([game.id]); addToast("Game is visible again", "success"); }
+          else { st.hideGames([game.id]); addToast("Game hidden — show hidden games from the library toolbar", "info"); }
+          onClose();
+        }}
+        className={rowCls}
+      >
+        <span className="w-4 h-4 flex items-center justify-center shrink-0 opacity-70">{isHidden ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}</span>
+        {isHidden ? "Unhide" : "Hide from Library"}
       </button>
       <button onClick={() => { setSelectedGameId(game.id); setDetailOpen(true); onClose(); }} className={rowCls}>
         <span className="w-4 h-4 flex items-center justify-center shrink-0 opacity-70"><SettingsIcon size={14} /></span>

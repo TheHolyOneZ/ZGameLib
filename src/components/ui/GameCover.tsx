@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, memo } from "react";
 import { useCover } from "@/hooks/useCover";
 import { cn } from "@/lib/utils";
+import { cleanTitle } from "@/lib/gameName";
 import type { Game } from "@/lib/types";
 
 function hashHue(name: string) {
@@ -17,6 +18,7 @@ export function initials(name: string) {
 }
 
 export function CoverFallback({ name, className, large }: { name: string; className?: string; large?: boolean }) {
+  name = cleanTitle(name);
   const hue = hashHue(name);
   return (
     <div

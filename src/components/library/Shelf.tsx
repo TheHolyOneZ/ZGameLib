@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { useRef, useState, useEffect, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
@@ -46,7 +47,7 @@ export function ShelfCard({ game, sub, badge, onDismiss, index = 0 }: { game: Ga
             </button>
           )}
         </div>
-        <p className="text-[12px] font-medium text-slate-300 mt-2 truncate group-hover:text-white transition-colors">{game.name}</p>
+        <p className="text-[12px] font-medium text-slate-300 mt-2 truncate group-hover:text-white transition-colors">{displayName(game.name)}</p>
         {sub && <p className="text-[10.5px] text-slate-500 truncate">{sub}</p>}
       </motion.div>
     </GameContextMenu>

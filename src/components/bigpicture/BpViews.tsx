@@ -5,6 +5,8 @@ import { api } from "@/lib/tauri";
 import { cn, formatPlaytime, timeAgo, PLATFORM_LABELS } from "@/lib/utils";
 import type { Collection, Game } from "@/lib/types";
 import GameCover from "@/components/ui/GameCover";
+import { searchGames } from "@/lib/search";
+import { compareNames, displayName } from "@/lib/gameName";
 import { HeartIcon, PlayIcon, CollectionIcon, LibraryIcon, ClockIcon, StarIcon } from "@/components/ui/Icons";
 
 export type BpTab = "home" | "library" | "favorites" | "recent" | "collections";
@@ -37,16 +39,20 @@ export const SORTS: { key: LibrarySort; label: string }[] = [
 
 export function applyLibraryView(games: Game[], filter: LibraryFilter, sort: LibrarySort, query: string) {
   let list = games;
-  const q = query.trim().toLowerCase();
-  if (q) list = list.filter((g) => g.name.toLowerCase().includes(q) || (g.genre?.toLowerCase().includes(q) ?? false) || g.tags.some((t) => t.includes(q)));
+  const scores = new Map<string, number>();
+  if (query.trim()) {
+    const hits = searchGames(list, query, true);
+    hits.forEach((h) => scores.set(h.game.id, h.score));
+    list = hits.map((h) => h.game);
+  }
   if (filter === "installed") list = list.filter((g) => !g.not_installed);
   else if (filter === "unplayed") list = list.filter((g) => g.playtime_mins === 0);
   else if (filter !== "all") list = list.filter((g) => g.status === filter);
   const sorted = [...list];
-  if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-  else if (sort === "recent") sorted.sort((a, b) => (b.last_played ?? "").localeCompare(a.last_played ?? "") || a.name.localeCompare(b.name));
-  else if (sort === "playtime") sorted.sort((a, b) => b.playtime_mins - a.playtime_mins || a.name.localeCompare(b.name));
-  else sorted.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1) || a.name.localeCompare(b.name));
+  if (sort === "name") sorted.sort((a, b) => (scores.size ? (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0) : 0) || compareNames(a.name, b.name));
+  else if (sort === "recent") sorted.sort((a, b) => (b.last_played ?? "").localeCompare(a.last_played ?? "") || compareNames(a.name, b.name));
+  else if (sort === "playtime") sorted.sort((a, b) => b.playtime_mins - a.playtime_mins || compareNames(a.name, b.name));
+  else sorted.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1) || compareNames(a.name, b.name));
   return sorted;
 }
 
@@ -78,7 +84,7 @@ const BpCardInner = ({ game, size = "md", running, onSelect, autofocus }: { game
         <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/70 text-[10px] font-semibold text-slate-300 tracking-wide">NOT INSTALLED</div>
       )}
     </div>
-    <p className="mt-2.5 px-1 text-[15px] font-semibold text-white/60 truncate group-data-[bp-active=true]:text-white transition-colors">{game.name}</p>
+    <p className="mt-2.5 px-1 text-[15px] font-semibold text-white/60 truncate group-data-[bp-active=true]:text-white transition-colors">{displayName(game.name)}</p>
   </button>
 );
 
@@ -147,7 +153,7 @@ export function HeroInfo({ game, running, label }: { game: Game | null; running:
           <span className="text-[13px] font-bold tracking-[0.2em] text-accent-200/80 uppercase">{label}</span>
         )}
       </div>
-      <h1 className="text-[clamp(34px,4.2vw,72px)] font-bold leading-[1.02] text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.6)] line-clamp-2">{game.name}</h1>
+      <h1 className="text-[clamp(34px,4.2vw,72px)] font-bold leading-[1.02] text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.6)] line-clamp-2">{displayName(game.name)}</h1>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 text-[16px] text-white/70">
         <span>{PLATFORM_LABELS[game.platform]}</span>
         <span className="flex items-center gap-2"><ClockIcon size={16} className="text-white/50" />{game.playtime_mins > 0 ? formatPlaytime(game.playtime_mins) : "Never played"}</span>

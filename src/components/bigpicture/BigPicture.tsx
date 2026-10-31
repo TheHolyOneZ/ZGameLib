@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useGames, useScan } from "@/hooks/useGames";
+import { useGames, useScan, useLibraryGames } from "@/hooks/useGames";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import { api } from "@/lib/tauri";
 import { startGamepadLoop, KEY_MAP, rumble, getConnectedPads, detectControllerKind, prettyControllerName } from "@/lib/gamepad";
@@ -67,17 +67,11 @@ function BigPictureShell() {
   const customStatuses = useUIStore((s) => s.customStatuses);
   const confirmDialog = useUIStore((s) => s.confirmDialog);
   const closeConfirm = useUIStore((s) => s.closeConfirm);
-  const allGames = useGameStore((s) => s.games);
-  const hiddenIds = useGameStore((s) => s.hiddenIds);
   const { update, toggleFavorite } = useGames();
   const { scan } = useScan();
   const { launch } = useLaunchGame();
 
-  const games = useMemo(() => {
-    if (hiddenIds.length === 0) return allGames;
-    const hidden = new Set(hiddenIds);
-    return allGames.filter((g) => !hidden.has(g.id));
-  }, [allGames, hiddenIds]);
+  const games = useLibraryGames();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<SpatialNav | null>(null);

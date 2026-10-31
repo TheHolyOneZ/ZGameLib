@@ -1,25 +1,24 @@
 import { useState, useRef, useEffect } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useScan, usePullUninstalled } from "@/hooks/useGames";
+import { useScan, usePullUninstalled, useDuplicateGroups } from "@/hooks/useGames";
 import { cn } from "@/lib/utils";
+import { cleanTitle } from "@/lib/gameName";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon, SearchIcon, TvIcon, DownloadIcon } from "@/components/ui/Icons";
 
 export default function Topbar() {
-  const hiddenIds = useGameStore((s) => s.hiddenIds);
-  const hideGames = useGameStore((s) => s.hideGames);
   const logPanelOpen = useUIStore((s) => s.logPanelOpen);
   const setLogPanelOpen = useUIStore((s) => s.setLogPanelOpen);
   const logCount = useUIStore((s) => s.logs.length);
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const addToast = useUIStore((s) => s.addToast);
-  const openConfirm = useUIStore((s) => s.openConfirm);
   const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
   const setBigPicture = useUIStore((s) => s.setBigPicture);
   const { scan, isScanning } = useScan();
+  const dupCount = useDuplicateGroups().length;
   const { pullUninstalled, isPulling } = usePullUninstalled();
   const [scanMenuOpen, setScanMenuOpen] = useState(false);
   const scanMenuRef = useRef<HTMLDivElement>(null);
@@ -69,7 +68,7 @@ export default function Topbar() {
     let done = 0;
     for (const game of pending) {
       try {
-        await api.fetchIgdbMetadata(game.id, game.name, settings.igdb_client_id!, settings.igdb_client_secret!);
+        await api.fetchIgdbMetadata(game.id, cleanTitle(game.name), settings.igdb_client_id!, settings.igdb_client_secret!);
       } catch {}
       done++;
       setIgdbProgress(done);
@@ -78,30 +77,6 @@ export default function Topbar() {
     const allGames = await api.getAllGames();
     useGameStore.getState().setGames(allGames);
     addToast(`IGDB scan complete — ${done} game${done !== 1 ? "s" : ""} processed`, "success");
-  };
-
-  const handleRemoveDuplicates = () => {
-    const games = useGameStore.getState().games;
-    const currentHidden = new Set(useGameStore.getState().hiddenIds);
-    const seen = new Map<string, boolean>();
-    const toHide: string[] = [];
-    for (const g of games) {
-      if (currentHidden.has(g.id)) continue;
-      const key = g.name.toLowerCase().trim();
-      if (seen.has(key)) toHide.push(g.id);
-      else seen.set(key, true);
-    }
-    if (toHide.length === 0) {
-      addToast("No duplicates found", "info");
-    } else {
-      openConfirm(
-        `Hide ${toHide.length} duplicate game${toHide.length !== 1 ? "s" : ""}?`,
-        () => {
-          hideGames(toHide);
-          addToast(`${toHide.length} duplicate${toHide.length !== 1 ? "s" : ""} hidden`, "success");
-        }
-      );
-    }
   };
 
   return (
@@ -137,12 +112,15 @@ export default function Topbar() {
         </button>
         <button
           data-tour="dedup-btn"
-          onClick={handleRemoveDuplicates}
-          className="btn-icon"
-          title="Hide duplicate games"
-          aria-label="Remove duplicate games"
+          onClick={() => useUIStore.getState().setDuplicatesOpen(true)}
+          className="btn-icon relative"
+          title={dupCount ? `${dupCount} duplicated game${dupCount !== 1 ? "s" : ""} — open Duplicate Manager` : "Duplicate Manager"}
+          aria-label="Open duplicate manager"
         >
           <LayersIcon size={15} />
+          {dupCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[17px] h-[17px] px-1 rounded-full bg-amber-500 text-[9.5px] font-bold text-black flex items-center justify-center tabular-nums">{dupCount > 99 ? "99+" : dupCount}</span>
+          )}
         </button>
         <button
           data-tour="igdb-scan-btn"

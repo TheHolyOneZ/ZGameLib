@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import { cn, formatPlaytime, formatDate, timeAgo, PLATFORM_LABELS } from "@/lib/utils";
+import { cleanTitle, displayName } from "@/lib/gameName";
 import StarRating from "@/components/ui/StarRating";
 import GameNotes from "./GameNotes";
 import ModLoaderPanel from "./ModLoaderPanel";
@@ -484,7 +485,7 @@ export default function GameDetail() {
         addToast("Set IGDB credentials in Settings → Integrations", "error");
         return;
       }
-      const data = await api.fetchIgdbMetadata(game.id, game.name, settings.igdb_client_id, settings.igdb_client_secret);
+      const data = await api.fetchIgdbMetadata(game.id, cleanTitle(game.name), settings.igdb_client_id, settings.igdb_client_secret);
       if (data) { await refreshGames(); addToast("IGDB metadata fetched", "success"); }
       else addToast("No IGDB data found", "info");
     } catch {
@@ -505,7 +506,7 @@ export default function GameDetail() {
   const handleHltb = async () => {
     setHltbFetching(true);
     try {
-      const data = await api.fetchHltbData(game.id, game.name);
+      const data = await api.fetchHltbData(game.id, cleanTitle(game.name));
       if (data) {
         useGameStore.getState().updateGame({ ...game, hltb_main_mins: data.main_mins, hltb_extra_mins: data.extra_mins });
         addToast("HowLongToBeat data fetched", "success");
@@ -561,7 +562,7 @@ export default function GameDetail() {
   return (
     <>
       {showCoverSearch && (
-        <CoverSearchModal gameId={game.id} gameName={game.name} currentCoverPath={game.cover_path} onClose={() => setShowCoverSearch(false)} />
+        <CoverSearchModal gameId={game.id} gameName={cleanTitle(game.name)} currentCoverPath={game.cover_path} onClose={() => setShowCoverSearch(false)} />
       )}
       <AnimatePresence>
         {coverLightbox && coverUrl && (
@@ -686,8 +687,11 @@ export default function GameDetail() {
                         onClick={() => { setNameVal(game.name); setEditingName(true); }}
                         title="Click to rename"
                       >
-                        {game.name}
+                        {displayName(game.name)}
                       </h2>
+                    )}
+                    {displayName(game.name) !== game.name && (
+                      <p className="text-[11px] text-slate-500 mt-1 truncate" title="Original title from the store or scan">{game.name}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px] text-slate-300/80">
                       {statusConfig && game.status !== "none" && (

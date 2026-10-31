@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -228,7 +229,7 @@ function AddGamesModal({ collection, existing, onClose }: { collection: Collecti
                         {on && <CheckIcon size={10} className="text-white" />}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-300 mt-1.5 truncate">{g.name}</p>
+                    <p className="text-[11px] text-slate-300 mt-1.5 truncate">{displayName(g.name)}</p>
                   </button>
                 );
               })}

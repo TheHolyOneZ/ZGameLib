@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn, formatPlaytime, timeAgo } from "@/lib/utils";
@@ -168,7 +169,7 @@ function GameCard({ game, subtitle, collectionId, onRemoveFromCollection }: Game
         </div>
 
         <div className="pt-2.5 px-0.5">
-          <p className="text-[13px] font-semibold text-slate-100 truncate leading-tight group-hover:text-white">{game.name}</p>
+          <p className="text-[13px] font-semibold text-slate-100 truncate leading-tight group-hover:text-white">{displayName(game.name)}</p>
           <div className="flex items-center gap-1.5 mt-1 min-w-0">
             {statusConfig && game.status !== "none" && (
               <>

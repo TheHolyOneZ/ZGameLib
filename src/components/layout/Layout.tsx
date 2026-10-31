@@ -22,6 +22,7 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import TourModeSelector from "@/components/onboarding/TourModeSelector";
 import WhatsNewModal from "@/components/modals/WhatsNewModal";
 import BigPicture from "@/components/bigpicture/BigPicture";
+import DuplicatesModal from "@/components/modals/DuplicatesModal";
 import GamepadLauncher from "@/components/bigpicture/GamepadLauncher";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
@@ -356,6 +357,7 @@ export default function Layout() {
         )}
       </AnimatePresence>
       <OnboardingTour />
+      <DuplicatesModal />
       <BigPicture />
       <GamepadLauncher />
       <AnimatePresence>

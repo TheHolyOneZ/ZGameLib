@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { displayName } from "@/lib/gameName";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { version as APP_VERSION } from "../../package.json";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -10,9 +11,13 @@ import type { AppSettings, StatusConfig, Game, CustomTheme } from "@/lib/types";
 import { COVER_PLACEHOLDER } from "@/lib/utils";
 import {
   DownloadIcon, SettingsIcon, CheckIcon, PlusIcon, TrashIcon,
-  CloseIcon, GamepadIcon, SparkleIcon, GlobeIcon, TvIcon, PowerIcon, InfoIcon, GridIcon,
+  CloseIcon, GamepadIcon, SparkleIcon, GlobeIcon, TvIcon, PowerIcon, InfoIcon, GridIcon, LayersIcon,
 } from "@/components/ui/Icons";
 import { BP_AUTOSTART_KEY } from "@/components/bigpicture/BigPicture";
+import { useGameStore } from "@/store/useGameStore";
+import { useDuplicateGroups } from "@/hooks/useGames";
+import { cleanTitle, isSmartTitles, setSmartTitles } from "@/lib/gameName";
+import { clearIgnoredPairs } from "@/lib/duplicates";
 import { isSoundEnabled, setSoundEnabled } from "@/components/bigpicture/sound";
 import { getConnectedPads, detectControllerKind, prettyControllerName } from "@/lib/gamepad";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -93,6 +98,7 @@ const NAV_SECTIONS: { title: string; icon: React.ReactNode }[] = [
   { title: "General", icon: <SparkleIcon size={14} /> },
   { title: "Appearance", icon: <GridIcon size={14} /> },
   { title: "Big Picture & Controllers", icon: <TvIcon size={14} /> },
+  { title: "Library Intelligence", icon: <LayersIcon size={14} /> },
   { title: "Behavior", icon: <SettingsIcon size={14} /> },
   { title: "System", icon: <PowerIcon size={14} /> },
   { title: "Platform Paths", icon: <GamepadIcon size={14} /> },
@@ -102,6 +108,55 @@ const NAV_SECTIONS: { title: string; icon: React.ReactNode }[] = [
   { title: "Trash", icon: <TrashIcon size={14} /> },
   { title: "About", icon: <InfoIcon size={14} /> },
 ];
+
+function IntelligenceSection() {
+  const [smart, setSmart] = useState(isSmartTitles());
+  const games = useGameStore((s) => s.games);
+  const hiddenIds = useGameStore((s) => s.hiddenIds);
+  const restoreAllHidden = useGameStore((s) => s.restoreAllHidden);
+  const collapse = useGameStore((s) => s.collapseDuplicates);
+  const setCollapse = useGameStore((s) => s.setCollapseDuplicates);
+  const bump = useGameStore((s) => s.bumpDuplicates);
+  const dupGroups = useDuplicateGroups();
+  const changed = useMemo(() => games.filter((g) => cleanTitle(g.name) !== g.name), [games]);
+  const examples = changed.slice(0, 3);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Row title="Smart titles" description="Show clean game names without ™ symbols, version numbers, build tags and edition suffixes. Original names are kept and shown in game details.">
+        <Toggle
+          value={smart}
+          onChange={(v) => {
+            setSmart(v);
+            setSmartTitles(v);
+            useGameStore.setState((s) => ({ games: s.games.map((g) => ({ ...g })) }));
+          }}
+        />
+      </Row>
+      {examples.length > 0 && (
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 flex flex-col gap-1.5">
+          <p className="text-[11px] text-slate-500">{changed.length} title{changed.length !== 1 ? "s" : ""} cleaned up, for example:</p>
+          {examples.map((g) => (
+            <p key={g.id} className="text-[12px] truncate"><span className="text-slate-500 line-through decoration-slate-600">{g.name}</span> <span className="text-slate-600 mx-1">→</span> <span className="text-slate-200">{cleanTitle(g.name)}</span></p>
+          ))}
+        </div>
+      )}
+      <div className="h-px bg-white/[0.05]" />
+      <Row title="Duplicate Manager" description={dupGroups.length ? `${dupGroups.length} game${dupGroups.length !== 1 ? "s are" : " is"} in your library more than once` : "No duplicates found across stores, editions and versions"}>
+        <button onClick={() => useUIStore.getState().setDuplicatesOpen(true)} className="btn-ghost h-9 py-0 text-[12.5px] shrink-0"><LayersIcon size={13} /> Open</button>
+      </Row>
+      <Row title="Collapse duplicates in the library" description="Show only the best copy of each duplicated game without changing anything">
+        <Toggle value={collapse} onChange={setCollapse} />
+      </Row>
+      <Row title="Pairs marked as not duplicates" description="Forget these choices so the manager suggests them again">
+        <button onClick={() => { clearIgnoredPairs(); bump(); useUIStore.getState().addToast("Duplicate suggestions reset", "success"); }} className="btn-ghost h-9 py-0 text-[12.5px] shrink-0">Reset</button>
+      </Row>
+      <Row title="Hidden games" description={hiddenIds.length ? `${hiddenIds.length} game${hiddenIds.length !== 1 ? "s are" : " is"} hidden from the library` : "Nothing is hidden. Right-click any game to hide it."}>
+        <button disabled={hiddenIds.length === 0} onClick={() => { restoreAllHidden(); useUIStore.getState().addToast("All hidden games are visible again", "success"); }} className="btn-ghost h-9 py-0 text-[12.5px] shrink-0 disabled:opacity-40">Unhide all</button>
+      </Row>
+    </div>
+  );
+}
 
 function ControllerSection() {
   const [autostart, setAutostart] = useState(() => { try { return localStorage.getItem(BP_AUTOSTART_KEY) === "1"; } catch { return false; } });
@@ -175,7 +230,7 @@ function TrashedGameRow({ game, onRestore, onDelete }: { game: Game; onRestore: 
         onError={(e) => { (e.target as HTMLImageElement).src = COVER_PLACEHOLDER; }}
       />
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-slate-300 truncate font-medium">{game.name}</p>
+        <p className="text-[12px] text-slate-300 truncate font-medium">{displayName(game.name)}</p>
         <p className="text-xs text-slate-500">{game.platform}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
@@ -971,6 +1026,10 @@ export default function Settings() {
 
           <Section title="Big Picture & Controllers" description="Saved instantly on this device" icon={<TvIcon size={15} />} delay={0.08}>
             <ControllerSection />
+          </Section>
+
+          <Section title="Library Intelligence" description="Smart titles, duplicates and hidden games — saved instantly" icon={<LayersIcon size={15} />} delay={0.09}>
+            <IntelligenceSection />
           </Section>
 
           <Section title="Behavior" description="Scanning, launching and tracking" icon={<SettingsIcon size={15} />} delay={0.1} dataTour="settings-behavior">

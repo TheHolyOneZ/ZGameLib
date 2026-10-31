@@ -7,9 +7,11 @@ import GameCover from "@/components/ui/GameCover";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 import {
   SearchIcon, GamepadIcon, LibraryIcon, HeartIcon,
-  ChartIcon, SpinIcon, SettingsIcon, PlusIcon, TvIcon, ClockIcon, CollectionIcon, WrappedIcon,
+  ChartIcon, SpinIcon, SettingsIcon, PlusIcon, TvIcon, ClockIcon, CollectionIcon, WrappedIcon, LayersIcon,
 } from "@/components/ui/Icons";
 import { cn, timeAgo, formatPlaytime } from "@/lib/utils";
+import { searchGames } from "@/lib/search";
+import { displayName } from "@/lib/gameName";
 import type { Game } from "@/lib/types";
 
 type ActionItem = {
@@ -34,7 +36,7 @@ function GameRow({ game, active }: { game: Game; active: boolean }) {
         <GameCover game={game} eager />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn("text-[13.5px] truncate", active ? "text-white font-medium" : "text-slate-200")}>{game.name}</p>
+        <p className={cn("text-[13.5px] truncate", active ? "text-white font-medium" : "text-slate-200")}>{displayName(game.name)}</p>
         <p className="text-[11px] text-slate-500">{game.last_played ? `Played ${timeAgo(game.last_played)}` : game.playtime_mins > 0 ? formatPlaytime(game.playtime_mins) : "Not played yet"}</p>
       </div>
       <PlatformBadge platform={game.platform} />
@@ -79,6 +81,7 @@ export default function CommandPalette() {
     { type: "action", id: "library", label: "Library", icon: <LibraryIcon size={14} />, action: () => { guardedNavigate("/"); setOpen(false); } },
     { type: "action", id: "favorites", label: "Favorites", icon: <HeartIcon size={14} />, action: () => { guardedNavigate("/favorites"); setOpen(false); } },
     { type: "action", id: "big-picture", label: "Big Picture Mode", icon: <TvIcon size={14} />, action: () => { setOpen(false); useUIStore.getState().setBigPicture(true); } },
+    { type: "action", id: "duplicates", label: "Find Duplicate Games", icon: <LayersIcon size={14} />, action: () => { setOpen(false); useUIStore.getState().setDuplicatesOpen(true); } },
     { type: "action", id: "recent", label: "Recently Played", icon: <ClockIcon size={14} />, action: () => { guardedNavigate("/recent"); setOpen(false); } },
     { type: "action", id: "collections", label: "Collections", icon: <CollectionIcon size={14} />, action: () => { guardedNavigate("/collections"); setOpen(false); } },
     { type: "action", id: "wrapped", label: "Year in Review", icon: <WrappedIcon size={14} />, action: () => { guardedNavigate("/wrapped"); setOpen(false); } },
@@ -89,14 +92,10 @@ export default function CommandPalette() {
 
   const results: ResultItem[] = (() => {
     const q = query.toLowerCase();
-    const filteredGames: GameItem[] = games
-      .filter((g) => g.name.toLowerCase().includes(q))
-      .sort((a, b) => {
-        if (!q) return (b.last_played ?? "").localeCompare(a.last_played ?? "");
-        const as = a.name.toLowerCase().startsWith(q) ? 0 : 1;
-        const bs = b.name.toLowerCase().startsWith(q) ? 0 : 1;
-        return as - bs || a.name.localeCompare(b.name);
-      })
+    const ranked = q.trim()
+      ? searchGames(games, query).map((r) => r.game)
+      : [...games].sort((a, b) => (b.last_played ?? "").localeCompare(a.last_played ?? ""));
+    const filteredGames: GameItem[] = ranked
       .slice(0, 8)
       .map((g) => ({ type: "game", game: g }));
 

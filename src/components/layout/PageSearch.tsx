@@ -1,16 +1,17 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useFilteredGames } from "@/hooks/useGames";
+import { useFilteredGames, useDuplicateGroups } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import FilterPopover from "@/components/library/FilterPopover";
+import { parseQuery, SEARCH_HELP } from "@/lib/search";
 import type { SortKey } from "@/lib/types";
 import { cn, PLATFORM_LABELS } from "@/lib/utils";
 import {
   SearchIcon, CloseIcon, GridIcon, ListIcon,
-  SortAscIcon, SortDescIcon, EyeIcon, EyeOffIcon, ImageIcon,
+  SortAscIcon, SortDescIcon, EyeIcon, EyeOffIcon, ImageIcon, LayersIcon,
 } from "@/components/ui/Icons";
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -55,6 +56,11 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
   const setSearchScope = useGameStore((s) => s.setSearchScope);
   const customStatuses = useUIStore((s) => s.customStatuses);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const collapseOn = useGameStore((s) => s.collapseDuplicates);
+  const dupGroups = useDuplicateGroups();
+  const collapsed = collapseOn ? dupGroups.filter((g) => g.reason !== "similar").reduce((a, g) => a + g.games.length - 1, 0) : 0;
+  const searchError = useMemo(() => (localSearch.trim() ? parseQuery(localSearch).error : null), [localSearch]);
   const { data: appSettings } = useQuery({ queryKey: ["settings"], queryFn: () => api.getSettings(), staleTime: 5 * 60 * 1000 });
   const autoColumns = (appSettings?.grid_columns ?? 0) === 0;
 
@@ -105,14 +111,15 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
     >
       <div className="flex items-center gap-3">
         {title && <h2 className="text-[17px] font-semibold text-white mr-1 shrink-0">{title}</h2>}
-        <div className="relative w-[280px] group shrink-0" data-tour="search-input">
+        <div className="relative w-[300px] group shrink-0" data-tour="search-input" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHelpOpen(false); }}>
           <SearchIcon size={14} className="absolute left-3.5 inset-y-0 my-auto text-slate-500 pointer-events-none group-focus-within:text-accent-300 transition-colors" />
           <input
             ref={inputRef}
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Filter games…"
-            className="input-glass h-9 py-0 pl-9 pr-16 text-[13px]"
+            placeholder="Search — try rdr2, is:fav, rating>=8"
+            className={cn("input-glass h-9 py-0 pl-9 pr-24 text-[13px]", searchError && "!border-red-400/60 !shadow-[0_0_0_4px_rgba(248,113,113,0.12)]")}
+            title={searchError ?? undefined}
             aria-label="Search games"
           />
           <div className="absolute right-2 inset-y-0 flex items-center gap-1">
@@ -133,6 +140,14 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
               )}
             </AnimatePresence>
             <button
+              onClick={() => setHelpOpen((v) => !v)}
+              className={cn("w-5 h-5 rounded-md text-[11px] font-bold transition-colors", helpOpen ? "text-accent-200 bg-accent-500/20" : "text-slate-500 hover:text-slate-200")}
+              title="Search syntax"
+              aria-label="Search syntax help"
+            >
+              ?
+            </button>
+            <button
               onClick={() => setSearchScope(searchScope === "name" ? "all" : "name")}
               title={searchScope === "all" ? "Searching names and descriptions" : "Searching names only — click to include descriptions"}
               aria-label="Toggle search scope"
@@ -141,13 +156,59 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
               {searchScope === "all" ? "ALL" : "NAME"}
             </button>
           </div>
+          <AnimatePresence>
+            {(helpOpen || searchError) && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.14 }}
+                className="absolute left-0 top-full mt-2 w-[420px] rounded-2xl z-50 p-3"
+                style={{ background: "rgb(19 19 28)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 30px 80px -20px rgba(0,0,0,0.85)" }}
+              >
+                {searchError && (
+                  <p className="text-[12px] text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-2">{searchError}</p>
+                )}
+                {helpOpen && (
+                  <>
+                    <p className="section-label !text-[10px] px-1 pb-2">Smart search</p>
+                    <div className="flex flex-col">
+                      {SEARCH_HELP.map((h) => (
+                        <button
+                          key={h.syntax}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { const first = h.syntax.split("  ")[0]; setLocalSearch(first); inputRef.current?.focus(); }}
+                          className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-white/[0.05] text-left"
+                        >
+                          <code className="text-[11.5px] font-mono text-accent-200 bg-accent-500/10 px-1.5 py-0.5 rounded shrink-0">{h.syntax}</code>
+                          <span className="text-[11.5px] text-slate-400 truncate">{h.meaning}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-slate-500 px-1 pt-2">Combine anything: <code className="text-slate-300">souls rating&gt;=8 -is:played</code></p>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <FilterPopover hideFavorite={hideFavoriteFilter} />
 
         <span className="text-[12px] text-slate-400 tabular-nums shrink-0">
-          {filteredCount === visibleTotal ? `${visibleTotal} games` : <><span className="text-white font-semibold">{filteredCount}</span> of {visibleTotal}</>}
+          {filteredCount === visibleTotal - collapsed ? `${filteredCount} games` : <><span className="text-white font-semibold">{filteredCount}</span> of {visibleTotal - collapsed}</>}
         </span>
+
+        {collapsed > 0 && (
+          <button
+            onClick={() => useUIStore.getState().setDuplicatesOpen(true)}
+            className="chip !py-1 !text-[11px]"
+            title="Duplicates are collapsed into one entry. Click to review or merge them."
+          >
+            <LayersIcon size={11} />
+            {collapsed} duplicate{collapsed !== 1 ? "s" : ""} collapsed
+          </button>
+        )}
 
         {hiddenIds.length > 0 && (
           <button

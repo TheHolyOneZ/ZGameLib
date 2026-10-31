@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -171,7 +172,7 @@ export default function LibraryHero() {
             ) : (
               <span className="text-[10.5px] font-bold tracking-[0.18em] text-accent-200/90 uppercase">Continue playing</span>
             )}
-            <h2 className="text-[30px] font-bold text-white leading-tight mt-2 truncate">{hero.name}</h2>
+            <h2 className="text-[30px] font-bold text-white leading-tight mt-2 truncate">{displayName(hero.name)}</h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[12.5px] text-slate-300/80">
               <span>{PLATFORM_LABELS[hero.platform]}</span>
               <span className="flex items-center gap-1.5"><ClockIcon size={12} className="text-slate-400" />{formatPlaytime(hero.playtime_mins)}</span>

@@ -330,18 +330,133 @@ fn download_image_to_cache(url: &str, filename: &str, app: &AppHandle) -> Option
     }
 }
 
-fn search_steam_cover_for_name(game_name: &str, app: &AppHandle) -> Option<String> {
-    let url = format!(
-        "https://steamcommunity.com/actions/SearchApps/{}",
-        game_name.trim()
-    );
-    let response = ureq::get(&url).timeout(std::time::Duration::from_secs(15)).call().ok()?;
+pub(crate) fn clean_title_for_search(raw: &str) -> String {
+    let mut s: String = raw.chars().filter(|c| !matches!(c, '\u{2122}' | '\u{00AE}' | '\u{00A9}')).collect();
+    loop {
+        let before = s.clone();
+        if let (Some(a), Some(b)) = (s.rfind('['), s.rfind(']')) {
+            if a < b && b == s.trim_end().len() - 1 { s.truncate(a); }
+        }
+        if let (Some(a), Some(b)) = (s.rfind('('), s.rfind(')')) {
+            if a < b && b == s.trim_end().len() - 1 {
+                let inner = s[a + 1..b].to_lowercase();
+                let noisy = inner.chars().any(|c| c.is_ascii_digit())
+                    || ["x64", "x86", "steam", "gog", "epic", "windows", "early access", "demo", "beta", "portable", "repack", "edition"].iter().any(|w| inner.contains(w));
+                if noisy { s.truncate(a); }
+            }
+        }
+        let trimmed = s.trim_end().to_string();
+        let lower = trimmed.to_lowercase();
+        let words: Vec<&str> = trimmed.split_whitespace().collect();
+        if let Some(last) = words.last() {
+            let l = last.to_lowercase();
+            let is_version = (l.starts_with('v') && l[1..].chars().next().map_or(false, |c| c.is_ascii_digit()))
+                || (l.contains('.') && l.chars().all(|c| c.is_ascii_digit() || c == '.') && l.matches('.').count() >= 1 && l.len() > 2 && !l.starts_with('.'))
+                || (l.len() >= 6 && l.chars().all(|c| c.is_ascii_digit()));
+            if is_version && words.len() > 1 {
+                s = words[..words.len() - 1].join(" ");
+                let lw = s.to_lowercase();
+                if lw.ends_with(" build") || lw.ends_with(" update") || lw.ends_with(" patch") {
+                    s = s[..s.rfind(' ').unwrap_or(s.len())].to_string();
+                }
+            }
+        }
+        for sep in [" - ", " – ", " — ", ": "] {
+            if let Some(idx) = s.rfind(sep) {
+                let tail = s[idx + sep.len()..].to_lowercase();
+                if tail.ends_with("edition") || tail.ends_with(" cut") || tail == "goty" || tail.ends_with("version") {
+                    s.truncate(idx);
+                }
+            }
+        }
+        if lower.ends_with(" edition") {
+            let mut w: Vec<&str> = s.split_whitespace().collect();
+            let editions = ["goty", "definitive", "deluxe", "complete", "ultimate", "gold", "premium", "standard", "enhanced", "special", "anniversary", "legendary", "digital", "super", "collector's", "collectors", "platinum", "year", "of", "the", "game"];
+            if w.last().map_or(false, |l| l.eq_ignore_ascii_case("edition")) {
+                w.pop();
+                let mut popped = 0;
+                while w.len() > 1 && editions.contains(&w[w.len() - 1].to_lowercase().as_str()) {
+                    w.pop();
+                    popped += 1;
+                }
+                if popped > 0 { s = w.join(" "); }
+            }
+        }
+        s = s.trim().trim_end_matches(|c: char| c == '-' || c == ':' || c == ',' || c == '_' || c.is_whitespace()).to_string();
+        if s == before { break; }
+    }
+    if s.chars().filter(|c| c.is_alphanumeric()).count() < 2 { raw.trim().to_string() } else { s }
+}
+
+fn url_encode_path(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() * 2);
+    for b in s.as_bytes() {
+        if b.is_ascii_alphanumeric() || matches!(*b, b'-' | b'_' | b'.' | b'~') {
+            out.push(*b as char);
+        } else {
+            out.push_str(&format!("%{:02X}", b));
+        }
+    }
+    out
+}
+
+fn normalize_for_match(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { ' ' })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+pub(crate) fn steam_search(query: &str, timeout_secs: u64) -> Vec<(String, String)> {
+    let q = query.trim();
+    if q.is_empty() { return Vec::new(); }
+    let url = format!("https://steamcommunity.com/actions/SearchApps/{}", url_encode_path(q));
+    let Ok(response) = ureq::get(&url).timeout(std::time::Duration::from_secs(timeout_secs)).call() else { return Vec::new(); };
     let mut body = String::new();
     use std::io::Read;
-    response.into_reader().read_to_string(&mut body).ok()?;
-    let results: Vec<serde_json::Value> = serde_json::from_str(&body).ok()?;
-    let first = results.first()?;
-    let app_id = first["appid"].as_str()?;
+    if response.into_reader().read_to_string(&mut body).is_err() { return Vec::new(); }
+    let results: Vec<serde_json::Value> = serde_json::from_str(&body).unwrap_or_default();
+    results.into_iter().filter_map(|v| {
+        let app_id = match &v["appid"] {
+            serde_json::Value::String(s) => s.clone(),
+            serde_json::Value::Number(n) => n.to_string(),
+            _ => return None,
+        };
+        Some((app_id, v["name"].as_str().unwrap_or_default().to_string()))
+    }).collect()
+}
+
+pub(crate) fn rank_steam_results(query: &str, results: Vec<(String, String)>) -> Vec<(String, String)> {
+    let target = normalize_for_match(query);
+    let noise = ["soundtrack", "ost", "artbook", "demo", "dlc", "season pass", "dedicated server", "sdk", "playtest", "wallpaper"];
+    let mut scored: Vec<(i32, usize, (String, String))> = results.into_iter().enumerate().map(|(i, (id, name))| {
+        let n = normalize_for_match(&name);
+        let mut score = 0;
+        if n == target { score += 100; }
+        else if n.starts_with(&target) { score += 60 - ((n.len() as i32 - target.len() as i32).min(40)); }
+        else if target.starts_with(&n) { score += 40; }
+        else if n.contains(&target) { score += 20; }
+        if !target.split(' ').any(|w| noise.contains(&w)) && noise.iter().any(|w| n.contains(w)) { score -= 50; }
+        (score, i, (id, name))
+    }).collect();
+    scored.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
+    scored.into_iter().map(|(_, _, r)| r).collect()
+}
+
+fn best_steam_app_for_name(name: &str, timeout_secs: u64) -> Option<String> {
+    let clean = clean_title_for_search(name);
+    let mut results = steam_search(&clean, timeout_secs);
+    if results.is_empty() && clean != name.trim() {
+        results = steam_search(name, timeout_secs);
+    }
+    rank_steam_results(&clean, results).into_iter().next().map(|(id, _)| id)
+}
+
+fn search_steam_cover_for_name(game_name: &str, app: &AppHandle) -> Option<String> {
+    let app_id = best_steam_app_for_name(game_name, 15)?;
     let portrait_url = format!(
         "https://cdn.cloudflare.steamstatic.com/steam/apps/{}/library_600x900.jpg",
         app_id
@@ -824,24 +939,19 @@ fn scan_gog_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rusq
 
 #[tauri::command]
 pub fn search_game_covers(query: String) -> Result<Vec<CoverCandidate>, String> {
-    let url = format!("https://steamcommunity.com/actions/SearchApps/{}", query.trim());
-    let response = ureq::get(&url).timeout(std::time::Duration::from_secs(15)).call().map_err(|e| e.to_string())?;
-    let mut body = String::new();
-    use std::io::Read;
-    response.into_reader().read_to_string(&mut body).map_err(|e| e.to_string())?;
-    let results: Vec<serde_json::Value> = serde_json::from_str(&body).unwrap_or_default();
-    let candidates = results.into_iter().take(16)
-        .filter_map(|v| {
-            let app_id = v["appid"].as_str()?.to_string();
-            let name = v["name"].as_str()?.to_string();
-            Some(CoverCandidate {
-                name,
-                app_id: app_id.clone(),
-                cover_url: format!(
-                    "https://cdn.cloudflare.steamstatic.com/steam/apps/{}/library_600x900.jpg",
-                    app_id
-                ),
-            })
+    let clean = clean_title_for_search(&query);
+    let mut results = steam_search(&clean, 15);
+    if results.is_empty() && clean != query.trim() {
+        results = steam_search(&query, 15);
+    }
+    let candidates = rank_steam_results(&clean, results).into_iter().take(16)
+        .map(|(app_id, name)| CoverCandidate {
+            name,
+            cover_url: format!(
+                "https://cdn.cloudflare.steamstatic.com/steam/apps/{}/library_600x900.jpg",
+                app_id
+            ),
+            app_id,
         })
         .collect();
     Ok(candidates)
@@ -1556,31 +1666,11 @@ pub fn fetch_missing_covers(state: State<DbState>) -> Result<FetchCoversResult, 
         let url = if let Some(app_id) = steam_app_id.as_deref().filter(|s| !s.is_empty()) {
             format!("https://cdn.cloudflare.steamstatic.com/steam/apps/{}/library_600x900_2x.jpg", app_id)
         } else {
-            let search_url = format!(
-                "https://steamcommunity.com/actions/SearchApps/{}",
-                name.trim()
-            );
-            let Ok(resp) = ureq::get(&search_url)
-                .timeout(std::time::Duration::from_secs(10))
-                .call() else {
+            let Some(app_id) = best_steam_app_for_name(name, 10) else {
                 failed += 1;
                 continue;
             };
-            let mut body = String::new();
-            use std::io::Read;
-            if resp.into_reader().read_to_string(&mut body).is_err() {
-                failed += 1;
-                continue;
-            }
-            let Ok(candidates) = serde_json::from_str::<Vec<CoverCandidate>>(&body) else {
-                failed += 1;
-                continue;
-            };
-            let Some(first) = candidates.into_iter().next() else {
-                failed += 1;
-                continue;
-            };
-            first.cover_url
+            format!("https://cdn.cloudflare.steamstatic.com/steam/apps/{}/library_600x900_2x.jpg", app_id)
         };
 
         let dest = data_dir.join(format!("{}.jpg", id));

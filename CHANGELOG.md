@@ -4,6 +4,12 @@
 
 ### Added
 
+- **Duplicate Manager** — finds the same game across stores, editions (GOTY, Deluxe, Definitive…), versions, build numbers, demos/playtests and typos, while keeping sequels apart (Doom 2 ≠ Doom 3, Dark Souls II ≠ III); picks the best copy to keep, then merges playtime, rating, tags, status, favorite, metadata and collections into it and moves the extras to Trash, or just hides them; "Not duplicates" is remembered; badge on the top bar shows how many were found
+- **Collapse duplicates** — on by default, the library, sidebar counts and Big Picture show each game once; uncertain matches are never collapsed automatically
+- **Smart titles** — clean display names without ™/®, version and build numbers, store tags like [GOG] or (x64) and edition suffixes, and readable names for folder scans (Hollow_Knight → Hollow Knight); original titles are kept and shown in game details; can be turned off in Settings
+- **Smart search** — typo-tolerant (wticher → The Witcher), acronyms (rdr2, gtav, ds3), roman numerals, relevance ranking, `/regex/` patterns, and filters such as `platform:steam`, `status:playing`, `rating>=8`, `playtime>10h`, `played<7d`, `year>=2020`, `is:fav`, `-tag:multiplayer`; a `?` button shows the syntax and invalid queries are flagged
+- **Library Intelligence** settings section, and Hide / Unhide in the right-click menu
+
 - **Big Picture mode** — full-screen, controller-first interface with Home shelves, Library grid with filters and sorting, Favorites, Recent and Collections tabs, a cinematic game page, status and rating pickers, on-screen keyboard search, a quick menu and a launch splash
 - **Xbox, PlayStation and Nintendo controller support** — D-pad and left stick navigation, A/B/X/Y actions, LB/RB tab switching, LT/RT page jumps, Start/Options menu, rumble on launch; button prompts switch automatically between Xbox letters, PlayStation symbols and keyboard keys; friendly controller names (DualSense, DualShock 4, Xbox Series)
 - **Ways into Big Picture** — Ctrl+B, Start/Options on any connected controller, the sidebar button, the top bar, the command palette, or "Start in Big Picture" on launch; optional fullscreen and interface sounds
@@ -25,6 +31,13 @@
 - Secondary pages load on demand for a faster start
 
 ### Fixed
+
+- Hidden games were only remembered until the app closed, so hidden duplicates came back on every start
+- "Fetch Missing Covers" never worked for games without a Steam ID because the search response was parsed with the wrong field names
+- Automatic cover search sent unescaped names (titles with & or # were cut off) and blindly took the first result, often a soundtrack or DLC; it now cleans the title and picks the best match
+- IGDB and HowLongToBeat lookups now use the clean title, so edition and version suffixes no longer cause failed matches
+- Empty rules in the rule builder hid every game
+- Name sorting now ignores a leading "The" and orders numbers naturally (Game 2 before Game 10)
 
 - Fonts never loaded because the content security policy blocked Google Fonts
 - Weekly goal summed lifetime playtime of any game played this week instead of this week's sessions

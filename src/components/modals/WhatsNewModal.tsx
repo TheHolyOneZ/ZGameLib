@@ -13,6 +13,8 @@ const RELEASE_NOTES: Record<string, ReleaseNote> = {
     headline: "A completely redesigned ZGameLib — plus Big Picture mode for controllers.",
     bullets: [
       "Big Picture mode: a full-screen, couch-friendly UI for Xbox, PlayStation and Nintendo controllers (Ctrl+B or Start/Options)",
+      "Duplicate Manager: finds the same game across stores, editions, versions and typos, then merges or hides the extras",
+      "Smart titles and smart search: clean names, typo-tolerant search, acronyms like rdr2, regex and filters like rating>=8",
       "Brand-new look across every page, with a cleaner sidebar and a command search in the top bar",
       "Library home with a Continue Playing hero, weekly goal ring and scrollable shelves",
       "All filters in one Filters popover, plus a card-size slider and removable filter chips",

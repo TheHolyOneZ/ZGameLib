@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
@@ -111,7 +112,8 @@ function Wheel({ pool, rotation, isSpinning }: {
           const end = (i + 1) * segAngle;
           const mid = start + segAngle / 2;
           const tp = polar(mid, textR);
-          const name = game.name.length > maxChars ? game.name.slice(0, maxChars - 1) + "\u2026" : game.name;
+          const full = displayName(game.name);
+          const name = full.length > maxChars ? full.slice(0, maxChars - 1) + "\u2026" : full;
           return (
             <g key={game.id}>
               <path d={segmentPath(start, end)} fill={`url(#seg-${i})`} stroke="rgba(0,0,0,0.3)" strokeWidth="1" />
@@ -234,7 +236,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
             </motion.div>
             <span className="text-[10px] font-bold text-accent-400 uppercase tracking-[0.16em]">Winner</span>
           </div>
-          <p className="text-[18px] font-bold text-white leading-tight truncate mb-1.5">{game.name}</p>
+          <p className="text-[18px] font-bold text-white leading-tight truncate mb-1.5">{displayName(game.name)}</p>
           <PlatformBadge platform={game.platform} />
           <div className="mt-2 flex flex-col gap-1">
             <StarRow rating={game.rating} />
@@ -292,7 +294,7 @@ function HistoryRow({ game, time }: { game: Game; time: Date }) {
           : <div className="w-full h-full bg-white/5" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-slate-300 truncate font-medium">{game.name}</p>
+        <p className="text-[11px] text-slate-300 truncate font-medium">{displayName(game.name)}</p>
         <p className="text-[10px] text-slate-500">{timeStr}</p>
       </div>
       <SparkleIcon size={10} className="text-accent-500/40 shrink-0" />
@@ -540,7 +542,7 @@ export default function Spin() {
                     <span className={cn(
                       "text-[12px] truncate flex-1 transition-colors",
                       isSelected ? "text-slate-200" : "text-slate-400 group-hover:text-slate-300"
-                    )}>{game.name}</span>
+                    )}>{displayName(game.name)}</span>
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: platformDot(game.platform) }} />
                   </button>
                 );

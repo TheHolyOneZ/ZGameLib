@@ -22,6 +22,8 @@ export interface SavedFilter {
 const SAVED_FILTERS_KEY = "zgamelib-saved-filters";
 const FILTER_RULES_KEY = "zgamelib-filter-rules";
 const FILTER_LOGIC_KEY = "zgamelib-filter-logic";
+const HIDDEN_KEY = "zgamelib-hidden-ids";
+const COLLAPSE_KEY = "zgamelib-collapse-duplicates";
 
 interface GameStore {
   games: Game[];
@@ -54,6 +56,11 @@ interface GameStore {
   hiddenIds: string[];
   showHidden: boolean;
   hideGames: (ids: string[]) => void;
+  unhideGames: (ids: string[]) => void;
+  collapseDuplicates: boolean;
+  duplicateVersion: number;
+  bumpDuplicates: () => void;
+  setCollapseDuplicates: (v: boolean) => void;
   toggleShowHidden: () => void;
   restoreAllHidden: () => void;
 
@@ -130,11 +137,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set((s) => ({ filters: { ...s.filters, [key]: value } })),
   resetFilters: () => set({ filters: defaultFilters }),
 
-  hiddenIds: [],
+  hiddenIds: (() => {
+    try { return JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? "[]") as string[]; } catch { return []; }
+  })(),
   showHidden: false,
-  hideGames: (ids) => set((s) => ({ hiddenIds: [...new Set([...s.hiddenIds, ...ids])] })),
+  hideGames: (ids) => set((s) => {
+    const next = [...new Set([...s.hiddenIds, ...ids])];
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(next)); } catch {}
+    return { hiddenIds: next };
+  }),
+  unhideGames: (ids) => set((s) => {
+    const drop = new Set(ids);
+    const next = s.hiddenIds.filter((id) => !drop.has(id));
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(next)); } catch {}
+    return { hiddenIds: next, showHidden: next.length ? s.showHidden : false };
+  }),
   toggleShowHidden: () => set((s) => ({ showHidden: !s.showHidden })),
-  restoreAllHidden: () => set({ hiddenIds: [], showHidden: false }),
+  restoreAllHidden: () => {
+    try { localStorage.setItem(HIDDEN_KEY, "[]"); } catch {}
+    set({ hiddenIds: [], showHidden: false });
+  },
+  duplicateVersion: 0,
+  bumpDuplicates: () => set((s) => ({ duplicateVersion: s.duplicateVersion + 1 })),
+  collapseDuplicates: (() => {
+    try { return localStorage.getItem(COLLAPSE_KEY) !== "0"; } catch { return true; }
+  })(),
+  setCollapseDuplicates: (v) => {
+    try { localStorage.setItem(COLLAPSE_KEY, v ? "1" : "0"); } catch {}
+    set({ collapseDuplicates: v });
+  },
 
   savedFilters: (() => {
     try { return JSON.parse(localStorage.getItem(SAVED_FILTERS_KEY) ?? "[]") as SavedFilter[]; } catch { return []; }

@@ -176,8 +176,8 @@ export function getAllSteps(deps: TourDeps): TourStep[] {
 
     {
       id: "dedup-btn",
-      title: "Remove Duplicates",
-      body: "If you scanned multiple sources and got the same game twice, this button detects duplicates by name and hides the extras. You can always unhide them later.",
+      title: "Duplicate Manager",
+      body: "Finds the same game across stores, editions, versions, builds and typos. Pick which copy to keep, then merge (playtime, ratings, tags and collections are combined) or just hide the extras. The badge shows how many duplicates were found.",
       target: '[data-tour="dedup-btn"]',
       cardPosition: "bottom",
       chapter: "Getting Games In",

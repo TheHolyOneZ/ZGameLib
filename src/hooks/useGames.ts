@@ -3,7 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import type { UpdateGamePayload, CreateGamePayload, FilterRule, FilterLogic } from "@/lib/types";
+import type { UpdateGamePayload, CreateGamePayload, FilterRule } from "@/lib/types";
+import { parseQuery, scoreGame } from "@/lib/search";
+import { compareNames } from "@/lib/gameName";
+import { findDuplicateGroups } from "@/lib/duplicates";
 
 export function useGames() {
   const setGames = useGameStore((s) => s.setGames);
@@ -189,6 +192,29 @@ function matchesRule(game: import("@/lib/types").Game, rule: FilterRule): boolea
   }
 }
 
+export function useDuplicateGroups() {
+  const games = useGameStore((s) => s.games);
+  const hiddenIds = useGameStore((s) => s.hiddenIds);
+  const version = useGameStore((s) => s.duplicateVersion);
+  return useMemo(() => {
+    if (hiddenIds.length === 0) return findDuplicateGroups(games);
+    const hidden = new Set(hiddenIds);
+    return findDuplicateGroups(games.filter((g) => !hidden.has(g.id)));
+  }, [games, hiddenIds, version]);
+}
+
+export function useLibraryGames() {
+  const games = useGameStore((s) => s.games);
+  const hiddenIds = useGameStore((s) => s.hiddenIds);
+  const collapse = useGameStore((s) => s.collapseDuplicates);
+  const groups = useDuplicateGroups();
+  return useMemo(() => {
+    const drop = new Set(hiddenIds);
+    if (collapse) for (const g of groups) if (g.reason !== "similar") for (const x of g.games) if (x.id !== g.keeperId) drop.add(x.id);
+    return drop.size ? games.filter((g) => !drop.has(g.id)) : games;
+  }, [games, hiddenIds, collapse, groups]);
+}
+
 export function useFilteredGames() {
   const games = useGameStore((s) => s.games);
   const search = useGameStore((s) => s.search);
@@ -200,6 +226,8 @@ export function useFilteredGames() {
   const showHidden = useGameStore((s) => s.showHidden);
   const filterRules = useGameStore((s) => s.filterRules);
   const filterLogic = useGameStore((s) => s.filterLogic);
+  const collapseDuplicates = useGameStore((s) => s.collapseDuplicates);
+  const dupGroups = useDuplicateGroups();
 
   return useMemo(() => {
     let result = [...games];
@@ -207,18 +235,17 @@ export function useFilteredGames() {
       const hiddenSet = new Set(hiddenIds);
       result = result.filter((g) => !hiddenSet.has(g.id));
     }
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      if (searchScope === "all") {
-        result = result.filter((g) =>
-          g.name.toLowerCase().includes(q) ||
-          (g.description?.toLowerCase().includes(q) ?? false)
-        );
-      } else {
-        result = result.filter((g) => g.name.toLowerCase().includes(q));
+    if (collapseDuplicates && dupGroups.length > 0) {
+      const extras = new Set<string>();
+      const visible = new Set(result.map((g) => g.id));
+      for (const grp of dupGroups) {
+        if (grp.reason === "similar") continue;
+        const keeper = visible.has(grp.keeperId) ? grp.keeperId : grp.games.find((g) => visible.has(g.id))?.id;
+        for (const g of grp.games) if (g.id !== keeper) extras.add(g.id);
       }
+      result = result.filter((g) => !extras.has(g.id));
     }
+
     if (filters.platform !== "all") result = result.filter((g) => g.platform === filters.platform);
     if (filters.status !== "all") result = result.filter((g) => g.status === filters.status);
     if (filters.favoritesOnly) result = result.filter((g) => g.is_favorite);
@@ -231,31 +258,41 @@ export function useFilteredGames() {
     if (filters.notInstalledOnly) result = result.filter((g) => g.not_installed);
 
     if (filterRules.length > 0) {
-      result = result.filter((g) => {
-        if (filterLogic === "and") {
-          return filterRules.every((rule) => matchesRule(g, rule));
-        } else {
-          return filterRules.some((rule) => matchesRule(g, rule));
-        }
-      });
+      const active = filterRules.filter((r) => r.value !== "");
+      if (active.length > 0) {
+        result = result.filter((g) => (filterLogic === "and" ? active.every((rule) => matchesRule(g, rule)) : active.some((rule) => matchesRule(g, rule))));
+      }
     }
 
+    const parsed = parseQuery(search);
+    const scores = new Map<string, number>();
+    if (!parsed.isEmpty && !parsed.error) {
+      const deep = searchScope === "all";
+      result = result.filter((g) => {
+        const sc = scoreGame(g, parsed, deep);
+        if (sc > 0) scores.set(g.id, sc);
+        return sc > 0;
+      });
+    }
+    const byRelevance = scores.size > 0 && parsed.terms.length > 0 && sortKey === "name";
+
+    const dir = sortAsc ? 1 : -1;
     result.sort((a, b) => {
-      let av: number | string = "";
-      let bv: number | string = "";
-      switch (sortKey) {
-        case "name": av = a.name.toLowerCase(); bv = b.name.toLowerCase(); break;
-        case "rating": av = a.rating ?? -1; bv = b.rating ?? -1; break;
-        case "last_played": av = a.last_played ?? ""; bv = b.last_played ?? ""; break;
-        case "date_added": av = a.date_added; bv = b.date_added; break;
-        case "playtime_mins": av = a.playtime_mins; bv = b.playtime_mins; break;
-        case "sort_order": av = a.sort_order; bv = b.sort_order; break;
+      if (byRelevance) {
+        const d = (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0);
+        if (Math.abs(d) > 0.01) return d;
       }
-      if (av < bv) return sortAsc ? -1 : 1;
-      if (av > bv) return sortAsc ? 1 : -1;
+      switch (sortKey) {
+        case "name": return dir * compareNames(a.name, b.name);
+        case "rating": return dir * ((a.rating ?? -1) - (b.rating ?? -1)) || compareNames(a.name, b.name);
+        case "last_played": return dir * (a.last_played ?? "").localeCompare(b.last_played ?? "") || compareNames(a.name, b.name);
+        case "date_added": return dir * a.date_added.localeCompare(b.date_added) || compareNames(a.name, b.name);
+        case "playtime_mins": return dir * (a.playtime_mins - b.playtime_mins) || compareNames(a.name, b.name);
+        case "sort_order": return dir * (a.sort_order - b.sort_order);
+      }
       return 0;
     });
 
     return result;
-  }, [games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic]);
+  }, [games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic, collapseDuplicates, dupGroups]);
 }

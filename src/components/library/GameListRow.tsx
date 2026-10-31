@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { motion } from "framer-motion";
 import { cn, formatPlaytime, timeAgo } from "@/lib/utils";
 import { useUIStore } from "@/store/useUIStore";
@@ -50,7 +51,7 @@ export default function GameListRow({ game, collectionId, onRemoveFromCollection
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[13.5px] font-medium text-slate-100 truncate group-hover:text-white transition-colors">{game.name}</p>
+          <p className="text-[13.5px] font-medium text-slate-100 truncate group-hover:text-white transition-colors">{displayName(game.name)}</p>
           <div className="flex items-center gap-2 mt-1">
             <PlatformBadge platform={game.platform} />
             {running && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide bg-emerald-500/20 text-emerald-300">PLAYING</span>}

@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { motion } from "framer-motion";
 import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -71,7 +72,7 @@ function GameRow({ game, rank, right, onOpen }: { game: Game; rank: number; righ
     <button onClick={onOpen} className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-white/[0.04] transition-colors text-left group w-full">
       <span className="w-5 text-[12px] font-bold text-slate-600 tabular-nums text-right group-hover:text-accent-300">{rank}</span>
       <div className="w-8 h-11 rounded-md overflow-hidden ring-1 ring-white/10 shrink-0"><GameCover game={game} /></div>
-      <span className="flex-1 min-w-0 text-[13px] text-slate-200 truncate group-hover:text-white">{game.name}</span>
+      <span className="flex-1 min-w-0 text-[13px] text-slate-200 truncate group-hover:text-white">{displayName(game.name)}</span>
       {right}
     </button>
   );

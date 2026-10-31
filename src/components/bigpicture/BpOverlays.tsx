@@ -1,3 +1,4 @@
+import { displayName } from "@/lib/gameName";
 import { motion } from "framer-motion";
 import { cn, formatPlaytime, timeAgo, formatDate, PLATFORM_LABELS } from "@/lib/utils";
 import type { Game, StatusConfig } from "@/lib/types";
@@ -99,7 +100,7 @@ export function GamePage({ game, running, statuses, onPlay, onStop, onFavorite, 
               </span>
             )}
           </div>
-          <h1 className="text-[clamp(36px,4.6vw,84px)] font-bold leading-[1] text-white line-clamp-2">{game.name}</h1>
+          <h1 className="text-[clamp(36px,4.6vw,84px)] font-bold leading-[1] text-white line-clamp-2">{displayName(game.name)}</h1>
 
           <div className="grid grid-cols-4 gap-4 mt-8 max-w-[900px]">
             {[
@@ -343,7 +344,7 @@ export function LaunchSplash({ game }: { game: Game }) {
       </motion.div>
       <div className="text-center">
         <p className="text-[16px] font-bold tracking-[0.3em] text-accent-200 uppercase">Launching</p>
-        <p className="text-[40px] font-bold text-white mt-2">{game.name}</p>
+        <p className="text-[40px] font-bold text-white mt-2">{displayName(game.name)}</p>
       </div>
       <div className="w-[280px] h-1.5 rounded-full bg-white/10 overflow-hidden">
         <motion.div

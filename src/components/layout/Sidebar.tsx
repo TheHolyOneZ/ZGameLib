@@ -1,9 +1,11 @@
+import { displayName } from "@/lib/gameName";
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useLibraryGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import { useQuery } from "@tanstack/react-query";
 import GameCover from "@/components/ui/GameCover";
@@ -84,7 +86,7 @@ function NowPlaying({ collapsed }: { collapsed: boolean }) {
             </span>
             <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.14em]">Now Playing</span>
           </div>
-          <p className="text-[12.5px] font-semibold text-white truncate mt-0.5">{game.name}</p>
+          <p className="text-[12.5px] font-semibold text-white truncate mt-0.5">{displayName(game.name)}</p>
         </div>
         <button onClick={stop} title="Stop game" className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-red-500/30 transition-colors shrink-0">
           <StopIcon size={12} />
@@ -124,6 +126,7 @@ export default function Sidebar() {
     });
   };
 
+  const libraryCount = useLibraryGames().length;
   const favCount = useMemo(() => games.filter((g) => g.is_favorite).length, [games]);
   const recentCount = useMemo(() => games.filter((g) => g.last_played).length, [games]);
 
@@ -191,7 +194,7 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <span className="font-display font-bold text-[17px] text-white tracking-tight block leading-none">ZGameLib</span>
-            <span className="block text-[11px] text-slate-500 mt-1">{games.length} games in library</span>
+            <span className="block text-[11px] text-slate-500 mt-1">{libraryCount} games in library</span>
           </div>
         )}
         <button
@@ -208,7 +211,7 @@ export default function Sidebar() {
       <div className={cn("flex-1 overflow-y-auto overflow-x-hidden scrollbar-none pb-3", collapsed ? "px-3" : "px-3")}>
         <div className="flex flex-col gap-0.5">
           {!collapsed && <SectionHeader label="Library" />}
-          {navItem("/", LibraryIcon, "All Games", games.length)}
+          {navItem("/", LibraryIcon, "All Games", libraryCount)}
           {navItem("/favorites", HeartIcon, "Favorites", favCount)}
           {navItem("/recent", ClockIcon, "Recently Played", recentCount)}
           {navItem("/collections", CollectionIcon, "Collections", undefined, "nav-collections")}

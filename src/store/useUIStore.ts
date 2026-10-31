@@ -81,6 +81,9 @@ interface UIStore {
 
   bigPicture: boolean;
   setBigPicture: (v: boolean) => void;
+
+  duplicatesOpen: boolean;
+  setDuplicatesOpen: (v: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -154,4 +157,7 @@ export const useUIStore = create<UIStore>((set) => ({
 
   bigPicture: false,
   setBigPicture: (v) => set({ bigPicture: v }),
+
+  duplicatesOpen: false,
+  setDuplicatesOpen: (v) => set({ duplicatesOpen: v }),
 }));

@@ -5,6 +5,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { cn } from "@/lib/utils";
 import type { GameStatus, Platform } from "@/lib/types";
 import FilterBuilder from "./FilterBuilder";
+import { useDuplicateGroups } from "@/hooks/useGames";
 import {
   SteamIcon, EpicIcon, GogIcon, UbisoftIcon, CustomGameIcon, ImageIcon, DownloadIcon,
   SlidersIcon, ChevronDownIcon, HeartIcon, StarIcon,
@@ -27,6 +28,9 @@ export default function FilterPopover({ hideFavorite }: { hideFavorite?: boolean
   const clearFilterRules = useGameStore((s) => s.clearFilterRules);
   const customStatuses = useUIStore((s) => s.customStatuses);
   const [open, setOpen] = useState(false);
+  const collapse = useGameStore((s) => s.collapseDuplicates);
+  const setCollapse = useGameStore((s) => s.setCollapseDuplicates);
+  const dupGroups = useDuplicateGroups();
   const [rulesOpen, setRulesOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -167,6 +171,24 @@ export default function FilterPopover({ hideFavorite }: { hideFavorite?: boolean
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            <div className="border-t border-white/[0.06] pt-3 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] text-slate-200 font-medium">Collapse duplicates</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{dupGroups.length ? `Show one copy of each duplicated game (${dupGroups.filter((g) => g.reason !== "similar").length} sure matches)` : "No duplicates detected"}</p>
+              </div>
+              {dupGroups.length > 0 && (
+                <button onClick={() => { setOpen(false); useUIStore.getState().setDuplicatesOpen(true); }} className="text-[11.5px] text-accent-300 hover:text-accent-200 shrink-0">Review</button>
+              )}
+              <button
+                onClick={() => setCollapse(!collapse)}
+                className="relative w-10 h-[22px] rounded-full transition-colors shrink-0"
+                style={{ background: collapse ? "rgb(var(--accent-500))" : "rgba(255,255,255,0.12)" }}
+                aria-label="Collapse duplicates"
+              >
+                <motion.span animate={{ x: collapse ? 20 : 2 }} transition={{ type: "spring", stiffness: 500, damping: 35 }} className="absolute top-[3px] w-4 h-4 rounded-full bg-white block" />
+              </button>
             </div>
 
             {active > 0 && (
