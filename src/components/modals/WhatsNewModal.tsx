@@ -9,6 +9,19 @@ interface ReleaseNote {
 }
 
 const RELEASE_NOTES: Record<string, ReleaseNote> = {
+  "1.3.0": {
+    headline: "A completely redesigned ZGameLib — plus Big Picture mode for controllers.",
+    bullets: [
+      "Big Picture mode: a full-screen, couch-friendly UI for Xbox, PlayStation and Nintendo controllers (Ctrl+B or Start/Options)",
+      "Brand-new look across every page, with a cleaner sidebar and a command search in the top bar",
+      "Library home with a Continue Playing hero, weekly goal ring and scrollable shelves",
+      "All filters in one Filters popover, plus a card-size slider and removable filter chips",
+      "Redesigned game details with HowLongToBeat progress and a session chart",
+      "Collections with cover collages, an Add Games picker and sidebar shortcuts",
+      "Statistics dashboard, Recently Played timeline and a reorganised Settings page",
+      "Many fixes, including fonts that never loaded and an incorrect weekly goal",
+    ],
+  },
   "1.2.1": {
     headline: "Ubisoft Connect support — auto-scan, launch, and full platform integration.",
     bullets: [

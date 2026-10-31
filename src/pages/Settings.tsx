@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { version as APP_VERSION } from "../../package.json";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { api } from "@/lib/tauri";
@@ -553,7 +554,7 @@ export default function Settings() {
               </div>
               <div>
                 <h1 className="text-[22px] font-bold text-white leading-none">Settings</h1>
-                <p className="text-[11.5px] text-slate-500 mt-1">v1.2.1</p>
+                <p className="text-[11.5px] text-slate-500 mt-1">v{APP_VERSION}</p>
               </div>
             </div>
             <nav className="flex flex-col gap-0.5">
@@ -1478,7 +1479,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
-                  <p className="text-[11px] text-slate-500">v1.2.1</p>
+                  <p className="text-[11px] text-slate-500">v{APP_VERSION}</p>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Made by{" "}
@@ -1553,7 +1554,7 @@ export default function Settings() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => { setWhatsNewVersion("1.2.1"); setWhatsNewOpen(true); }}
+                  onClick={() => { setWhatsNewVersion(APP_VERSION); setWhatsNewOpen(true); }}
                   className="btn-ghost w-full justify-center text-[12px]"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
