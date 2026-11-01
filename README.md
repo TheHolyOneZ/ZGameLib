@@ -1,16 +1,14 @@
 <div align="center">
 
-<h1>
-  <img src="https://img.shields.io/badge/-ZGameLib-7c3aed?style=for-the-badge&logoColor=white" alt="ZGameLib" height="40"/>
-</h1>
+<img src="docs/banner.webp" alt="ZGameLib — every game you own in one library" width="100%"/>
 
-<p><strong>A beautiful, free, open-source personal game library for Windows.</strong><br/>
-Track, organize, rate and launch every game you own — Steam, Epic, GOG, Ubisoft Connect, and custom — from one sleek desktop app.</p>
+<p><strong>A beautiful, free, open-source game library for Windows.</strong><br/>
+Track, organize, rate and launch every game you own — Steam, Epic, GOG, Ubisoft Connect and anything else — from one fast desktop app, with a full-screen Big Picture mode for controllers.</p>
 
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-1.2.1-22c55e?style=flat-square" alt="v1.2.1"/>
+  <img src="https://img.shields.io/badge/Version-1.3.0-22c55e?style=flat-square" alt="v1.3.0"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -18,34 +16,75 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, Ubisof
 
 <p>
   <a href="https://zsync.eu/zgamelib/"><strong>🌐 Website</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64_en-US.msi"><strong>⬇ Download MSI</strong></a> &nbsp;·&nbsp;
-  <a href="https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64-setup.exe"><strong>⬇ Download EXE</strong></a> &nbsp;·&nbsp;
-  <a href="https://github.com/TheHolyOneZ/ZGameLib"><strong>GitHub</strong></a>
+  <a href="https://github.com/TheHolyOneZ/ZGameLib/releases/latest"><strong>⬇ Download</strong></a> &nbsp;·&nbsp;
+  <a href="#screenshots"><strong>📸 Screenshots</strong></a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.md"><strong>📝 Changelog</strong></a>
 </p>
 
 </div>
 
 ---
 
-## What's New in v1.2.1
+## What's New in v1.3.0
 
-v1.2.1 adds **Ubisoft Connect** as a full first-class platform and introduces **collapsible library sections**.
+v1.3.0 is the biggest update yet: a complete redesign, a controller-first **Big Picture mode**, a smarter library and much more reliable playtime tracking.
 
 | Feature | Description |
 |---------|-------------|
-| **Ubisoft Connect** | Added alongside Steam, Epic Games, and GOG as a default platform |
-| **Ubisoft Auto-Scan** | Reads Windows registry (`HKLM\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs`) to detect installed games and executables |
-| **Ubisoft Launch** | Launches games directly via `ubisoft://launch/{id}` protocol with full playtime tracking |
-| **Ubisoft Platform Badge** | Sidebar filter, spin wheel filter, stats chart, library growth chart, and Year in Review all support Ubisoft |
-| **Filter Builder Support** | Ubisoft Connect available as a platform option in the advanced filter builder |
-| **Game Detail Panel** | Shows Ubisoft Game ID in the info section |
-| **Collapsible Sections** | Play Next and Recently Played rows can be collapsed with one click — preference persists across sessions |
+| **New design** | Every page rebuilt with a cleaner, flatter look inspired by modern game launchers, a new Z controller logo and app icon |
+| **Big Picture mode** | Full-screen TV interface for Xbox, PlayStation and Nintendo controllers with a **Now Playing** card, on-screen keyboard and quick menu |
+| **Cover Art Finder** | Bulk cover search across Steam, SteamGridDB and IGDB with scene/repack name cleanup and your own regex rules |
+| **Duplicate Manager** | Finds the same game across stores, editions, versions and typos, then merges or hides the extras |
+| **Smart titles & search** | Clean display names, typo-tolerant search, acronyms (`rdr2`), `/regex/` and filters like `rating>=8 is:fav` |
+| **Reliable playtime** | Stop saves your time, sessions survive restarts, sleep and long alt-tabs don't count, failed launches end within seconds |
+| **Live session timer** | See how long you've been playing in the sidebar, library hero, game details and Big Picture |
+| **Single instance** | Opening ZGameLib again focuses the window that's already running |
+| **Performance** | Virtualized grids, no backend work on the UI thread, cached duplicate detection and search — thousands of games stay smooth |
+
+See the full list in the [changelog](CHANGELOG.md).
 
 ---
 
-## Preview
+## Screenshots
 
-> Recorded on v0.3.0. Latest version includes game session management, onboarding tour, Year in Review, smart recommendations, and many more improvements.
+<div align="center">
+
+<img src="docs/screenshots/library.webp" alt="Library home with Continue Playing hero, pinned games and shelves" width="100%"/>
+<sub><b>Library</b> — continue-playing hero with live session timer, pinned games, Play Next and Recently Played shelves</sub>
+
+</div>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/big-picture.webp" alt="Big Picture mode with Now Playing card"/><br/><sub><b>Big Picture</b> — controller-first home with the Now Playing card</sub></td>
+<td width="50%"><img src="docs/screenshots/big-picture-game.webp" alt="Big Picture game page"/><br/><sub><b>Big Picture game page</b> — play, favorite, status and rating from the couch</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/library-grid.webp" alt="Library grid"/><br/><sub><b>All Games</b> — virtualized grid, smart search, filters and card-size slider</sub></td>
+<td width="50%"><img src="docs/screenshots/game-details.webp" alt="Game details drawer"/><br/><sub><b>Game details</b> — HowLongToBeat progress, rating, status, tags and IGDB info</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/cover-art-finder.webp" alt="Cover Art Finder"/><br/><sub><b>Cover Art Finder</b> — cleans scene names and finds art from several sources at once</sub></td>
+<td width="50%"><img src="docs/screenshots/duplicate-manager.webp" alt="Duplicate Manager"/><br/><sub><b>Duplicate Manager</b> — merge playtime, ratings and tags into the copy you keep</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/statistics.webp" alt="Statistics dashboard"/><br/><sub><b>Statistics</b> — weekly playtime, progress, platforms, ratings and genres</sub></td>
+<td width="50%"><img src="docs/screenshots/collections.webp" alt="Collections"/><br/><sub><b>Collections</b> — cover mosaics for every group you create</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/game-spin.webp" alt="Game Spin"/><br/><sub><b>Game Spin</b> — can't decide? Let the wheel pick</sub></td>
+<td width="50%"><img src="docs/screenshots/year-in-review.webp" alt="Year in Review"/><br/><sub><b>Year in Review</b> — your gaming year at a glance</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/command-palette.webp" alt="Command palette"/><br/><sub><b>Command palette</b> — <kbd>Ctrl</kbd>+<kbd>K</kbd> to jump to any game or action</sub></td>
+<td width="50%"><img src="docs/screenshots/settings.webp" alt="Settings"/><br/><sub><b>Settings</b> — 7 themes plus your own, behavior, integrations and data</sub></td>
+</tr>
+</table>
+
+<sub>Screenshots use a sample library with made-up games and generated cover art.</sub>
+
+<details>
+<summary><strong>Older video preview (v0.3.0)</strong></summary>
 
 <div align="center">
 
@@ -53,14 +92,18 @@ v1.2.1 adds **Ubisoft Connect** as a full first-class platform and introduces **
 
 </div>
 
+</details>
+
 ---
 
 ## Download
 
+Grab the latest installer from **[GitHub Releases](https://github.com/TheHolyOneZ/ZGameLib/releases/latest)**:
+
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| [ZGameLib_1.2.1_x64_en-US.msi](https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64_en-US.msi) | `.msi` | **Recommended** — Windows Installer |
-| [ZGameLib_1.2.1_x64-setup.exe](https://zsync.eu/zgamelib/app/ZGameLib_1.2.1_x64-setup.exe) | `.exe` | NSIS alternative installer |
+| `ZGameLib_1.3.0_x64_en-US.msi` | `.msi` | **Recommended** — Windows Installer |
+| `ZGameLib_1.3.0_x64-setup.exe` | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -68,8 +111,12 @@ v1.2.1 adds **Ubisoft Connect** as a full first-class platform and introduces **
 
 ## Table of Contents
 
-- [What's New in v1.2.1](#whats-new-in-v121)
+- [What's New in v1.3.0](#whats-new-in-v130)
+- [Screenshots](#screenshots)
 - [Features](#features)
+  - [Big Picture Mode & Controllers](#-big-picture-mode--controllers)
+  - [Smart Library](#-smart-library)
+  - [Cover Art Finder](#-cover-art-finder)
   - [Onboarding Tour](#-interactive-onboarding-tour)
   - [Library & Scanning](#-library--scanning)
   - [Game Launching & Playtime](#-game-launching--playtime)
@@ -94,6 +141,74 @@ v1.2.1 adds **Ubisoft Connect** as a full first-class platform and introduces **
 ---
 
 ## Features
+
+### 🎮 Big Picture Mode & Controllers
+
+A full-screen, couch-friendly interface built for TVs and controllers — open it with <kbd>Ctrl</kbd>+<kbd>B</kbd>, the Start / Options button on any connected controller, the sidebar, the top bar or the command palette. It can also start automatically on launch.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Navigation**
+- **Xbox, PlayStation and Nintendo controllers** — D-pad and left stick navigation, A/B/X/Y actions, LB/RB to switch tabs, LT/RT to jump a page, Start/Options for the quick menu
+- **Correct button prompts** — glyphs switch automatically between Xbox letters, PlayStation symbols and keyboard keys, with friendly controller names (DualSense, DualShock 4, Xbox Series)
+- Spatial navigation across shelves, grids, chips and dialogs; keyboard and mouse work too
+- Rumble on launch, optional interface sounds and optional fullscreen
+
+</td>
+<td width="50%" valign="top">
+
+**Views**
+- **Home** with Jump Back In, Favorites, Up Next and Recently Added shelves
+- **Library** grid with filters (installed, playing, backlog…) and sorting
+- Favorites, Recent and Collections tabs
+- **Game page** — play, favorite, set status and rating from the couch
+- **On-screen keyboard** for search, a quick menu and a launch splash
+- **Now Playing card** — while a game runs: live session timer, total playtime, rating, status, story progress, **Switch to Game** (brings the game window back to the front), Details and Stop
+
+</td>
+</tr>
+</table>
+
+---
+
+### 🧠 Smart Library
+
+- **Duplicate Manager** — finds the same game across stores, editions (GOTY, Deluxe, Definitive…), versions, build numbers, demos/playtests and typos, while keeping sequels apart (Doom 2 ≠ Doom 3, Dark Souls II ≠ III)
+  - picks the best copy to keep and **merges** playtime, rating, tags, status, favorite, metadata and collections into it, or just hides the extras
+  - "Not duplicates" is remembered; a badge on the top bar shows how many groups were found
+- **Collapse duplicates** — on by default, the library, sidebar counts and Big Picture show each game once; uncertain matches are never collapsed automatically
+- **Smart titles** — clean display names without ™/®, version and build numbers, store tags like `[GOG]` or `(x64)`, scene and repack tags (`Elden.Ring-CODEX`, `[FitGirl Repack]`) and edition suffixes; original titles stay visible in the game details; can be turned off in Settings
+- **Smart search** — typo-tolerant (`wticher` → The Witcher), acronyms (`rdr2`, `gtav`, `ds3`), roman numerals, relevance ranking, `/regex/` patterns and filters:
+
+  | Filter | Example |
+  |--------|---------|
+  | Platform / store | `platform:steam` |
+  | Status | `status:playing` |
+  | Rating | `rating>=8` |
+  | Playtime | `playtime>10h` |
+  | Last played | `played<7d` |
+  | Release year | `year>=2020` |
+  | Favorites | `is:fav` |
+  | Exclude | `-tag:multiplayer` |
+
+  A `?` button shows the syntax and invalid queries are flagged.
+
+---
+
+### 🖼 Cover Art Finder
+
+Bulk cover search for games that are missing art — or for your whole library. Open it from the image button in the top bar, the selection bar, the Filters popover, the command palette or Settings → Data.
+
+- **Several sources at once** — Steam store, Steam community, **SteamGridDB** (add your free API key in Settings → Integrations) and **IGDB** are searched in parallel and ranked by how well the title matches; sequels, soundtracks and DLC rank lower
+- **Scene & repack cleanup** — `Midnight.Signal.v1.3.2-RUNE`, `Hades_II_v1.0_[FitGirl Repack]` or `… - ElAmigos` become searchable titles automatically
+- **Your own regex rules** — with presets (dots → spaces, drop brackets, drop version, split CamelCase) and a live preview
+- Every game's search text is editable; **auto-pick** only uses confident matches, then **Apply** sets all covers in one go
+- Covers are downloaded as image files into ZGameLib's local app data folder (`%LOCALAPPDATA%\ZGameLib\covers`); the old file is cleaned up when you replace a cover
+- A single-game cover search with the same sources is available from every game's details
+
+---
 
 ### 🎬 Interactive Onboarding Tour
 
@@ -141,30 +256,31 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 - **Sidebar filter** — "Not Installed" section shows count and lets you filter to only uninstalled games
 - Optional **auto-pull on startup** toggle in Settings → Behavior
 
-**Duplicate Management**
-- **Remove Duplicates** button collapses entries sharing the same name
-- Non-destructive — hidden, not deleted
+**Duplicates & Hidden Games**
+- The **Duplicate Manager** (see [Smart Library](#-smart-library)) merges or hides duplicates
+- Hide / Unhide any game from the right-click menu — non-destructive
 - Toggle show/hide hidden games instantly (`H` shortcut)
-- Resets automatically on app restart
 
 **Cover Art Resolution Chain**
-1. Steam CDN portrait (`library_600x900.jpg`)
+1. Steam CDN portrait (`library_600x900.jpg`, then `library_600x900_2x`, then `header.jpg`)
 2. GOG product API
-3. Steam SearchApps (fallback for Epic/GOG/Custom)
-4. Exe icon extraction (last resort)
-5. Placeholder
+3. Best Steam store / community match for the cleaned title (Epic / GOG / Custom)
+4. [Cover Art Finder](#-cover-art-finder) — Steam, SteamGridDB and IGDB on demand
+5. Generated cover with the game's initials
 
 </td>
 <td width="50%" valign="top">
 
 **Views & Sorting**
-- **Grid view** — configurable 3–6 columns or **Auto** (fills available space with `minmax(180px, 1fr)`); default 6 columns
+- **Library home** — "Continue playing" hero with one-click Play/Stop, live session timer, playtime stats and a weekly goal ring; Pinned, Play Next and Recently Played shelves
+- **Grid view** — virtualized, so thousands of games scroll smoothly; card-size slider or fixed 3–6 columns
 - **Dense list view** — compact rows with all info
 - Sort by: name · rating · last played · date added · playtime · **custom order**
 - Ascending / descending toggle
 - **Drag-and-drop reordering** — select "Custom Order" sort to drag cards into any order; persisted to the database
 
 **Filtering**
+- Everything lives in one **Filters popover** with removable "Filtered by" chips in the toolbar
 - Filter by platform: All / Steam / Epic / GOG / Ubisoft Connect / Custom
 - Filter by status (any custom status)
 - Filter by cover art: Has Cover / Missing Cover (sidebar, with counts)
@@ -193,9 +309,9 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 - Games flagged after clearing IGDB data are silently skipped
 
 **Command Palette** (`Ctrl+K`)
-- Centered overlay with fuzzy search across all game names
-- Cover thumbnail and platform badge per result; keyboard navigation (↑ ↓ Enter Escape)
-- Six built-in quick actions: Add Game · Library · Favorites · Stats · Spin · Settings
+- Also opened from the "Jump to a game or command…" box in the top bar
+- Smart search across your library (duplicates collapsed) with cover thumbnail and platform badge per result; keyboard navigation (↑ ↓ Enter Escape)
+- Quick actions for every page plus Big Picture, Cover Art Finder, Duplicate Manager and Add Game
 
 **Batch Multi-Select**
 - Checkbox on game cards (visible on hover or when selected)
@@ -213,8 +329,8 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 - **Remove from Collection** option appears in the right-click menu when browsing a collection
 
 **Weekly Playtime Goal**
-- Set a weekly playtime target in hours at the top of the Library page
-- Animated progress bar with current week's playtime
+- Set a weekly playtime target in the library hero
+- Progress ring with the current week's playtime
 - "Goal reached!" state; persists across sessions
 
 **Contextual Empty State**
@@ -236,7 +352,7 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 **🟦 Steam**
 - Launches via `steam://run/{appId}`
 - Full Steam Overlay support
-- Directory-based process tracking with 300-second startup window
+- Process tracking by install folder and executable name; waits up to 60 s for Steam to start the game
 
 </td>
 <td width="33%" valign="top">
@@ -245,7 +361,7 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 - Launches via Epic URI with `silent=true`
 - Epic Online Services (EOS) auth works correctly
 - Essential for EOS games like Fortnite
-- Directory-based process tracking with 300-second startup window
+- Process tracking by install folder and executable name; waits up to 60 s for the game to start
 
 </td>
 <td width="33%" valign="top">
@@ -261,9 +377,9 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 <td width="33%" valign="top">
 
 **⬜ GOG / Custom**
-- Direct executable spawn
-- Full process monitoring from launch
-- Instant playtime tracking start
+- Direct executable spawn, started in the game's own folder
+- Full process monitoring from launch, including launcher → game handoffs
+- If nothing starts within ~20 s, the session ends and you're told the game didn't start
 
 </td>
 <td width="33%" valign="top"></td>
@@ -272,16 +388,18 @@ The signature 1.0 feature. On first launch, users pick a tour mode — ZGameLib 
 </table>
 
 **Playtime Tracking**
-- A background thread watches the game's install directory for running processes via `CreateToolhelp32Snapshot` + `QueryFullProcessImageNameW` — no console flicker, ~10× faster than subprocess polling
-- Multi-process games (launcher stub → real exe) are handled with an adaptive grace window: 300 s for the initial launcher handoff, then 30 s once the real game is confirmed running
-- Records elapsed minutes and saves a session row when the game exits; fires a `game-session-ended` event to the frontend so playtime updates instantly without a manual refresh
-- Updates `last_played` timestamp on launch
-- Falls back to timeout-based tracking when no install directory is resolvable — session stays active until manually stopped
-- **Game-already-running detection** — if you try to launch a game while another is tracked, an in-app confirm dialog offers "Stop & Launch" to kill the running game (`TerminateProcess`) and start the new one
-- **Live "Playing" indicator** — the play button shows a pulsing green "Playing" state while a game session is active
-- **Idle detection** — polls `GetForegroundWindow` every 30 s; if the game window loses focus for 5+ consecutive minutes, that idle period is excluded from the session total; brief alt-tabs are ignored; can be toggled off in Settings → Behavior
+- A background thread watches the game's processes via `CreateToolhelp32Snapshot` + `QueryFullProcessImageNameW` — no console flicker; if the launched process hands off to another one (launcher → game), it follows the game by executable name and install folder
+- **Fast failure detection** — a game that never appears ends the session after ~20 s (60 s for Steam, Epic and Ubisoft); a game that closes right after starting ends it within ~12 s; you get a short notice either way, and the UI shows "Starting…" until the game is detected
+- **Stop saves your time** — stopping a game (or just stopping tracking) records the time played so far
+- **Sessions survive restarts** — progress is checkpointed every minute and on exit; if you close or restart ZGameLib mid-game, tracking resumes when the game is still running, otherwise the time is saved
+- **Sleep doesn't count** — gaps while the PC was asleep or hibernating are ignored; sessions are rounded to the nearest minute
+- **Idle detection** — time while the game isn't the foreground window for 5+ consecutive minutes is excluded; brief alt-tabs still count; can be toggled off in Settings → Behavior
+- **Live session timer** — shown in the sidebar, the library hero, the game details Stop button and Big Picture's Now Playing card
+- **Switch to Game** — brings the running game's window back to the front (Big Picture)
+- **Game-already-running detection** — launching another game offers "Stop & Launch"
+- Session rows are saved per play session and a `game-session-ended` event refreshes playtime instantly
 - **Steam Playtime Sync** — enter your Steam API Key and SteamID64 in Settings → Integrations; sync only increases local values, never decreases
-- **Minimize on launch** — ZGameLib hides to tray with a 400 ms delay (for window focus handoff), then auto-restores when the game exits
+- **Minimize on launch** — ZGameLib minimizes when a game starts and comes back when it exits
 
 ---
 
@@ -342,7 +460,7 @@ A slide-in drawer (500 px wide) that opens without navigating away from your lib
 **Cover**
 - Click the cover image → full-size **lightbox overlay** with spring animation
 - Hover the cover → "Change Cover" button appears for replacing it
-- Cover search: browse Steam's portrait database by name, click to apply instantly
+- Cover search: Steam, SteamGridDB and IGDB results side by side, click to apply instantly
 
 ---
 
@@ -389,8 +507,8 @@ Can't decide what to play? Let the wheel decide.
 <td width="50%" valign="top">
 
 **Wheel**
-- SVG donut wheel with dynamic radial gradient segments
-- 60-color palette — each game gets a unique color slot
+- SVG wheel in your theme's accent colors
+- Shows a fair random set of up to 24 games per spin, so huge pools stay readable
 - Tick marks around the outer ring
 - Pointer triangle fixed at the top
 - Smooth animated spin with easing: `cubic-bezier(0.08, 0.82, 0.12, 1.0)`
@@ -421,25 +539,22 @@ Can't decide what to play? Let the wheel decide.
 
 | Card | What it shows |
 |------|--------------|
-| Total Games | Full library count |
-| Total Playtime | Summed across all games |
-| Average Rating | Mean of rated games |
+| Games | Library count and how many you've played |
+| Playtime | Total hours and average per played game |
+| Completed | Completed games and completion rate |
+| Avg rating | Mean of rated games |
 | Favorites | Count of hearted games |
-| Completed | Count with Completed status |
-| Rated | Count with any rating |
+| Last 12 weeks | Hours tracked in ZGameLib recently |
 
-All stat cards are **clickable** — each navigates to the Library with the relevant filter or sort pre-applied.
+All stat cards are **clickable** — each opens the Library with the relevant filter or sort applied.
 
-- **Platform breakdown** — horizontal proportion bars (clickable, filters library)
-- **Status breakdown** — pill badges per custom status with counts (clickable)
-- **Rating distribution** — horizontal bar chart showing game count per rating (1–10)
-- **Completion rate** — circular SVG progress ring
-- **Top 5 rated games** — ranked list with cover thumbnails
-- **Playtime — Last 12 Weeks** — bar chart grouped by ISO week; bars grow from bottom with staggered entrance animation; hover for exact hours; weeks labeled every other column to avoid crowding
-- **Lowest Rated** — up to 5 games with a rating ≤ 4, scores highlighted in red
-- **Most Neglected** — up to 5 games with zero recorded playtime, sorted by time in library, with "Added X days ago" label
-- **Library Growth** — stacked bar chart showing how many games were added per calendar month, bars colored by platform; legend at the bottom
-- Staggered entrance animations
+- **Weekly playtime** — bar chart of the last 12 weeks
+- **Progress** — donut of every status with counts
+- **Platforms** — games and hours per store
+- **Ratings** — distribution from 1 to 10
+- **Genres** — most common genres in your library
+- **Library growth** — games added per month, by platform
+- **Most played, Top rated and Pile of shame** (added 2+ months ago, never played) lists that open the game directly
 
 **Year in Review** (`/wrapped`)
 - Accessible from the sidebar and `W` shortcut
@@ -489,7 +604,7 @@ A "Play Next" strip that surfaces backlog games the user is most likely to enjoy
 
 **Custom Theme Creator** — pick one accent color and a background; ZGameLib auto-generates all 8 accent shades (200–900) via HSL math. The entire app previews live as you adjust colors. Save with a name, edit or delete anytime.
 
-All themes are implemented as **CSS custom properties** (`--accent-200` through `--accent-900`). Every accent color, gradient, glow, glass effect, and border throughout the entire UI responds to the active theme.
+All themes are implemented as **CSS custom properties** (`--accent-200` through `--accent-900`). Every accent color, surface and border throughout the UI — including Big Picture and the logo — responds to the active theme.
 
 <details>
 <summary><strong>CSS Design System (click to expand)</strong></summary>
@@ -499,19 +614,13 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 - `.glass-strong` — enhanced opacity variant
 - `.glass-sidebar` — sidebar-specific frosted panel
 
-**Glow Effects**
-- `.glow-purple` — accent-colored box shadow
-- `.glow-sm` — subtle glow for hover states
-- `.glow-inner` — inward glow for inputs
-
 **Cards**
-- `.card-lift` — hover translate-Y transform
-- `.card-shine` — gradient shine overlay on hover
-- `.border-gradient` — animated gradient border
+- `.card-lift` — hover lift with a crisp white outline
+- `.surface` / `.surface-interactive` — flat panels used across pages
 
 **Buttons**
-- `.btn-primary` — gradient fill with glow
-- `.btn-ghost` — glass morphism border style
+- `.btn-primary` — solid accent fill
+- `.btn-ghost` — subtle neutral button
 - `.btn-icon` — compact square icon button
 
 **Inputs**
@@ -539,6 +648,7 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 - **Window position memory** — window position and size saved on close and restored exactly on next launch
 - **Playtime reminder** — on startup, a notification is shown if your longest-neglected game (≥ 30 days since last play) is detected; toggle in Settings → Behavior
 - **What's New modal** — shown automatically on first launch after an update; "What's New" button in Settings → About re-opens it anytime
+- **Single instance** — starting ZGameLib again focuses the window that's already running (also when it's minimized or in the tray)
 
 ---
 
@@ -557,7 +667,7 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
   > Make sure the file is named exactly `portable.flag` with no `.txt` extension. If Windows is hiding extensions, check via View → Show → File name extensions.
 - **Zero telemetry. Zero accounts. Zero cloud.**
 - **Export library** JSON uses v3 format — includes `collections` and `collection_games`; backwards-compatible with older exports on import
-- The only network calls made are: cover art fetching (Steam CDN / GOG / Steam SearchApps), HLTB lookup (on user request), IGDB metadata fetch via Twitch OAuth (on user request), mod installer downloads from GitHub, and the update check against `zsync.eu` — all explicitly user-initiated or one-time at startup
+- The only network calls made are: cover art fetching (Steam CDN / GOG / Steam store and community search, plus SteamGridDB and IGDB when you use the Cover Art Finder), HLTB lookup (on user request), IGDB metadata fetch via Twitch OAuth (on user request), mod installer downloads from GitHub, and the update check — all explicitly user-initiated or one-time at startup
 
 ---
 
@@ -570,11 +680,13 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 | <kbd>F</kbd> | Toggle favorite on the currently open game |
 | <kbd>S</kbd> | Focus the Scan Games dropdown button |
 | <kbd>W</kbd> | Navigate to the Year in Review page |
-| <kbd>H</kbd> | Toggle visibility of hidden/duplicate games |
+| <kbd>H</kbd> | Toggle visibility of hidden games |
 | <kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd> | Quick-rate the open game detail (0 = 10 stars); only fires when the detail panel is open |
 | <kbd>Escape</kbd> | Close the detail panel, command palette, or any overlay |
 | <kbd>?</kbd> | Show / hide the keyboard shortcuts help overlay |
-| <kbd>Ctrl</kbd> + <kbd>K</kbd> | Open the command palette (fuzzy game search + 6 quick actions) |
+| <kbd>Ctrl</kbd> + <kbd>K</kbd> | Open the command palette (smart game search + quick actions) |
+| <kbd>Ctrl</kbd> + <kbd>B</kbd> | Enter / leave Big Picture mode |
+| Start / Options | Open Big Picture from any connected controller |
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Save a new note in the notes editor |
 | <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Undo last game deletion (triggers the undo countdown if one is pending) |
 
@@ -607,6 +719,16 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 <td>Styling</td>
 <td>Tailwind CSS + CSS custom properties</td>
 <td>3.4.14</td>
+</tr>
+<tr>
+<td>Fonts</td>
+<td>Inter + Outfit (bundled via Fontsource)</td>
+<td>5.x</td>
+</tr>
+<tr>
+<td>Controllers</td>
+<td>Gamepad API with spatial navigation</td>
+<td>—</td>
 </tr>
 <tr>
 <td>Animations</td>
@@ -665,7 +787,7 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 </tr>
 </table>
 
-**All Rust crates:** `tauri 2` · `rusqlite` · `serde` · `serde_json` · `uuid` · `chrono` · `walkdir` · `tokio` · `anyhow` · `dirs` · `open` · `ureq` · `zip` · `winreg` · `base64`
+**All Rust crates:** `tauri 2` · `tauri-plugin-single-instance` · `rusqlite` · `serde` · `serde_json` · `uuid` · `chrono` · `walkdir` · `tokio` · `anyhow` · `dirs` · `open` · `ureq` · `zip` · `winreg` · `windows` · `base64`
 
 ---
 
@@ -679,37 +801,37 @@ All themes are implemented as **CSS custom properties** (`--accent-200` through 
 │   ─────                 ──────────              ──────       │
 │   / Library             Layout (Sidebar,        useGameStore │
 │   /favorites            Topbar, PageSearch)     · games[]    │
-│   /recent               Library (GameCard,      · filters    │
-│   /stats                GameGrid,               · sort       │
-│   /wrapped              GameListRow)            · viewMode   │
-│   /spin                 GameDetail (drawer)     · hiddenIds  │
-│   /collections          ModLoaderPanel                       │
-│   /settings             Spin Wheel (SVG)        useUIStore   │
-│                         Stats Dashboard         · toasts     │
-│                         Wrapped (Year Review)   · modals     │
-│                         Recommendations         · statuses   │
-│                         OnboardingTour          · logs       │
-│                         AddGameModal            · update     │
-│                         CoverSearchModal                     │
+│   /recent               Library (LibraryHero,   · filters    │
+│   /stats                Shelf, VirtualGrid,     · sort       │
+│   /wrapped              GameCard, ListRow)      · hiddenIds  │
+│   /spin                 GameDetail (drawer)     · collapse   │
+│   /collections          BigPicture (TV mode)                 │
+│   /settings             CoverFinder, Duplicates useUIStore   │
+│                         CommandPalette          · toasts     │
+│                         Stats, Wrapped, Spin    · modals     │
+│                         OnboardingTour          · session    │
 │                                                              │
-│   Hooks: useGames (TanStack Query mutations)                 │
-│          useCover (smart cover cache, max 4 concurrent)      │
-│          useFilteredGames (memoized filter + sort)           │
+│   Hooks: useGames (scans, library view, duplicates)          │
+│          useCover (priority queue, cancel, LRU cache)        │
+│          useSession (live session clock)                     │
+│   Lib:   search · duplicates · gameName · coverQuery         │
+│          gamepad · gameActions (ordered writes)              │
 └──────────────────────────┬───────────────────────────────────┘
                            │  Tauri IPC  (invoke / listen events)
 ┌──────────────────────────▼───────────────────────────────────┐
 │                   Backend  (Rust + Tauri 2)                   │
 │                                                              │
-│   commands/games.rs     — Game & Note CRUD                   │
-│   commands/scanner.rs   — Steam / Epic / GOG / custom scan   │
-│   commands/launcher.rs  — process spawn, playtime tracking   │
-│   commands/modloader.rs — BepInEx / MelonLoader management   │
-│   commands/settings.rs  — settings, import/export, updates   │
+│   commands/games.rs       — games, notes, sessions, IGDB     │
+│   commands/scanner.rs     — Steam / Epic / GOG / Ubisoft     │
+│   commands/launcher.rs    — launch, playtime + sessions      │
+│   commands/covers.rs      — multi-source cover search        │
+│   commands/collections.rs — collections                      │
+│   commands/modloader.rs   — BepInEx / MelonLoader            │
+│   commands/settings.rs    — settings, import/export, sync    │
 │                                                              │
-│   db/schema.rs          — CREATE TABLE + INDEX statements    │
-│   db/queries.rs         — all SQL read/write operations      │
-│   models.rs             — shared Rust structs                │
-│   lib.rs                — Tauri builder, tray, IPC reg.      │
+│   db/schema.rs            — CREATE TABLE + INDEX statements  │
+│   db/queries.rs           — SQL read/write operations        │
+│   lib.rs                  — builder, tray, single instance   │
 └──────────────────────────┬───────────────────────────────────┘
                            │
 ┌──────────────────────────▼───────────────────────────────────┐
@@ -889,6 +1011,8 @@ Index: `game_id`
 | `onboarding_completed` | `true` \| `false` | `false` | Whether the onboarding tour has been completed |
 | `onboarding_tour_mode` | `fast` \| `standard` \| `detailed` \| `""` | `""` | Tour mode chosen at first launch |
 | `last_seen_version` | version string | `""` | Used for What's New modal detection |
+| `steamgriddb_api_key` | string | `null` | SteamGridDB key for the Cover Art Finder |
+| `active_session` | JSON | — | Checkpoint of the running play session, used to recover after a restart |
 
 ---
 
@@ -938,14 +1062,16 @@ Walks up to **6 directory levels deep** using this priority chain:
 | Service | Used For | Triggered By |
 |---------|---------|-------------|
 | Steam CDN | Portrait cover art for Steam games | Auto on scan |
-| Steam SearchApps API | Cover search by name (Epic / GOG / Custom) | Auto + Cover Search modal |
+| Steam store search + SearchApps | Cover search by name (Epic / GOG / Custom) | Auto + Cover Art Finder |
+| SteamGridDB API | Community cover art (needs your API key) | Cover Art Finder / cover search |
+| IGDB (via Twitch OAuth) | Cover art | Cover Art Finder / cover search |
 | Steam Web API (`IPlayerService/GetOwnedGames`) | Playtime sync; Pull Uninstalled | User clicks Sync or Pull Uninstalled |
 | GOG Product API | Cover art + metadata for GOG games | Auto on scan |
 | GitHub Releases API | Latest BepInEx x64 ZIP download | User clicks Install BepInEx |
 | GitHub Releases API | Latest MelonLoader x64 ZIP download | User clicks Install MelonLoader |
 | HowLongToBeat | Time-to-beat estimates (main story + completionist) | User clicks clock icon in Game Detail |
 | IGDB (via Twitch OAuth) | Genre · developer · publisher · release year | User clicks IGDB button or bulk scan |
-| Tauri Updater | Checks `https://zsync.eu/zgamelib/update.json` | App startup |
+| Tauri Updater | Checks for a newer release | App startup |
 
 ---
 
@@ -954,111 +1080,47 @@ Walks up to **6 directory levels deep** using this priority chain:
 ```
 ZGameLib/
 │
-├── build-release.ps1               # PowerShell production build script (recommended)
+├── .github/workflows/release.yml   # Builds Windows installers and drafts a GitHub release
+├── docs/                           # README banner and screenshots
 ├── package.json                    # npm deps + scripts
 ├── vite.config.ts                  # Vite dev server on port 1420
-├── tailwind.config.ts              # Custom accent color system, animations
-├── tsconfig.json                   # TypeScript compiler config
-├── index.html                      # HTML entry, Inter font
+├── tailwind.config.ts              # Accent color system, animations
+├── index.html                      # HTML entry
 │
 ├── src/                            # React + TypeScript frontend
-│   ├── main.tsx                    # React entry point, QueryClient setup
-│   ├── App.tsx                     # Router definition + Layout wrapper
-│   ├── index.css                   # Global styles, all 7 themes as CSS vars
+│   ├── main.tsx / App.tsx          # Entry point, QueryClient, routes
+│   ├── index.css                   # Global styles, 7 themes as CSS vars, Big Picture styles
 │   │
-│   ├── pages/
-│   │   ├── Library.tsx             # Main view: Recommendations + Pinned + game grid/list
-│   │   ├── Favorites.tsx           # is_favorite=true filtered view
-│   │   ├── RecentlyPlayed.tsx      # last_played DESC, 12 games, time-ago badges
-│   │   ├── Stats.tsx               # Statistics dashboard with animated cards
-│   │   ├── Wrapped.tsx             # Year in Review — 9 animated stat cards + charts
-│   │   ├── Spin.tsx                # SVG randomizer wheel with history & controls
-│   │   ├── Collections.tsx         # Collections index + per-collection game grid
-│   │   └── Settings.tsx            # Full settings: theme, behavior, statuses, data, about
+│   ├── pages/                      # Library · Favorites · RecentlyPlayed · Collections
+│   │                               # Stats · Wrapped · Spin · Settings
 │   │
 │   ├── components/
-│   │   ├── layout/
-│   │   │   ├── Layout.tsx          # Root shell: sidebar + topbar + outlet + portals
-│   │   │   ├── Sidebar.tsx         # Nav links, platform/status filters, overview stats
-│   │   │   ├── Topbar.tsx          # Log panel, Remove Duplicates, IGDB scan, Scan, Add Game
-│   │   │   └── PageSearch.tsx      # Per-page search + sort + view toggle bar
-│   │   │
-│   │   ├── library/
-│   │   │   ├── GameCard.tsx        # 3:4 cover, overlay Play/Fav/Folder, platform badge, 🔥 on ≥8
-│   │   │   ├── GameGrid.tsx        # Responsive CSS grid, handles both view modes + BatchActionBar
-│   │   │   ├── GameListRow.tsx     # Compact row: thumbnail, name+status, tags, playtime, rating
-│   │   │   ├── BatchActionBar.tsx  # Floating bottom bar for batch status/rating/tag/delete actions
-│   │   │   ├── PinnedRow.tsx       # Horizontal strip of pinned games shown above the main grid
-│   │   │   ├── Recommendations.tsx # Smart "Play Next" horizontal strip with taste-based scoring
-│   │   │   ├── FilterBuilder.tsx   # Advanced filter builder: unlimited rules, AND/OR logic, 8 fields
-│   │   │   └── RecentlyPlayed.tsx  # Horizontal scrollable carousel (max 12 games)
-│   │   │
-│   │   ├── game/
-│   │   │   ├── GameDetail.tsx      # Slide-in drawer with Info / Screenshots / History / Mods tabs
-│   │   │   ├── GameNotes.tsx       # Note list + inline edit + new note (Ctrl+Enter to save)
-│   │   │   └── ModLoaderPanel.tsx  # BepInEx/MelonLoader install, mod list, add/remove
-│   │   │
-│   │   ├── onboarding/
-│   │   │   ├── OnboardingTour.tsx  # Root controller: step index, keyboard nav, finale trigger
-│   │   │   ├── TourSpotlight.tsx   # SVG mask overlay with glow ring, pulse rings, auto-scroll
-│   │   │   ├── TourCard.tsx        # Glass-morphism floating card with progress bar and chapter strip
-│   │   │   ├── TourModeSelector.tsx# Full-screen mode picker (Quick / Standard / Deep Dive)
-│   │   │   ├── TourFinale.tsx      # Cinematic ending: message screen → heart fly-through → credit
-│   │   │   └── steps.ts            # All step definitions, FAST_IDS, STANDARD_IDS, DOM helpers
-│   │   │
-│   │   ├── modals/
-│   │   │   ├── AddGameModal.tsx    # Single exe picker or bulk folder scan
-│   │   │   ├── CoverSearchModal.tsx# Search Steam by name, 4-col grid, click to apply
-│   │   │   ├── WhatsNewModal.tsx   # In-app release notes modal (auto on version bump)
-│   │   │   └── ConfirmModal.tsx    # Yes/No dialog with error-style accent
-│   │   │
-│   │   └── ui/
-│   │       ├── Badge.tsx           # Platform / tag pill badges
-│   │       ├── PlatformBadge.tsx   # Icon + label badge for Steam / Epic / GOG / Custom
-│   │       ├── StarRating.tsx      # Interactive 10-star rating widget
-│   │       ├── Icons.tsx           # 40+ custom SVG icons
-│   │       ├── GameContextMenu.tsx # Right-click portal menu: Play, Folder, Fav, Pin, Copy, Details
-│   │       ├── CommandPalette.tsx  # Ctrl+K overlay: fuzzy game search + 6 quick actions
-│   │       ├── Toast.tsx           # Bottom-right toasts (3.5 s auto-dismiss)
-│   │       ├── LogPanel.tsx        # Right-side scan log (max 500 entries, auto-scroll)
-│   │       ├── EmptyState.tsx      # Centered placeholder with action button
-│   │       ├── GlassCard.tsx       # Frosted glass effect card wrapper
-│   │       └── ErrorBoundary.tsx   # React error boundary with fallback UI
+│   │   ├── layout/                 # Layout, Sidebar, Topbar, PageSearch
+│   │   ├── library/                # LibraryHero, Shelf, VirtualGrid, GameCard, GameGrid,
+│   │   │                           # GameListRow, FilterPopover, FilterBuilder, BatchActionBar,
+│   │   │                           # PinnedRow, Recommendations, RecentlyPlayed
+│   │   ├── bigpicture/             # BigPicture shell, views, overlays, Now Playing card,
+│   │   │                           # button glyphs, spatial navigation, sounds, gamepad launcher
+│   │   ├── game/                   # GameDetail drawer, GameNotes, ModLoaderPanel, ModsPromoPanel
+│   │   ├── modals/                 # AddGame, CoverFinder, CoverSearch, Duplicates, WhatsNew, Confirm
+│   │   ├── onboarding/             # Tour controller, spotlight, cards, mode selector, finale
+│   │   └── ui/                     # Logo, GameCover, CommandPalette, SessionClock, PageHeader,
+│   │                               # Icons, Toast, LogPanel, StarRating, context menu…
 │   │
-│   ├── store/
-│   │   ├── useGameStore.ts         # Games, filters, sort, view, hiddenIds (Zustand)
-│   │   └── useUIStore.ts           # Toasts, modals, statuses, logs, update, tour state (Zustand)
-│   │
-│   ├── hooks/
-│   │   ├── useGames.ts             # TanStack Query mutations + scan operations
-│   │   └── useCover.ts             # Smart cover loader: cache, queue (max 4 concurrent), cancel
-│   │
-│   └── lib/
-│       ├── tauri.ts                # Typed wrappers for every Tauri IPC command
-│       ├── types.ts                # TypeScript interfaces: Game, Note, AppSettings, StatusConfig…
-│       └── utils.ts                # Formatters, platform color maps, time-ago, constants
+│   ├── store/                      # useGameStore, useUIStore (Zustand)
+│   ├── hooks/                      # useGames, useCover, useSession, useProgressive
+│   └── lib/                        # tauri (typed IPC), search, duplicates, gameName,
+│                                   # coverQuery, gamepad, gameActions, theme, utils, types
 │
 └── src-tauri/                      # Tauri + Rust backend
-    ├── tauri.conf.json             # App ID, window (1400×900, min 1000×700), CSP, updater, bundle
+    ├── tauri.conf.json             # App ID, window, CSP, updater, bundle
     ├── Cargo.toml                  # Rust crate deps
-    ├── build.rs                    # Tauri build script
-    │
     └── src/
-        ├── main.rs                 # Entry point — calls lib::run()
-        ├── lib.rs                  # Tauri builder, system tray, window events, IPC registration
-        ├── models.rs               # Game, Note, AppSettings, CoverCandidate, YearInReview structs
-        │
-        ├── commands/
-        │   ├── games.rs            # CRUD for games, notes, sessions; trash/restore/purge; toggle pin
-        │   ├── scanner.rs          # Steam/Epic/GOG/custom scan, cover fetch, bulk cover auto-fetch
-        │   ├── launcher.rs         # Process spawn, playtime + session tracking, minimize/restore
-        │   ├── modloader.rs        # BepInEx + MelonLoader install/uninstall + mod management
-        │   ├── settings.rs         # get/save settings, export/import, update check, Steam sync, Wrapped
-        │   └── logger.rs           # Static in-memory error buffer + rotating file log (1 MB / 3 files)
-        │
-        └── db/
-            ├── schema.rs           # CREATE TABLE + CREATE INDEX statements
-            └── queries.rs          # All SQL operations (CRUD, filter, upsert)
+        ├── main.rs / lib.rs        # Entry, builder, tray, single instance, session recovery
+        ├── models.rs               # Shared structs
+        ├── commands/               # games, scanner, launcher, covers, collections,
+        │                           # modloader, settings, logger
+        └── db/                     # schema.rs, queries.rs
 ```
 
 ---
@@ -1086,13 +1148,17 @@ Rust source changes trigger a full backend recompile. Frontend changes hot-reloa
 
 ### Production Build
 
-```powershell
-.\build-release.ps1
+```bash
+npx tauri build
 ```
 
 Outputs installers to `src-tauri/target/release/bundle/`:
-- `msi/ZGameLib_1.2.0_x64_en-US.msi`
-- `nsis/ZGameLib_1.2.0_x64-setup.exe`
+- `msi/ZGameLib_1.3.0_x64_en-US.msi`
+- `nsis/ZGameLib_1.3.0_x64-setup.exe`
+
+### Release Builds on GitHub
+
+Run the **Release** workflow from the Actions tab (or push a `v*` tag). It builds the Windows installers and creates a **draft** GitHub release with them attached, ready to test and publish.
 
 ---
 

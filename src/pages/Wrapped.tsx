@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useCover } from "@/hooks/useCover";
-import { formatPlaytime } from "@/lib/utils";
+import { formatPlaytime, PLATFORM_LABELS } from "@/lib/utils";
 import type { GameSummary, Platform } from "@/lib/types";
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -118,7 +118,7 @@ function PlatformDonut({ breakdown }: { breakdown: Record<string, number> }) {
         {entries.map(([platform, count]) => (
           <div key={platform} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full shrink-0" style={{ background: PLATFORM_COLORS[platform] ?? "#94a3b8" }} />
-            <span className="text-[11px] text-slate-400 capitalize">{platform}</span>
+            <span className="text-[11px] text-slate-400">{PLATFORM_LABELS[platform as Platform] ?? platform}</span>
             <span className="text-[11px] text-slate-500 ml-1">{count}</span>
           </div>
         ))}
@@ -223,7 +223,7 @@ export default function Wrapped() {
                 <GameCoverMini game={data.most_played} />
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold text-white truncate">{data.most_played.name}</div>
-                  <div className="text-[11px] text-slate-500 capitalize mt-0.5">{data.most_played.platform}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">{PLATFORM_LABELS[data.most_played.platform as Platform] ?? data.most_played.platform}</div>
                   <div className="text-[11px] mt-2" style={{ color: "rgb(var(--accent-400))" }}>
                     {formatPlaytime(data.most_played.playtime_mins)}
                   </div>
@@ -245,7 +245,7 @@ export default function Wrapped() {
                 <GameCoverMini game={data.top_rated} />
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold text-white truncate">{data.top_rated.name}</div>
-                  <div className="text-[11px] text-slate-500 capitalize mt-0.5">{data.top_rated.platform}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">{PLATFORM_LABELS[data.top_rated.platform as Platform] ?? data.top_rated.platform}</div>
                   {data.top_rated.rating != null && (
                     <div className="flex items-center gap-1 mt-2">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="rgb(var(--accent-400))"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>

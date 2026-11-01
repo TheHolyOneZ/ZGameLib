@@ -52,6 +52,8 @@
 
 ### Fixed
 
+- The command palette listed duplicate copies the library had already collapsed
+- Year in Review showed store names like "Gog" instead of "GOG"
 - A game that never starts, or closes right after launching, no longer stays stuck on "Playing / Stop". ZGameLib gives up after about 20 seconds (60 seconds for Steam, Epic and Ubisoft, which may need to start first), shows "Starting…" in the meantime and tells you when a game didn't start
 - Some borders and backgrounds (theme picker, grid-column buttons and others) rendered as bright light-grey outlines because their opacity values weren't generated
 - Playtime tracking was reworked:

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
+import { useLibraryGames } from "@/hooks/useGames";
 import GameCover from "@/components/ui/GameCover";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 import {
@@ -47,7 +48,7 @@ function GameRow({ game, active }: { game: Game; active: boolean }) {
 export default function CommandPalette() {
   const isOpen = useUIStore((s) => s.isCommandPaletteOpen);
   const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const games = useGameStore((s) => s.games);
+  const games = useLibraryGames();
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
