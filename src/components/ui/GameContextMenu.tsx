@@ -1,9 +1,9 @@
+import * as gameActions from "@/lib/gameActions";
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { PlayIcon, FolderIcon, HeartIcon, CopyIcon, SettingsIcon, PinIcon, TrashIcon, CheckIcon, EyeIcon, EyeOffIcon } from "@/components/ui/Icons";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useGames } from "@/hooks/useGames";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
@@ -170,7 +170,7 @@ function ContextMenuPortal({
   const setSelectedGameId = useGameStore((s) => s.setSelectedGameId);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
   const addToast = useUIStore((s) => s.addToast);
-  const { toggleFavorite, togglePinned, remove, update } = useGames();
+  const { toggleFavorite, togglePinned, moveToTrash: remove, updateGame: update } = gameActions;
   const isHidden = useGameStore((s) => s.hiddenIds.includes(game.id));
   const { launch } = useLaunchGame();
 

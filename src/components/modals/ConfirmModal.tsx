@@ -17,7 +17,7 @@ export default function ConfirmModal() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: "none" }}
           onClick={closeConfirm}
           onKeyDown={(e) => { if (e.key === "Escape") closeConfirm(); }}
           className="fixed inset-0 z-[80] flex items-center justify-center"
@@ -26,7 +26,7 @@ export default function ConfirmModal() {
           <motion.div
             initial={{ opacity: 0, scale: 0.94, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96 }}
+            exit={{ opacity: 0, scale: 0.96, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
             className="glass-strong rounded-3xl p-6 w-full max-w-[420px] mx-4"

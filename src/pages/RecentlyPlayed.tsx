@@ -2,6 +2,7 @@ import { displayName } from "@/lib/gameName";
 import { useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
+import { useLibraryGames } from "@/hooks/useGames";
 import { useUIStore } from "@/store/useUIStore";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import GameCard from "@/components/library/GameCard";
@@ -13,6 +14,7 @@ import { timeAgo, formatPlaytime, PLATFORM_LABELS } from "@/lib/utils";
 import { ClockIcon, PlayIcon, SearchIcon, CloseIcon } from "@/components/ui/Icons";
 import type { Game } from "@/lib/types";
 import { useState } from "react";
+import { useProgressive } from "@/hooks/useProgressive";
 
 function bucketOf(iso: string): string {
   const d = new Date(iso);
@@ -59,7 +61,7 @@ function FeaturedRecent({ game }: { game: Game }) {
 }
 
 export default function RecentlyPlayedPage() {
-  const games = useGameStore((s) => s.games);
+  const games = useLibraryGames();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
 
@@ -70,16 +72,18 @@ export default function RecentlyPlayedPage() {
       .sort((a, b) => (b.last_played! > a.last_played! ? 1 : -1));
   }, [games, query]);
 
+  const { limit, sentinel, hasMore } = useProgressive(recent.length, 60, query);
+
   const groups = useMemo(() => {
     const out: { label: string; games: Game[] }[] = [];
-    for (const g of recent) {
+    for (const g of recent.slice(0, limit)) {
       const label = bucketOf(g.last_played!);
       const last = out[out.length - 1];
       if (last && last.label === label) last.games.push(g);
       else out.push({ label, games: [g] });
     }
     return out;
-  }, [recent]);
+  }, [recent, limit]);
 
   const weekCount = useMemo(() => {
     const cutoff = Date.now() - 7 * 86400000;
@@ -133,6 +137,7 @@ export default function RecentlyPlayedPage() {
                 </div>
               </section>
             ))}
+            {hasMore && <div ref={sentinel} className="h-24" />}
           </>
         )}
       </div>

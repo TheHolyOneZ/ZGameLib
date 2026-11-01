@@ -750,7 +750,7 @@ export default function Settings() {
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
+                      exit={{ opacity: 0, height: 0, pointerEvents: "none" }}
                       className="overflow-hidden"
                     >
                       <div
@@ -993,7 +993,7 @@ export default function Settings() {
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
+                      exit={{ opacity: 0, height: 0, pointerEvents: "none" }}
                       className="overflow-hidden"
                     >
                       <div className="pt-1">
@@ -1242,7 +1242,7 @@ export default function Settings() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
+                  exit={{ opacity: 0, height: 0, pointerEvents: "none" }}
                   className="overflow-hidden"
                 >
                   <div
@@ -1641,7 +1641,7 @@ export default function Settings() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
+            exit={{ opacity: 0, y: 30, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 400, damping: 32 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 pl-5 pr-2 py-2 rounded-2xl glass-strong"
             style={{ boxShadow: "0 20px 50px -10px rgba(0,0,0,0.8), 0 0 0 1px rgb(var(--accent-400) / 0.25)" }}
@@ -1663,7 +1663,7 @@ export default function Settings() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, pointerEvents: "none" }}
               onClick={() => setSettingsUnsavedNav(null)}
               className="fixed inset-0 z-[60]"
               style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)" }}
@@ -1671,7 +1671,7 @@ export default function Settings() {
             <motion.div
               initial={{ opacity: 0, scale: 0.88, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 8 }}
+              exit={{ opacity: 0, scale: 0.92, y: 8, pointerEvents: "none" }}
               transition={{ type: "spring", stiffness: 420, damping: 30 }}
               className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none"
             >

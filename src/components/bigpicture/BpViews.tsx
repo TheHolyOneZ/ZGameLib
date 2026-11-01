@@ -212,7 +212,7 @@ export function HomeView({ games, runningId, focusedGame, onSelect, onOpenTab }:
   );
 }
 
-const PAGE = 240;
+const PAGE = 96;
 
 export function GridView({ title, games, runningId, onSelect, chips, empty }: {
   title: string;

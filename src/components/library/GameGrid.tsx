@@ -1,10 +1,11 @@
 import { AnimatePresence, motion, Reorder } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { useFilteredGames, useScan, usePullUninstalled } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import GameCard from "./GameCard";
+import VirtualGrid from "./VirtualGrid";
 import GameListRow from "./GameListRow";
 import BatchActionBar from "./BatchActionBar";
 import EmptyState from "@/components/ui/EmptyState";
@@ -128,6 +129,13 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
   const pageSize = appSettings?.pagination_page_size ?? 24;
 
   const [page, setPage] = useState(1);
+  const [animateIn, setAnimateIn] = useState(true);
+  const visibleIds = useMemo(() => games.map((g) => g.id), [games]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimateIn(false), 900);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => { setPage(1); }, [search, filters, paginationEnabled, pageSize]);
 
@@ -272,44 +280,52 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
             <div className="w-14 text-right">Rating</div>
             <div className="w-[104px]" />
           </div>
-          <AnimatePresence initial={false}>
-            {visibleGames.map((g) => (
-              <GameListRow key={g.id} game={g} />
-            ))}
-          </AnimatePresence>
+          <VirtualGrid
+            items={visibleGames}
+            getKey={(g) => g.id}
+            columns={1}
+            gapX={0}
+            gapY={4}
+            fixedRowHeight={68}
+            overscanRows={8}
+            render={(g) => <GameListRow game={g} />}
+          />
         </div>
         {paginationEnabled && totalPages > 1 && (
           <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
         )}
-        <BatchActionBar visibleIds={games.map((g) => g.id)} />
+        <BatchActionBar visibleIds={visibleIds} />
       </>
     );
   }
 
   return (
     <>
-      <div
-        data-tour="game-grid"
-        className="px-8 pt-5 pb-10 grid gap-x-5 gap-y-6"
-        style={{ gridTemplateColumns: gridTemplate(gridColumns, cardSize) }}
-      >
-        {visibleGames.map((g, idx) => (
+      <VirtualGrid
+        dataTour="game-grid"
+        className="mx-8 mt-5 mb-10"
+        items={visibleGames}
+        getKey={(g) => g.id}
+        columns={gridColumns}
+        minColumnWidth={cardSize}
+        gapX={20}
+        gapY={24}
+        render={(g, idx) => (
           <motion.div
-            key={g.id}
             data-tour={idx === 0 ? "game-card-first" : undefined}
             variants={itemVariants}
-            initial={idx < 40 ? "hidden" : false}
+            initial={animateIn && idx < 40 ? "hidden" : false}
             animate="show"
             transition={{ delay: Math.min(idx, 24) * 0.012 }}
           >
             <GameCard game={g} />
           </motion.div>
-        ))}
-      </div>
+        )}
+      />
       {paginationEnabled && totalPages > 1 && (
         <Pagination page={safePage} totalPages={totalPages} onPage={setPage} />
       )}
-      <BatchActionBar visibleIds={games.map((g) => g.id)} />
+      <BatchActionBar visibleIds={visibleIds} />
     </>
   );
 }

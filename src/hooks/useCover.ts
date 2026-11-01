@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/tauri";
 import type { Game } from "@/lib/types";
 
-const CACHE_MAX = 500;
+const CACHE_MAX = 250;
 const cache = new Map<string, string>();
 
 function cacheGet(key: string): string | undefined {
@@ -20,10 +20,12 @@ function cacheSet(key: string, val: string) {
 }
 
 const pending = new Map<string, Promise<string>>();
+const wanted = new Map<string, number>();
 
-const MAX_CONCURRENT = 4;
+const MAX_CONCURRENT = 6;
 let activeCount = 0;
 const queue: Array<{
+  key: string;
   fetcher: () => Promise<string>;
   resolve: (v: string) => void;
   reject: (e: unknown) => void;
@@ -31,7 +33,12 @@ const queue: Array<{
 
 function processQueue() {
   while (activeCount < MAX_CONCURRENT && queue.length > 0) {
-    const item = queue.shift()!;
+    const item = queue.pop()!;
+    if ((wanted.get(item.key) ?? 0) <= 0) {
+      pending.delete(item.key);
+      item.reject(new Error("cancelled"));
+      continue;
+    }
     activeCount++;
     item.fetcher()
       .then(item.resolve)
@@ -40,15 +47,23 @@ function processQueue() {
   }
 }
 
-function queueFetch(fetcher: () => Promise<string>, key: string): Promise<string> {
-  if (pending.has(key)) return pending.get(key)!;
+export function want(key: string) {
+  wanted.set(key, (wanted.get(key) ?? 0) + 1);
+  return () => {
+    const n = (wanted.get(key) ?? 1) - 1;
+    if (n <= 0) wanted.delete(key); else wanted.set(key, n);
+  };
+}
 
+export function queueFetch(fetcher: () => Promise<string>, key: string): Promise<string> {
+  const existing = pending.get(key);
+  if (existing) return existing;
   const promise = new Promise<string>((resolve, reject) => {
-    queue.push({ fetcher, resolve, reject });
-    processQueue();
+    queue.push({ key, fetcher, resolve, reject });
+    queueMicrotask(processQueue);
   });
   pending.set(key, promise);
-  promise.finally(() => pending.delete(key));
+  promise.then(() => pending.delete(key), () => pending.delete(key));
   return promise;
 }
 
@@ -72,6 +87,7 @@ export function useCover(game: Game): string | null {
     const gen = ++genRef.current;
     const isRemote = path.startsWith("http://") || path.startsWith("https://");
     const fetcher = isRemote ? () => api.fetchUrlAsBase64(path) : () => api.readImageBase64(path);
+    const release = want(path);
 
     queueFetch(fetcher, path)
       .then((dataUri) => {
@@ -79,6 +95,7 @@ export function useCover(game: Game): string | null {
         if (genRef.current === gen) setSrc(dataUri);
       })
       .catch(() => {});
+    return release;
   }, [path]);
 
   return src;

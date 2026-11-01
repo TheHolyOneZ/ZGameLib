@@ -1,10 +1,10 @@
+import * as gameActions from "@/lib/gameActions";
 import { displayName } from "@/lib/gameName";
 import { motion } from "framer-motion";
 import { cn, formatPlaytime, timeAgo } from "@/lib/utils";
 import { useUIStore } from "@/store/useUIStore";
 import type { Game } from "@/lib/types";
 import { useGameStore } from "@/store/useGameStore";
-import { useGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import Badge from "@/components/ui/Badge";
@@ -19,7 +19,7 @@ export default function GameListRow({ game, collectionId, onRemoveFromCollection
   const addToast = useUIStore((s) => s.addToast);
   const customStatuses = useUIStore((s) => s.customStatuses);
   const running = useUIStore((s) => s.activeGameId === game.id);
-  const { toggleFavorite } = useGames();
+  const toggleFavorite = gameActions.toggleFavorite;
   const { launch } = useLaunchGame();
   const isSelected = useGameStore((s) => s.selectedIds.includes(game.id));
   const anySelected = useGameStore((s) => s.selectedIds.length > 0);
@@ -29,10 +29,6 @@ export default function GameListRow({ game, collectionId, onRemoveFromCollection
   return (
     <GameContextMenu game={game} collectionId={collectionId} onRemoveFromCollection={onRemoveFromCollection}>
       <motion.div
-        layout="position"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
         onClick={() => { if (anySelected) toggleSelected(game.id); else { setSelectedGameId(game.id); setDetailOpen(true); } }}
         className={cn(
           "group flex items-center gap-4 px-3 py-2 cursor-pointer rounded-xl border transition-colors duration-200",

@@ -1,3 +1,4 @@
+import * as gameActions from "@/lib/gameActions";
 import { displayName } from "@/lib/gameName";
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -5,7 +6,6 @@ import { cn, formatPlaytime, timeAgo } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import GameContextMenu from "@/components/ui/GameContextMenu";
@@ -26,7 +26,7 @@ function GameCard({ game, subtitle, collectionId, onRemoveFromCollection }: Game
   const addToast = useUIStore((s) => s.addToast);
   const activeGameId = useUIStore((s) => s.activeGameId);
   const customStatuses = useUIStore((s) => s.customStatuses);
-  const { toggleFavorite } = useGames();
+  const toggleFavorite = gameActions.toggleFavorite;
   const { launch } = useLaunchGame();
   const isSelected = useGameStore((s) => s.selectedIds.includes(game.id));
   const anySelected = useGameStore((s) => s.selectedIds.length > 0);
@@ -39,13 +39,12 @@ function GameCard({ game, subtitle, collectionId, onRemoveFromCollection }: Game
   });
   const showPlaytime = appSettings?.show_playtime_on_cards ?? true;
 
-  const { data: exeExists } = useQuery({
-    queryKey: ["exe-health", game.id],
-    queryFn: () => api.checkExeHealth(game.id),
-    staleTime: 10 * 60 * 1000,
-    enabled: !!game.exe_path,
+  const { data: missingExe } = useQuery({
+    queryKey: ["missing-exe"],
+    queryFn: async () => new Set(await api.getMissingExeIds()),
+    staleTime: 5 * 60 * 1000,
   });
-  const exeMissing = !!game.exe_path && exeExists === false;
+  const exeMissing = !!game.exe_path && !!missingExe?.has(game.id);
   const running = activeGameId === game.id;
   const statusConfig = customStatuses.find((s) => s.key === game.status);
   const PlatformIcon = PLATFORM_ICONS[game.platform];

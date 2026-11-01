@@ -4,19 +4,19 @@ use uuid::Uuid;
 use crate::db::{DbState, IgdbTokenState, queries};
 use crate::models::{Game, Note, Session, CreateGamePayload, UpdateGamePayload, HltbData, WeeklyPlaytime, IgdbMetadata, LibraryGrowthEntry};
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_all_games(state: State<DbState>) -> Result<Vec<Game>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::get_all_games(&conn).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_game(state: State<DbState>, id: String) -> Result<Option<Game>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::get_game_by_id(&conn, &id).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn create_game(state: State<DbState>, payload: CreateGamePayload) -> Result<Game, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let now = Utc::now().to_rfc3339();
@@ -55,7 +55,7 @@ pub fn create_game(state: State<DbState>, payload: CreateGamePayload) -> Result<
     Ok(game)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn update_game(state: State<DbState>, payload: UpdateGamePayload) -> Result<Game, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut game = queries::get_game_by_id(&conn, &payload.id)
@@ -99,38 +99,38 @@ pub fn update_game(state: State<DbState>, payload: UpdateGamePayload) -> Result<
     Ok(game)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_game(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let now = Utc::now().to_rfc3339();
     queries::soft_delete_game(&conn, &id, &now).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn permanent_delete_game(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::delete_game(&conn, &id).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn restore_game(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::restore_game(&conn, &id).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn purge_trash(state: State<DbState>) -> Result<usize, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::purge_trash(&conn).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_trashed_games(state: State<DbState>) -> Result<Vec<Game>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::get_trashed_games(&conn).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn toggle_pinned(state: State<DbState>, id: String) -> Result<bool, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut game = queries::get_game_by_id(&conn, &id)
@@ -141,7 +141,7 @@ pub fn toggle_pinned(state: State<DbState>, id: String) -> Result<bool, String> 
     Ok(game.is_pinned)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn toggle_favorite(state: State<DbState>, id: String) -> Result<bool, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut game = queries::get_game_by_id(&conn, &id)
@@ -152,7 +152,7 @@ pub fn toggle_favorite(state: State<DbState>, id: String) -> Result<bool, String
     Ok(game.is_favorite)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn check_exe_health(state: State<DbState>, id: String) -> Result<bool, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let game = queries::get_game_by_id(&conn, &id)
@@ -164,13 +164,32 @@ pub fn check_exe_health(state: State<DbState>, id: String) -> Result<bool, Strin
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
+pub fn get_missing_exe_ids(state: State<DbState>) -> Result<Vec<String>, String> {
+    let paths: Vec<(String, String)> = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare("SELECT id, exe_path FROM games WHERE deleted_at IS NULL AND exe_path IS NOT NULL AND exe_path != ''")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+            .map_err(|e| e.to_string())?;
+        rows.filter_map(|r| r.ok()).collect()
+    };
+    Ok(paths
+        .into_iter()
+        .filter(|(_, p)| !std::path::Path::new(p).exists())
+        .map(|(id, _)| id)
+        .collect())
+}
+
+#[tauri::command(async)]
 pub fn get_notes(state: State<DbState>, game_id: String) -> Result<Vec<Note>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::get_notes_for_game(&conn, &game_id).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn create_note(state: State<DbState>, game_id: String, content: String) -> Result<Note, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let now = Utc::now().to_rfc3339();
@@ -185,7 +204,7 @@ pub fn create_note(state: State<DbState>, game_id: String, content: String) -> R
     Ok(note)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn update_note(state: State<DbState>, id: String, content: String) -> Result<Note, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn.prepare("SELECT id, game_id, content, created_at, updated_at FROM notes WHERE id=?1")
@@ -207,13 +226,13 @@ pub fn update_note(state: State<DbState>, id: String, content: String) -> Result
     Ok(note)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_note(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::delete_note(&conn, &id).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn reorder_games(state: State<DbState>, ids: Vec<String>) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
@@ -227,7 +246,7 @@ pub fn reorder_games(state: State<DbState>, ids: Vec<String>) -> Result<(), Stri
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn fetch_hltb_data(state: State<DbState>, game_id: String, game_name: String) -> Result<Option<HltbData>, String> {
     let raw = match ureq::get("https://howlongtobeat.com/")
         .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
@@ -319,7 +338,7 @@ pub fn fetch_hltb_data(state: State<DbState>, game_id: String, game_name: String
     Ok(Some(data))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_sessions(state: State<DbState>, game_id: String) -> Result<Vec<Session>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn.prepare(
@@ -339,7 +358,7 @@ pub fn get_sessions(state: State<DbState>, game_id: String) -> Result<Vec<Sessio
     Ok(sessions)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_weekly_playtime(state: State<DbState>) -> Result<Vec<WeeklyPlaytime>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn.prepare(
@@ -357,7 +376,7 @@ pub fn get_weekly_playtime(state: State<DbState>) -> Result<Vec<WeeklyPlaytime>,
     Ok(rows)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn batch_update_games(
     state: State<DbState>,
     ids: Vec<String>,
@@ -385,7 +404,7 @@ pub fn batch_update_games(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_library_growth(state: State<DbState>) -> Result<Vec<LibraryGrowthEntry>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn.prepare(
@@ -441,7 +460,7 @@ fn fetch_fresh_igdb_token(client_id: &str, client_secret: &str, now_secs: u64) -
     Ok((access_token, now_secs + expires_in))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn fetch_igdb_metadata(
     state: State<DbState>,
     token_state: State<IgdbTokenState>,
@@ -552,7 +571,7 @@ pub fn fetch_igdb_metadata(
     Ok(Some(meta))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn clear_igdb_data(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::clear_igdb_data(&conn, &id).map_err(|e| e.to_string())

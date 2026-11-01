@@ -8,6 +8,8 @@ import { api } from "@/lib/tauri";
 import type { Platform } from "@/lib/types";
 import { CloseIcon, FolderIcon, PlusIcon, GamepadIcon, ScanIcon } from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
+import { useGameStore } from "@/store/useGameStore";
+import { canonicalKey, cleanTitle, displayName } from "@/lib/gameName";
 
 type Mode = "single" | "bulk";
 
@@ -23,6 +25,7 @@ export default function AddGameModal() {
   const [exePath, setExePath] = useState("");
   const [platform] = useState<Platform>("custom");
   const [bulkFolder, setBulkFolder] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const isBulkAdding = useUIStore((s) => s.isBulkAdding);
   const setBulkAdding = useUIStore((s) => s.setBulkAdding);
 
@@ -42,8 +45,10 @@ export default function AddGameModal() {
       setExePath(selected);
       if (!name) {
         const parts = selected.split(/[\\/]/);
-        const filename = parts[parts.length - 1].replace(".exe", "");
-        setName(filename);
+        const filename = parts[parts.length - 1].replace(/\.exe$/i, "");
+        const folder = parts.length > 1 ? parts[parts.length - 2] : "";
+        const generic = /^(game|launcher|start|play|run|setup|bin|win64|win32|x64|shipping|client)$/i.test(filename.replace(/[-_.]?(win64|win32|x64|shipping)$/i, ""));
+        setName(cleanTitle(generic && folder ? folder : filename.replace(/[-_.](win64|win32|x64|shipping)$/i, "")));
       }
     }
   };
@@ -58,15 +63,27 @@ export default function AddGameModal() {
     }
   };
 
-  const handleSubmitSingle = (e: React.FormEvent) => {
+  const handleSubmitSingle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    create({
-      name: name.trim(),
-      platform,
-      exe_path: exePath || undefined,
-      install_dir: exePath ? exePath.split(/[\\/]/).slice(0, -1).join("/") : undefined,
-    });
+    if (!name.trim() || submitting) return;
+    const trimmed = name.trim();
+    const existing = useGameStore.getState().games.find((g) => (exePath && g.exe_path === exePath) || canonicalKey(g.name) === canonicalKey(trimmed));
+    if (existing) {
+      const proceed = await new Promise<boolean>((resolve) =>
+        useUIStore.getState().openConfirm(`"${displayName(existing.name)}" is already in your library. Add it again anyway?`, () => resolve(true), "Add Anyway")
+      );
+      if (!proceed) return;
+    }
+    setSubmitting(true);
+    create(
+      {
+        name: trimmed,
+        platform,
+        exe_path: exePath || undefined,
+        install_dir: exePath ? exePath.split(/[\\/]/).slice(0, -1).join("/") : undefined,
+      },
+      { onSettled: () => setSubmitting(false) }
+    );
     close();
   };
 
@@ -98,7 +115,7 @@ export default function AddGameModal() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: "none" }}
             onClick={close}
             className="fixed inset-0 z-40"
             style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)" }}
@@ -106,7 +123,7 @@ export default function AddGameModal() {
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
           >
@@ -176,7 +193,7 @@ export default function AddGameModal() {
                     key="single"
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -16 }}
+                    exit={{ opacity: 0, x: -16, pointerEvents: "none" }}
                     transition={{ duration: 0.15 }}
                     onSubmit={handleSubmitSingle}
                     className="px-6 pb-6 flex flex-col gap-4"
@@ -242,7 +259,7 @@ export default function AddGameModal() {
                     key="bulk"
                     initial={{ opacity: 0, x: 16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 16 }}
+                    exit={{ opacity: 0, x: 16, pointerEvents: "none" }}
                     transition={{ duration: 0.15 }}
                     className="px-6 pb-6 flex flex-col gap-4"
                   >

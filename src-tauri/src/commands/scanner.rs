@@ -937,7 +937,7 @@ fn scan_gog_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mutex<rusq
     Ok(ScanResult { added, skipped, total })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn search_game_covers(query: String) -> Result<Vec<CoverCandidate>, String> {
     let clean = clean_title_for_search(&query);
     let mut results = steam_search(&clean, 15);
@@ -957,7 +957,7 @@ pub fn search_game_covers(query: String) -> Result<Vec<CoverCandidate>, String> 
     Ok(candidates)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_game_screenshots(steam_app_id: String) -> Result<Vec<String>, String> {
     let steam_root = match get_steam_root() {
         Some(r) => r,
@@ -1368,7 +1368,7 @@ fn scan_folder_for_games_inner(app: AppHandle, db: std::sync::Arc<std::sync::Mut
     Ok(ScanResult { added, skipped, total })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_game_cover(state: State<DbState>, game_id: String, image_path: String) -> Result<String, String> {
     let src = std::path::Path::new(&image_path);
 
@@ -1421,7 +1421,7 @@ pub fn set_game_cover(state: State<DbState>, game_id: String, image_path: String
     Ok(cover_path)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn fetch_url_as_base64(url: String) -> Result<String, String> {
     let data_dir = dirs::data_local_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
@@ -1509,7 +1509,7 @@ fn extract_exe_icon_internal(_exe_path: &str) -> Option<String> {
     None
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn extract_exe_icon(exe_path: String) -> Result<String, String> {
     extract_exe_icon_internal(&exe_path).ok_or_else(|| "Failed to extract icon".to_string())
 }
@@ -1579,13 +1579,13 @@ fn find_cover_in_dir_internal(dir: &str) -> Option<String> {
     best_match.map(|(p, _)| p.to_string_lossy().to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn find_cover_in_dir(dir_path: String) -> Result<String, String> {
     find_cover_in_dir_internal(&dir_path)
         .ok_or_else(|| "No cover image found in directory".to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_image_base64(file_path: String) -> Result<String, String> {
     use base64::Engine;
     let path = std::path::Path::new(&file_path);
@@ -1632,7 +1632,7 @@ pub struct FetchCoversResult {
     pub failed: usize,
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn fetch_missing_covers(state: State<DbState>) -> Result<FetchCoversResult, String> {
     let data_dir = dirs::data_local_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))

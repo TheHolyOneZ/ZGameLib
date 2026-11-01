@@ -72,7 +72,7 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, pointerEvents: "none" }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -80,7 +80,7 @@ export default function CoverSearchModal({ gameId, gameName, currentCoverPath, o
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        exit={{ opacity: 0, scale: 0.95, pointerEvents: "none" }}
         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
         className="w-[560px] max-h-[80vh] flex flex-col rounded-2xl overflow-hidden"
         style={{

@@ -2,6 +2,7 @@ import { displayName } from "@/lib/gameName";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
+import { useLibraryGames } from "@/hooks/useGames";
 import { useUIStore } from "@/store/useUIStore";
 import { useCover } from "@/hooks/useCover";
 import { api } from "@/lib/tauri";
@@ -10,6 +11,7 @@ import { cn, formatPlaytime } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 import { SpinIcon, PlayIcon, SearchIcon, SteamIcon, EpicIcon, GogIcon, CustomGameIcon, UbisoftIcon, HeartIcon, LibraryIcon, SparkleIcon, CloseIcon, CheckIcon } from "@/components/ui/Icons";
 import Badge from "@/components/ui/Badge";
+import VirtualGrid from "@/components/library/VirtualGrid";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 
 const SEG_PALETTE = [
@@ -302,10 +304,22 @@ function HistoryRow({ game, time }: { game: Game; time: Date }) {
   );
 }
 
+const WHEEL_MAX = 24;
+
+function drawWheel(pool: Game[]): Game[] {
+  if (pool.length <= WHEEL_MAX) return pool;
+  const copy = [...pool];
+  for (let i = copy.length - 1; i > copy.length - 1 - WHEEL_MAX; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(copy.length - WHEEL_MAX);
+}
+
 type QuickFilter = "all" | "steam" | "epic" | "gog" | "custom" | "ubisoft" | "favorites";
 
 export default function Spin() {
-  const allGames = useGameStore((s) => s.games);
+  const allGames = useLibraryGames();
   const addToast = useUIStore((s) => s.addToast);
 
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
@@ -373,14 +387,24 @@ export default function Spin() {
     return games;
   }, [allGames, selected, excludeLastWinner, history]);
 
+  const [wheelPool, setWheelPool] = useState<Game[]>([]);
+  const spinningRef = useRef(false);
+  spinningRef.current = isSpinning;
+  const poolKey = useMemo(() => pool.map((g) => g.id).join(","), [pool]);
+  const poolRef = useRef(pool);
+  poolRef.current = pool;
+  useEffect(() => { if (!spinningRef.current) setWheelPool(drawWheel(poolRef.current)); }, [poolKey]);
+
   const handleSpin = useCallback(() => {
     if (isSpinning || pool.length < 2) return;
+    const wheel = pool.length > WHEEL_MAX ? drawWheel(pool) : wheelPool.length === pool.length ? wheelPool : pool;
+    if (wheel !== wheelPool) setWheelPool(wheel);
     setIsSpinning(true);
     setWinner(null);
     setShowConfetti(false);
 
-    const winnerIndex = Math.floor(Math.random() * pool.length);
-    const segAngle = 360 / pool.length;
+    const winnerIndex = Math.floor(Math.random() * wheel.length);
+    const segAngle = 360 / wheel.length;
     const extraAngle = (360 - (winnerIndex * segAngle + segAngle / 2) + 360) % 360;
     const spins = 6 + Math.floor(Math.random() * 4);
     const targetRotation = rotation.get() + spins * 360 + extraAngle;
@@ -389,7 +413,7 @@ export default function Spin() {
       duration: 6 + Math.random() * 1.5,
       ease: [0.08, 0.82, 0.12, 1.0],
     }).then(() => {
-      const won = pool[winnerIndex];
+      const won = wheel[winnerIndex];
       setWinner(won);
       setIsSpinning(false);
       setShowConfetti(true);
@@ -397,7 +421,7 @@ export default function Spin() {
       setHistory((prev) => [{ game: won, time: new Date() }, ...prev].slice(0, 8));
       setTimeout(() => setShowConfetti(false), 4000);
     });
-  }, [isSpinning, pool, rotation]);
+  }, [isSpinning, wheelPool, rotation]);
 
   const handleExcludeWinner = () => {
     if (!winner) return;
@@ -514,7 +538,15 @@ export default function Spin() {
                 <p className="text-[12px] text-slate-600">No games found</p>
               </div>
             ) : (
-              selectorGames.map((game) => {
+              <VirtualGrid
+                items={selectorGames}
+                getKey={(g) => g.id}
+                columns={1}
+                gapX={0}
+                gapY={2}
+                fixedRowHeight={38}
+                overscanRows={10}
+                render={(game) => {
                 const isSelected = selected.has(game.id);
                 const isLastWinner = excludeLastWinner && history.length > 0 && game.id === history[0].game.id;
                 return (
@@ -522,7 +554,7 @@ export default function Spin() {
                     key={game.id}
                     onClick={() => toggleGame(game.id)}
                     className={cn(
-                      "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all mb-0.5 group",
+                      "w-full h-[38px] flex items-center gap-2.5 px-2.5 rounded-xl text-left transition-colors group",
                       isLastWinner ? "opacity-40" : "",
                       isSelected
                         ? "bg-accent-600/15 border border-accent-500/20"
@@ -546,7 +578,8 @@ export default function Spin() {
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: platformDot(game.platform) }} />
                   </button>
                 );
-              })
+                }}
+              />
             )}
           </div>
 
@@ -581,7 +614,12 @@ export default function Spin() {
 
           <div className="flex flex-col items-center gap-6 pt-6 pb-4 shrink-0">
             <div className="relative">
-              <Wheel pool={pool} rotation={rotation} isSpinning={isSpinning} />
+              <Wheel pool={wheelPool} rotation={rotation} isSpinning={isSpinning} />
+              {pool.length > WHEEL_MAX && (
+                <p className="absolute -bottom-7 left-0 right-0 text-center text-[11px] text-slate-500">
+                  Showing {WHEEL_MAX} of {pool.length} — every spin draws a fresh random set
+                </p>
+              )}
 
               {pool.length === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none z-30">

@@ -86,6 +86,9 @@ interface UIStore {
   setDuplicatesOpen: (v: boolean) => void;
 }
 
+let logBuffer: LogEntry[] = [];
+let logFlush: ReturnType<typeof setTimeout> | null = null;
+
 export const useUIStore = create<UIStore>((set) => ({
   toasts: [],
   addToast: (message, type = "success") => {
@@ -121,10 +124,16 @@ export const useUIStore = create<UIStore>((set) => ({
   logs: [],
   logPanelOpen: false,
   addLog: (level, message) => {
-    const id = crypto.randomUUID();
     const now = new Date();
     const time = now.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    set((s) => ({ logs: [...s.logs.slice(-499), { id, time, level, message }] }));
+    logBuffer.push({ id: crypto.randomUUID(), time, level, message });
+    if (logFlush) return;
+    logFlush = setTimeout(() => {
+      logFlush = null;
+      const batch = logBuffer;
+      logBuffer = [];
+      set((s) => ({ logs: [...s.logs, ...batch].slice(-500) }));
+    }, 100);
   },
   clearLogs: () => set({ logs: [] }),
   setLogPanelOpen: (v) => set({ logPanelOpen: v }),

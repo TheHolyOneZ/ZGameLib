@@ -152,7 +152,7 @@ export default function CommandPalette() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: "none" }}
           transition={{ duration: 0.15 }}
           onClick={() => setOpen(false)}
           className="fixed inset-0 z-50 flex justify-center"
@@ -161,7 +161,7 @@ export default function CommandPalette() {
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -8 }}
+            exit={{ opacity: 0, scale: 0.96, y: -8, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
             className="w-[620px] max-h-[520px] flex flex-col rounded-3xl overflow-hidden glass-strong"

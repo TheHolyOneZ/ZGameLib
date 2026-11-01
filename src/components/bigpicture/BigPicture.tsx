@@ -1,8 +1,9 @@
+import * as gameActions from "@/lib/gameActions";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useGames, useScan, useLibraryGames } from "@/hooks/useGames";
+import { useScan, useLibraryGames } from "@/hooks/useGames";
 import { useLaunchGame } from "@/lib/useLaunchGame";
 import { api } from "@/lib/tauri";
 import { startGamepadLoop, KEY_MAP, rumble, getConnectedPads, detectControllerKind, prettyControllerName } from "@/lib/gamepad";
@@ -67,7 +68,7 @@ function BigPictureShell() {
   const customStatuses = useUIStore((s) => s.customStatuses);
   const confirmDialog = useUIStore((s) => s.confirmDialog);
   const closeConfirm = useUIStore((s) => s.closeConfirm);
-  const { update, toggleFavorite } = useGames();
+  const { updateGame: update, toggleFavorite } = gameActions;
   const { scan } = useScan();
   const { launch } = useLaunchGame();
 
@@ -100,6 +101,12 @@ function BigPictureShell() {
 
   const pageGame = pageGameId ? games.find((g) => g.id === pageGameId) ?? null : null;
   const focusedGame = focusedGameId ? games.find((g) => g.id === focusedGameId) ?? null : null;
+  const [settledId, setSettledId] = useState<string | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => setSettledId(focusedGameId), 180);
+    return () => clearTimeout(t);
+  }, [focusedGameId]);
+  const settledGame = settledId ? games.find((g) => g.id === settledId) ?? null : null;
 
   useEffect(() => {
     let prev: boolean | null = null;
@@ -345,7 +352,7 @@ function BigPictureShell() {
   const favoriteGames = useMemo(() => games.filter((g) => g.is_favorite).sort((a, b) => a.name.localeCompare(b.name)), [games]);
   const recentGames = useMemo(() => games.filter((g) => g.last_played).sort((a, b) => (b.last_played ?? "").localeCompare(a.last_played ?? "")), [games]);
 
-  const backdropGame = pageGame ?? focusedGame ?? recentGames[0] ?? games[0] ?? null;
+  const backdropGame = pageGame ?? settledGame ?? recentGames[0] ?? games[0] ?? null;
 
   const hints: { action: PadAction; label: string }[] = (() => {
     if (confirmDialog) return [{ action: "a", label: "Select" }, { action: "b", label: "Cancel" }];
@@ -405,7 +412,10 @@ function BigPictureShell() {
               transition={{ duration: 0.7 }}
               className="absolute inset-0"
             >
-              <div className="absolute -inset-[10%] blur-[70px] opacity-45 saturate-150">
+              <div
+                className="absolute opacity-45"
+                style={{ left: "-5%", top: "-5%", width: "13.75%", height: "13.75%", transform: "scale(8)", transformOrigin: "0 0", filter: "blur(9px) saturate(1.5)" }}
+              >
                 <GameCover game={backdropGame} eager />
               </div>
             </motion.div>
@@ -456,7 +466,7 @@ function BigPictureShell() {
 
         <div data-bp-content className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
           {tab === "home" && (
-            <HomeView games={games} runningId={activeGameId} focusedGame={focusedGame} onSelect={openGame} onOpenTab={(t) => setTab(t)} />
+            <HomeView games={games} runningId={activeGameId} focusedGame={settledGame} onSelect={openGame} onOpenTab={(t) => setTab(t)} />
           )}
           {tab === "library" && (
             <GridView title="Library" games={libraryGames} runningId={activeGameId} onSelect={openGame} chips={chips} empty={query ? `No games match “${query}”.` : "No games match this filter."} />

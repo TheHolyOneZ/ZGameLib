@@ -63,7 +63,7 @@ export function GamePage({ game, running, statuses, onPlay, onStop, onFavorite, 
       style={{ background: "rgb(var(--bg-base))" }}
     >
       <div className="absolute inset-0">
-        <div className="absolute inset-0 scale-125 blur-[60px] opacity-60">
+        <div className="absolute opacity-60" style={{ left: "-5%", top: "-5%", width: "13.75%", height: "13.75%", transform: "scale(8)", transformOrigin: "0 0", filter: "blur(9px)" }}>
           <GameCover game={game} eager />
         </div>
         <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgb(var(--bg-base) / 0.97) 0%, rgb(var(--bg-base) / 0.85) 45%, rgb(var(--bg-base) / 0.55) 100%)" }} />

@@ -177,22 +177,23 @@ interface Indexed {
   extra: string;
 }
 
-const indexCache = new WeakMap<Game, Indexed>();
+const indexCache = new Map<string, { sig: string; ix: Indexed }>();
 
 function indexOf(g: Game): Indexed {
-  let ix = indexCache.get(g);
-  if (!ix) {
-    const clean = normalizeText(cleanTitle(g.name));
-    const name = normalizeText(g.name);
-    ix = {
-      name,
-      clean,
-      words: [...new Set([...clean.split(" "), ...name.split(" ")])].filter(Boolean),
-      acr: acronym(g.name),
-      extra: normalizeText([g.description, g.genre, g.developer, g.publisher, ...g.tags].filter(Boolean).join(" ")),
-    };
-    indexCache.set(g, ix);
-  }
+  const sig = g.name + "\u0001" + (g.description ?? "") + "\u0001" + (g.genre ?? "") + (g.developer ?? "") + (g.publisher ?? "") + "\u0001" + g.tags.join(",");
+  const hit = indexCache.get(g.id);
+  if (hit && hit.sig === sig) return hit.ix;
+  const clean = normalizeText(cleanTitle(g.name));
+  const name = normalizeText(g.name);
+  const ix: Indexed = {
+    name,
+    clean,
+    words: [...new Set([...clean.split(" "), ...name.split(" ")])].filter(Boolean),
+    acr: acronym(g.name),
+    extra: normalizeText([g.description, g.genre, g.developer, g.publisher, ...g.tags].filter(Boolean).join(" ")),
+  };
+  if (indexCache.size > 20000) indexCache.clear();
+  indexCache.set(g.id, { sig, ix });
   return ix;
 }
 

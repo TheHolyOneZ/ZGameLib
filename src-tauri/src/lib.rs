@@ -213,6 +213,7 @@ pub fn run() {
             games::toggle_favorite,
             games::toggle_pinned,
             games::check_exe_health,
+            games::get_missing_exe_ids,
             games::get_notes,
             games::create_note,
             games::update_note,

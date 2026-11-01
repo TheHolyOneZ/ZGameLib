@@ -1,11 +1,11 @@
+import * as gameActions from "@/lib/gameActions";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useGames } from "@/hooks/useGames";
-import { useCover, setCoverCache, clearCoverCache } from "@/hooks/useCover";
+import { useCover, setCoverCache, clearCoverCache, queueFetch, want } from "@/hooks/useCover";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
 import { useLaunchGame } from "@/lib/useLaunchGame";
@@ -122,20 +122,44 @@ function IgdbMetadataCard({ game, onClear }: { game: Game; onClear: () => void }
   );
 }
 
-function useScreenshotUrl(path: string) {
-  const [url, setUrl] = useState<string | null>(null);
+const shotCache = new Map<string, string>();
+
+function useScreenshotUrl(path: string, enabled = true) {
+  const [url, setUrl] = useState<string | null>(() => shotCache.get(path) ?? null);
   useEffect(() => {
+    if (!enabled) return;
+    const hit = shotCache.get(path);
+    if (hit) { setUrl(hit); return; }
     let cancelled = false;
-    api.readImageBase64(path)
-      .then((data) => { if (!cancelled) setUrl(data); })
-      .catch(() => { if (!cancelled) setUrl(""); });
-    return () => { cancelled = true; };
-  }, [path]);
+    const release = want("shot:" + path);
+    queueFetch(() => api.readImageBase64(path), "shot:" + path)
+      .then((data) => {
+        if (shotCache.size > 60) shotCache.delete(shotCache.keys().next().value!);
+        shotCache.set(path, data);
+        if (!cancelled) setUrl(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; release(); };
+  }, [path, enabled]);
   return url || null;
 }
 
+function useInView<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || inView) return;
+    const io = new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) { setInView(true); io.disconnect(); } }, { rootMargin: "300px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
+  return [ref, inView] as const;
+}
+
 function ScreenshotThumb({ path, onOpen }: { path: string; onOpen: () => void }) {
-  const dataUrl = useScreenshotUrl(path);
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const dataUrl = useScreenshotUrl(path, inView);
   const addToast = useUIStore((s) => s.addToast);
   const folderPath = path.replace(/[\\/][^\\/]+$/, "");
 
@@ -143,7 +167,7 @@ function ScreenshotThumb({ path, onOpen }: { path: string; onOpen: () => void })
   const btn = "p-1.5 rounded-lg bg-black/50 hover:bg-black/70 text-slate-200 hover:text-white transition-colors backdrop-blur";
 
   return (
-    <div className="break-inside-avoid rounded-xl overflow-hidden mb-2 ring-1 ring-white/[0.06] hover:ring-accent-400/40 transition-all relative group cursor-zoom-in" onClick={onOpen}>
+    <div ref={ref} className="break-inside-avoid rounded-xl overflow-hidden mb-2 ring-1 ring-white/[0.06] hover:ring-accent-400/40 transition-all relative group cursor-zoom-in" onClick={onOpen}>
       {dataUrl ? <img src={dataUrl} alt="" className="w-full h-auto block" /> : <div className="w-full aspect-video bg-white/[0.04] animate-pulse" />}
       {dataUrl && (
         <div className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-1 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}>
@@ -175,7 +199,7 @@ function ScreenshotLightbox({ shots, index, setIndex }: { shots: string[]; index
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, pointerEvents: "none" }}
       className="fixed inset-0 z-[70] flex items-center justify-center p-16"
       style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(10px)" }}
       onClick={() => setIndex(null)}
@@ -263,7 +287,7 @@ export default function GameDetail() {
   const game = useGameStore((s) => s.games.find((g) => g.id === s.selectedGameId) ?? null);
   const isOpen = useUIStore((s) => s.isDetailOpen);
   const setDetailOpen = useUIStore((s) => s.setDetailOpen);
-  const { update, remove, toggleFavorite, togglePinned } = useGames();
+  const { updateGame: update, moveToTrash: remove, toggleFavorite, togglePinned } = gameActions;
   const openConfirm = useUIStore((s) => s.openConfirm);
   const addToast = useUIStore((s) => s.addToast);
   const activeGameId = useUIStore((s) => s.activeGameId);
@@ -419,18 +443,22 @@ export default function GameDetail() {
 
   const loadSessions = async () => {
     if (loadingSessions) return;
+    const forId = game.id;
     setLoadingSessions(true);
-    try { setSessions(await api.getSessions(game.id)); }
-    catch { setSessions([]); }
-    finally { setLoadingSessions(false); }
+    const data = await api.getSessions(forId).catch(() => [] as Session[]);
+    if (useGameStore.getState().selectedGameId !== forId) return;
+    setSessions(data);
+    setLoadingSessions(false);
   };
 
   const loadScreenshots = async () => {
     if (!game.steam_app_id || loadingShots) return;
+    const forId = game.id;
     setLoadingShots(true);
-    try { setScreenshots(await api.getGameScreenshots(game.steam_app_id)); }
-    catch { setScreenshots([]); }
-    finally { setLoadingShots(false); }
+    const shots = await api.getGameScreenshots(game.steam_app_id).catch(() => [] as string[]);
+    if (useGameStore.getState().selectedGameId !== forId) return;
+    setScreenshots(shots);
+    setLoadingShots(false);
   };
 
   const handleDelete = () => {
@@ -453,17 +481,17 @@ export default function GameDetail() {
   const addTag = (e: React.KeyboardEvent) => {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
-      const t = tagInput.trim().replace(/,$/, "").toLowerCase();
-      if (t && !game.tags.includes(t)) update({ id: game.id, tags: [...game.tags, t] }, { onSuccess: flashSaved });
+      const t = tagInput.trim().replace(/,$/, "");
+      if (t) gameActions.addTag(game.id, t);
       setTagInput("");
+      flashSaved();
     }
   };
 
   const removeTag = (t: string) => {
     setPendingTags((prev) => new Set([...prev, t]));
     const timer = setTimeout(() => {
-      const current = useGameStore.getState().games.find((g) => g.id === game.id);
-      if (current) update({ id: game.id, tags: current.tags.filter((x) => x !== t) });
+      gameActions.removeTag(game.id, t);
       setPendingTags((prev) => { const next = new Set(prev); next.delete(t); return next; });
       pendingTagTimers.current.delete(t);
     }, 4000);
@@ -569,7 +597,7 @@ export default function GameDetail() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: "none" }}
             onClick={() => setCoverLightbox(false)}
             className="fixed inset-0 z-[70] flex items-center justify-center"
             style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(20px)" }}
@@ -577,7 +605,7 @@ export default function GameDetail() {
             <motion.img
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              exit={{ scale: 0.9, opacity: 0, pointerEvents: "none" }}
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
               src={coverUrl}
               alt={game.name}
@@ -594,22 +622,27 @@ export default function GameDetail() {
       </AnimatePresence>
       <AnimatePresence>
         {isOpen && (
-          <>
             <motion.div
+              key="detail-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, pointerEvents: "none" }}
+              transition={{ duration: 0.2 }}
               onClick={close}
               className="fixed inset-0 z-30"
               style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
             />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isOpen && (
             <motion.div
+              key="detail-panel"
               ref={panelRef}
               data-tour="game-detail"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              exit={{ x: "100%", pointerEvents: "none" }}
               transition={{ type: "spring", damping: 34, stiffness: 320 }}
               className="fixed right-0 top-0 bottom-0 w-[580px] max-w-[92vw] z-40 flex flex-col overflow-hidden"
               style={{
@@ -644,7 +677,7 @@ export default function GameDetail() {
                   <div className="flex items-center gap-1.5">
                     <AnimatePresence>
                       {showSaved && (
-                        <motion.span initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-emerald-300 font-medium mr-1">
+                        <motion.span initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, pointerEvents: "none" }} className="flex items-center gap-1 text-[11px] text-emerald-300 font-medium mr-1">
                           <CheckIcon size={11} /> Saved
                         </motion.span>
                       )}
@@ -737,7 +770,7 @@ export default function GameDetail() {
                             <motion.div
                               initial={{ opacity: 0, y: -6, scale: 0.97 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                              exit={{ opacity: 0, y: -6, scale: 0.97, pointerEvents: "none" }}
                               transition={{ duration: 0.14 }}
                               className="absolute top-full mt-2 right-0 min-w-[210px] glass-strong rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5"
                             >
@@ -781,7 +814,7 @@ export default function GameDetail() {
                       className={cn("relative px-3.5 py-3 text-[12.5px] font-medium transition-colors", activeTab === tab.key ? "text-white" : "text-slate-500 hover:text-slate-300")}
                     >
                       {tab.label}
-                      {activeTab === tab.key && <motion.span layoutId="detail-tab" className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full bg-accent-400" />}
+                      <span className={cn("absolute left-2 right-2 -bottom-px h-[2px] rounded-full bg-accent-400 transition-all duration-200", activeTab === tab.key ? "opacity-100 scale-x-100" : "opacity-0 scale-x-50")} />
                     </button>
                   ))}
                 </div>
@@ -916,7 +949,7 @@ export default function GameDetail() {
                                 layout
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: pending ? 0.5 : 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
+                                exit={{ opacity: 0, scale: 0.8, pointerEvents: "none" }}
                                 onClick={() => (pending ? undoRemoveTag(t) : removeTag(t))}
                                 className={cn("chip group !py-1", pending && "line-through")}
                                 title={pending ? "Click to undo" : "Click to remove"}
@@ -1056,7 +1089,6 @@ export default function GameDetail() {
                 )}
               </div>
             </motion.div>
-          </>
         )}
       </AnimatePresence>
     </>

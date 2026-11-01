@@ -99,12 +99,22 @@ export function canonicalKey(raw: string): string {
   return words.join(" ");
 }
 
+const sortKeyCache = new Map<string, string>();
+
 export function sortKey(name: string): string {
-  return normalizeText(cleanTitle(name)).replace(/^(?:the|a|an) /, "");
+  let k = sortKeyCache.get(name);
+  if (k === undefined) {
+    k = normalizeText(cleanTitle(name)).replace(/^(?:the|a|an) /, "");
+    if (sortKeyCache.size > 20000) sortKeyCache.clear();
+    sortKeyCache.set(name, k);
+  }
+  return k;
 }
 
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
 export function compareNames(a: string, b: string): number {
-  return sortKey(a).localeCompare(sortKey(b), undefined, { numeric: true, sensitivity: "base" });
+  return collator.compare(sortKey(a), sortKey(b));
 }
 
 export function levenshtein(a: string, b: string, max = Infinity): number {

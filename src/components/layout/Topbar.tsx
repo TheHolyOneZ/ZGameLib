@@ -83,7 +83,7 @@ export default function Topbar() {
     <div className="flex items-center gap-3 px-6 h-[60px] shrink-0 relative z-20" style={{ borderBottom: "1px solid rgba(255,255,255,0.045)" }}>
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="group flex items-center gap-2.5 h-9 pl-3 pr-2 rounded-xl text-[13px] text-slate-500 hover:text-slate-300 transition-all w-[320px] max-w-[40vw]"
+        className="group flex items-center gap-2.5 h-9 pl-3 pr-2 rounded-xl text-[13px] text-slate-500 hover:text-slate-300 transition-all flex-1 min-w-[150px] max-w-[320px]"
         style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.07)" }}
       >
         <SearchIcon size={14} className="text-slate-500 group-hover:text-accent-300 transition-colors" />

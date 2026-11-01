@@ -61,14 +61,14 @@ function UpdateBanner({ update, onDismiss }: { update: Update; onDismiss: () => 
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, pointerEvents: "none" }}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)" }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 24 }}
+        exit={{ opacity: 0, scale: 0.9, y: 24, pointerEvents: "none" }}
         transition={{ type: "spring", stiffness: 380, damping: 28 }}
         className="glass rounded-2xl p-6 w-[440px] max-w-[90vw] relative"
         style={{
@@ -370,7 +370,7 @@ export default function Layout() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: "none" }}
             onClick={() => setShowShortcuts(false)}
             className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
@@ -378,7 +378,7 @@ export default function Layout() {
             <motion.div
               initial={{ scale: 0.95, y: 12 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 12 }}
+              exit={{ scale: 0.95, y: 12, pointerEvents: "none" }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
               className="glass-strong rounded-3xl p-6 w-[440px]"

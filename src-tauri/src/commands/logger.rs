@@ -40,7 +40,7 @@ pub fn log_error(message: &str) {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_log_contents() -> Vec<String> {
     if let Some(buf) = LOG_BUFFER.get() {
         if let Ok(v) = buf.lock() {

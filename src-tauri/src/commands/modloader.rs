@@ -100,7 +100,7 @@ pub struct ModInfo {
     pub size_bytes: u64,
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn check_modloader_status(install_dir: String) -> Result<ModLoaderStatus, String> {
     let bepinex = is_bepinex_installed(&install_dir);
     let melonloader = is_melonloader_installed(&install_dir);
@@ -118,7 +118,7 @@ pub fn check_modloader_status(install_dir: String) -> Result<ModLoaderStatus, St
     Ok(ModLoaderStatus { bepinex_installed: bepinex, melonloader_installed: melonloader, mods_folder, mods })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn install_bepinex(app: AppHandle, install_dir: String) -> Result<(), String> {
     emit_log(&app, "info", "Fetching latest BepInEx release from GitHub...");
 
@@ -163,7 +163,7 @@ pub fn install_bepinex(app: AppHandle, install_dir: String) -> Result<(), String
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn uninstall_bepinex(install_dir: String) -> Result<(), String> {
     let bepinex_dir = p(&install_dir, "BepInEx");
     if bepinex_dir.exists() {
@@ -176,7 +176,7 @@ pub fn uninstall_bepinex(install_dir: String) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn install_melonloader(app: AppHandle, install_dir: String) -> Result<(), String> {
     emit_log(&app, "info", "Fetching MelonLoader releases from GitHub...");
 
@@ -228,7 +228,7 @@ pub fn install_melonloader(app: AppHandle, install_dir: String) -> Result<(), St
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn uninstall_melonloader(install_dir: String) -> Result<(), String> {
     let ml_dir = p(&install_dir, "MelonLoader");
     if ml_dir.exists() {
@@ -241,7 +241,7 @@ pub fn uninstall_melonloader(install_dir: String) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn open_mods_folder(install_dir: String) -> Result<(), String> {
     let folder = if is_bepinex_installed(&install_dir) {
         let dir = bepinex_plugins_dir(&install_dir);
@@ -257,7 +257,7 @@ pub fn open_mods_folder(install_dir: String) -> Result<(), String> {
     open::that(&folder).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn install_mod(install_dir: String, source_path: String) -> Result<ModInfo, String> {
     let mods_folder = if is_bepinex_installed(&install_dir) {
         bepinex_plugins_dir(&install_dir)
@@ -280,7 +280,7 @@ pub fn install_mod(install_dir: String, source_path: String) -> Result<ModInfo, 
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_mod(install_dir: String, file_name: String) -> Result<(), String> {
     let mods_folder = if is_bepinex_installed(&install_dir) {
         bepinex_plugins_dir(&install_dir)

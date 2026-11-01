@@ -85,7 +85,7 @@ export default function WhatsNewModal() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: "none" }}
           onClick={handleClose}
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}
@@ -93,7 +93,7 @@ export default function WhatsNewModal() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 360, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
             className="w-[460px] max-w-[92vw] rounded-2xl overflow-hidden"

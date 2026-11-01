@@ -23,6 +23,18 @@
 - **Settings navigation** with section jump list and a sticky "unsaved changes" bar; new Big Picture & Controllers section with live controller detection
 - Rate games from the right-click menu; Escape clears a multi-selection; covers lazy-load as they scroll into view; generated cover art for games without a cover
 
+### Performance
+
+- Backend commands no longer run on the UI thread: covers, scans, IGDB, HowLongToBeat, Steam sync, mod-loader downloads, imports and exports can't freeze the window anymore
+- Library grid and list only render what is on screen, so thousands of games scroll smoothly; Recently Played, the Duplicate Manager and the Game Spin list load progressively
+- Favoriting, rating and tagging update instantly and no longer reload the whole library from the database after every change
+- Duplicate detection, search indexing and filtering are computed once and shared instead of separately in every component, and are skipped entirely when nothing relevant changed
+- One batched executable check replaces one backend call per game card, and it no longer holds the database lock while touching the disk
+- Cover loading prioritises what's on screen and cancels requests for cards scrolled away; screenshots load lazily
+- Big Picture backdrop and hero update once focus settles and use a much cheaper blur
+- Game Spin's wheel shows a fair random set of up to 24 games instead of drawing thousands of slices
+- Scan log updates are batched
+
 ### Changed
 
 - Complete visual redesign: new type (Inter and Outfit, now bundled), surfaces, buttons, inputs, chips, sidebar, top bar with command search, cards, dialogs and every page
@@ -32,6 +44,13 @@
 
 ### Fixed
 
+- Rapid edits could be lost (only 7 of 15 tags added in quick succession were saved); writes are now ordered and stale responses can no longer overwrite newer changes
+- The game details panel could stay invisibly mounted after closing while switching tabs, blocking every click until restart
+- Switching quickly between games could show the previous game's sessions or screenshots
+- Adding the same game twice by double-clicking, and starting two scans at once, are prevented; adding a game that's already in the library asks first
+- Names picked from an .exe are cleaned up and generic executables (Game-Win64-Shipping.exe) use the folder name
+- Spin, Stats and Recently Played now count each game once, matching the library
+- Library toolbar and top bar fit at the minimum window size
 - Hidden games were only remembered until the app closed, so hidden duplicates came back on every start
 - "Fetch Missing Covers" never worked for games without a Steam ID because the search response was parsed with the wrong field names
 - Automatic cover search sent unescaped names (titles with & or # were cut off) and blindly took the first result, often a soundtrack or DLC; it now cleans the title and picks the best match

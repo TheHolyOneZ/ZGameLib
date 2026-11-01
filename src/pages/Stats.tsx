@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useGameStore } from "@/store/useGameStore";
+import { useLibraryGames } from "@/hooks/useGames";
 import { useUIStore } from "@/store/useUIStore";
 import { formatPlaytime, PLATFORM_LABELS, cn } from "@/lib/utils";
 import type { Platform, Game, LibraryGrowthEntry } from "@/lib/types";
@@ -79,7 +80,7 @@ function GameRow({ game, rank, right, onOpen }: { game: Game; rank: number; righ
 }
 
 export default function Stats() {
-  const games = useGameStore((s) => s.games);
+  const games = useLibraryGames();
   const customStatuses = useUIStore((s) => s.customStatuses);
   const navigate = useNavigate();
   const [hoverWeek, setHoverWeek] = useState<number | null>(null);

@@ -17,17 +17,24 @@ function pairKey(a: string, b: string) {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
 }
 
+let ignoredMemo: Set<string> | null = null;
+
 export function loadIgnoredPairs(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(IGNORE_KEY) ?? "[]") as string[]); } catch { return new Set(); }
+  if (!ignoredMemo) {
+    try { ignoredMemo = new Set(JSON.parse(localStorage.getItem(IGNORE_KEY) ?? "[]") as string[]); } catch { ignoredMemo = new Set(); }
+  }
+  return ignoredMemo;
 }
 
 export function ignoreGroup(ids: string[]) {
-  const set = loadIgnoredPairs();
+  const set = new Set(loadIgnoredPairs());
   for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) set.add(pairKey(ids[i], ids[j]));
+  ignoredMemo = set;
   try { localStorage.setItem(IGNORE_KEY, JSON.stringify([...set])); } catch {}
 }
 
 export function clearIgnoredPairs() {
+  ignoredMemo = new Set();
   try { localStorage.removeItem(IGNORE_KEY); } catch {}
 }
 
@@ -54,7 +61,7 @@ export function keeperScore(g: Game): number {
   return s;
 }
 
-function pickKeeper(games: Game[]): string {
+export function pickKeeper(games: Game[]): string {
   return [...games].sort((a, b) => keeperScore(b) - keeperScore(a) || (a.date_added ?? "").localeCompare(b.date_added ?? ""))[0].id;
 }
 
@@ -191,3 +198,50 @@ export const REASON_LABEL: Record<DuplicateReason, { label: string; hint: string
   variant: { label: "Demo / test build", hint: "A demo, playtest or extra alongside the full game" },
   similar: { label: "Very similar name", hint: "Names differ by a typo or small spelling difference — check before merging" },
 };
+
+let cache: {
+  games: Game[] | null;
+  hiddenKey: string;
+  ignoredKey: string;
+  sig: string;
+  shape: { key: string; ids: string[]; reason: DuplicateReason; confidence: number }[];
+  result: DuplicateGroup[];
+} = { games: null, hiddenKey: "", ignoredKey: "", sig: "", shape: [], result: [] };
+
+const stamps = new WeakMap<Set<string>, string>();
+let stampSeq = 0;
+function ignoredStamp(set: Set<string>) {
+  let s = stamps.get(set);
+  if (!s) { s = String(++stampSeq); stamps.set(set, s); }
+  return s;
+}
+
+function signature(games: Game[]) {
+  let s = "";
+  for (const g of games) s += g.id + "\u0001" + g.name + "\u0001" + (g.steam_app_id ?? "") + (g.epic_app_name ?? "") + "\u0001" + (g.exe_path ?? "") + (g.deleted_at ? "\u0003" : "") + "\u0002";
+  return s;
+}
+
+export function getDuplicateGroups(games: Game[], hiddenIds: string[]): DuplicateGroup[] {
+  const hiddenKey = hiddenIds.join(",");
+  const ignored = loadIgnoredPairs();
+  const ignoredKey = ignoredStamp(ignored);
+  if (cache.games === games && cache.hiddenKey === hiddenKey && cache.ignoredKey === ignoredKey) return cache.result;
+  const hidden = hiddenIds.length ? new Set(hiddenIds) : null;
+  const pool = hidden ? games.filter((g) => !hidden.has(g.id)) : games;
+  const sig = signature(pool);
+  let shape = cache.shape;
+  if (sig !== cache.sig || hiddenKey !== cache.hiddenKey || ignoredKey !== cache.ignoredKey) {
+    shape = findDuplicateGroups(pool, ignored).map((g) => ({ key: g.key, ids: g.games.map((x) => x.id), reason: g.reason, confidence: g.confidence }));
+  }
+  const byId = new Map(pool.map((g) => [g.id, g]));
+  const result: DuplicateGroup[] = [];
+  for (const sh of shape) {
+    const gs = sh.ids.map((id) => byId.get(id)).filter((g): g is Game => !!g);
+    if (gs.length < 2) continue;
+    gs.sort((a, b) => keeperScore(b) - keeperScore(a));
+    result.push({ key: sh.key, games: gs, keeperId: pickKeeper(gs), reason: sh.reason, confidence: sh.confidence });
+  }
+  cache = { games, hiddenKey, ignoredKey, sig, shape, result };
+  return result;
+}

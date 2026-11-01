@@ -97,9 +97,41 @@ const defaultFilters: Filters = {
   notInstalledOnly: false,
 };
 
+function sameGame(a: Game, b: Game) {
+  for (const k in b) {
+    const va = (a as unknown as Record<string, unknown>)[k];
+    const vb = (b as unknown as Record<string, unknown>)[k];
+    if (va === vb) continue;
+    if (Array.isArray(va) && Array.isArray(vb)) {
+      if (va.length !== vb.length || va.some((x, i) => x !== vb[i])) return false;
+      continue;
+    }
+    if (va && vb && typeof va === "object" && typeof vb === "object") {
+      if (JSON.stringify(va) !== JSON.stringify(vb)) return false;
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   games: [],
-  setGames: (games) => set({ games }),
+  setGames: (incoming) => set((s) => {
+    if (s.games.length === 0) return { games: incoming };
+    const prev = new Map(s.games.map((g) => [g.id, g]));
+    let changed = incoming.length !== s.games.length;
+    const games = incoming.map((g, i) => {
+      const old = prev.get(g.id);
+      if (old && sameGame(old, g)) {
+        if (s.games[i] !== old) changed = true;
+        return old;
+      }
+      changed = true;
+      return g;
+    });
+    return changed ? { games } : {};
+  }),
   updateGame: (updated) =>
     set((s) => ({ games: s.games.map((g) => (g.id === updated.id ? updated : g)) })),
   removeGame: (id) => set((s) => ({ games: s.games.filter((g) => g.id !== id) })),

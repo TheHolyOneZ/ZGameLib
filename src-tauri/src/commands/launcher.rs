@@ -451,7 +451,7 @@ fn track_by_pid(
     finish_session(&app, &game_id, &started_at, elapsed);
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn launch_game(
     app: AppHandle,
     state: State<DbState>,
@@ -566,7 +566,7 @@ pub fn launch_game(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn launch_steam_game(
     app: AppHandle,
     state: State<DbState>,
@@ -685,7 +685,7 @@ pub fn launch_steam_game(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn launch_epic_game(
     app: AppHandle,
     state: State<DbState>,
@@ -798,7 +798,7 @@ pub fn launch_epic_game(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn launch_ubisoft_game(
     app: AppHandle,
     state: State<DbState>,
@@ -906,7 +906,7 @@ pub fn launch_ubisoft_game(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn open_game_folder(state: State<DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let game = queries::get_game_by_id(&conn, &id)
@@ -926,7 +926,7 @@ pub fn open_game_folder(state: State<DbState>, id: String) -> Result<(), String>
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn stop_tracking(
     app: AppHandle,
     active_pids: State<ActivePids>,
@@ -942,7 +942,7 @@ pub fn stop_tracking(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn stop_game(
     app: AppHandle,
     active_pids: State<ActivePids>,

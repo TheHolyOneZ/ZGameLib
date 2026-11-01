@@ -146,7 +146,7 @@ export default function BatchActionBar({ visibleIds = [] }: { visibleIds?: strin
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.98 }}
+          exit={{ opacity: 0, y: 24, scale: 0.98, pointerEvents: "none" }}
           transition={{ type: "spring", stiffness: 420, damping: 34 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 pl-4 pr-2 py-2 rounded-2xl glass-strong whitespace-nowrap"
           style={{ boxShadow: "0 24px 60px -12px rgba(0,0,0,0.85), 0 0 0 1px rgb(var(--accent-400) / 0.25)" }}
@@ -221,7 +221,7 @@ export default function BatchActionBar({ visibleIds = [] }: { visibleIds?: strin
                   <motion.div
                     initial={{ opacity: 0, y: 6, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.96, pointerEvents: "none" }}
                     transition={{ duration: 0.15 }}
                     className="absolute bottom-full mb-3 right-0 min-w-[200px] rounded-2xl glass-strong shadow-2xl z-50 overflow-hidden p-1.5"
                   >

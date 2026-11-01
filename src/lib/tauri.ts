@@ -1,25 +1,34 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult, YearInReview } from "./types";
 
+let writeChain: Promise<unknown> = Promise.resolve();
+
+function serial<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const run = writeChain.then(() => invoke<T>(cmd, args), () => invoke<T>(cmd, args));
+  writeChain = run.catch(() => undefined);
+  return run;
+}
+
 export const api = {
   getAllGames: () => invoke<Game[]>("get_all_games"),
   getGame: (id: string) => invoke<Game | null>("get_game", { id }),
   createGame: (payload: CreateGamePayload) => invoke<Game>("create_game", { payload }),
-  updateGame: (payload: UpdateGamePayload) => invoke<Game>("update_game", { payload }),
-  deleteGame: (id: string) => invoke<void>("delete_game", { id }),
-  permanentDeleteGame: (id: string) => invoke<void>("permanent_delete_game", { id }),
-  restoreGame: (id: string) => invoke<void>("restore_game", { id }),
-  purgeTrash: () => invoke<number>("purge_trash"),
+  updateGame: (payload: UpdateGamePayload) => serial<Game>("update_game", { payload }),
+  deleteGame: (id: string) => serial<void>("delete_game", { id }),
+  permanentDeleteGame: (id: string) => serial<void>("permanent_delete_game", { id }),
+  restoreGame: (id: string) => serial<void>("restore_game", { id }),
+  purgeTrash: () => serial<number>("purge_trash"),
   getTrashedGames: () => invoke<Game[]>("get_trashed_games"),
-  toggleFavorite: (id: string) => invoke<boolean>("toggle_favorite", { id }),
-  togglePinned: (id: string) => invoke<boolean>("toggle_pinned", { id }),
+  toggleFavorite: (id: string) => serial<boolean>("toggle_favorite", { id }),
+  togglePinned: (id: string) => serial<boolean>("toggle_pinned", { id }),
   checkExeHealth: (id: string) => invoke<boolean>("check_exe_health", { id }),
+  getMissingExeIds: () => invoke<string[]>("get_missing_exe_ids"),
 
   getNotes: (gameId: string) => invoke<Note[]>("get_notes", { gameId }),
   getSessions: (gameId: string) => invoke<Session[]>("get_sessions", { gameId }),
-  createNote: (gameId: string, content: string) => invoke<Note>("create_note", { gameId, content }),
-  updateNote: (id: string, content: string) => invoke<Note>("update_note", { id, content }),
-  deleteNote: (id: string) => invoke<void>("delete_note", { id }),
+  createNote: (gameId: string, content: string) => serial<Note>("create_note", { gameId, content }),
+  updateNote: (id: string, content: string) => serial<Note>("update_note", { id, content }),
+  deleteNote: (id: string) => serial<void>("delete_note", { id }),
 
   scanSteam: () => invoke<ScanResult>("scan_steam_games"),
   scanEpic: () => invoke<ScanResult>("scan_epic_games"),
@@ -27,7 +36,7 @@ export const api = {
   scanUbisoft: () => invoke<ScanResult>("scan_ubisoft_games"),
   scanAll: () => invoke<ScanResult>("scan_all_games"),
   scanFolder: (folderPath: string) => invoke<ScanResult>("scan_folder_for_games", { folderPath }),
-  setGameCover: (gameId: string, imagePath: string) => invoke<string>("set_game_cover", { gameId, imagePath }),
+  setGameCover: (gameId: string, imagePath: string) => serial<string>("set_game_cover", { gameId, imagePath }),
   extractExeIcon: (exePath: string) => invoke<string>("extract_exe_icon", { exePath }),
   findCoverInDir: (dirPath: string) => invoke<string>("find_cover_in_dir", { dirPath }),
   readImageBase64: (filePath: string) => invoke<string>("read_image_base64", { filePath }),
@@ -45,7 +54,7 @@ export const api = {
   stopGame: () => invoke<void>("stop_game"),
 
   getSettings: () => invoke<AppSettings>("get_settings"),
-  saveSettings: (settings: AppSettings) => invoke<void>("save_settings", { settings }),
+  saveSettings: (settings: AppSettings) => serial<void>("save_settings", { settings }),
   exportLibrary: () => invoke<string>("export_library"),
   exportLibraryCsv: () => invoke<string>("export_library_csv"),
   exportGamesByIds: (ids: string[]) => invoke<string>("export_games_by_ids", { ids }),
@@ -64,31 +73,31 @@ export const api = {
   installMod: (installDir: string, sourcePath: string) => invoke<ModInfo>("install_mod", { installDir, sourcePath }),
   deleteMod: (installDir: string, fileName: string) => invoke<void>("delete_mod", { installDir, fileName }),
 
-  reorderGames: (ids: string[]) => invoke<void>("reorder_games", { ids }),
+  reorderGames: (ids: string[]) => serial<void>("reorder_games", { ids }),
   fetchHltbData: (gameId: string, gameName: string) => invoke<HltbData | null>("fetch_hltb_data", { gameId, gameName }),
   getWeeklyPlaytime: () => invoke<WeeklyPlaytime[]>("get_weekly_playtime"),
   batchUpdateGames: (ids: string[], status?: string, rating?: number, tagsToAdd?: string[]) =>
-    invoke<void>("batch_update_games", { ids, status, rating, tagsToAdd }),
+    serial<void>("batch_update_games", { ids, status, rating, tagsToAdd }),
 
   getLibraryGrowth: () => invoke<LibraryGrowthEntry[]>("get_library_growth"),
   fetchIgdbMetadata: (gameId: string, gameName: string, clientId: string, clientSecret: string) =>
     invoke<IgdbMetadata | null>("fetch_igdb_metadata", { gameId, gameName, clientId, clientSecret }),
-  clearIgdbData: (id: string) => invoke<void>("clear_igdb_data", { id }),
+  clearIgdbData: (id: string) => serial<void>("clear_igdb_data", { id }),
 
   getCollections: () => invoke<Collection[]>("get_collections"),
-  createCollection: (name: string) => invoke<Collection>("create_collection", { name }),
-  renameCollection: (id: string, name: string) => invoke<void>("rename_collection", { id, name }),
-  deleteCollection: (id: string) => invoke<void>("delete_collection", { id }),
+  createCollection: (name: string) => serial<Collection>("create_collection", { name }),
+  renameCollection: (id: string, name: string) => serial<void>("rename_collection", { id, name }),
+  deleteCollection: (id: string) => serial<void>("delete_collection", { id }),
   getCollectionGames: (collectionId: string) => invoke<Game[]>("get_collection_games", { collectionId }),
-  addGameToCollection: (collectionId: string, gameId: string) => invoke<void>("add_game_to_collection", { collectionId, gameId }),
-  removeGameFromCollection: (collectionId: string, gameId: string) => invoke<void>("remove_game_from_collection", { collectionId, gameId }),
+  addGameToCollection: (collectionId: string, gameId: string) => serial<void>("add_game_to_collection", { collectionId, gameId }),
+  removeGameFromCollection: (collectionId: string, gameId: string) => serial<void>("remove_game_from_collection", { collectionId, gameId }),
   getCollectionsForGame: (gameId: string) => invoke<Collection[]>("get_collections_for_game", { gameId }),
-  updateCollectionDescription: (id: string, description: string | null) => invoke<void>("update_collection_description", { id, description }),
+  updateCollectionDescription: (id: string, description: string | null) => serial<void>("update_collection_description", { id, description }),
 
   syncSteamPlaytime: (apiKey: string, steamId: string) => invoke<SteamSyncResult>("sync_steam_playtime", { apiKey, steamId }),
   pullUninstalledSteamGames: (apiKey: string, steamId: string) => invoke<PullUninstalledResult>("pull_uninstalled_steam_games", { apiKey, steamId }),
   getLogContents: () => invoke<string[]>("get_log_contents"),
-  saveSetting: (key: string, value: string) => invoke<void>("save_setting", { key, value }),
+  saveSetting: (key: string, value: string) => serial<void>("save_setting", { key, value }),
   getYearInReview: (year: number) => invoke<YearInReview>("get_year_in_review", { year }),
 
 };

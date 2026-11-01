@@ -1,17 +1,16 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
+import * as actions from "@/lib/gameActions";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import type { UpdateGamePayload, CreateGamePayload, FilterRule } from "@/lib/types";
+import type { UpdateGamePayload, CreateGamePayload, FilterRule, Game, SortKey } from "@/lib/types";
 import { parseQuery, scoreGame } from "@/lib/search";
 import { compareNames } from "@/lib/gameName";
-import { findDuplicateGroups } from "@/lib/duplicates";
+import { getDuplicateGroups } from "@/lib/duplicates";
 
 export function useGames() {
   const setGames = useGameStore((s) => s.setGames);
-  const updateGameInStore = useGameStore((s) => s.updateGame);
-  const removeFromStore = useGameStore((s) => s.removeGame);
   const addToStore = useGameStore((s) => s.addGame);
   const addToast = useUIStore((s) => s.addToast);
   const qc = useQueryClient();
@@ -28,24 +27,6 @@ export function useGames() {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (payload: UpdateGamePayload) => api.updateGame(payload),
-    onSuccess: (game) => {
-      updateGameInStore(game);
-      qc.invalidateQueries({ queryKey: ["games"] });
-    },
-    onError: (e) => addToast(String(e), "error"),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.deleteGame(id),
-    onSuccess: (_, id) => {
-      removeFromStore(id);
-      addToast("Game moved to trash", "info");
-    },
-    onError: (e) => addToast(String(e), "error"),
-  });
-
   const createMutation = useMutation({
     mutationFn: (payload: CreateGamePayload) => api.createGame(payload),
     onSuccess: (game) => {
@@ -55,31 +36,13 @@ export function useGames() {
     onError: (e) => addToast(String(e), "error"),
   });
 
-  const toggleFavMutation = useMutation({
-    mutationFn: (id: string) => api.toggleFavorite(id),
-    onSuccess: (isFav, id) => {
-      const games = useGameStore.getState().games;
-      const game = games.find((g) => g.id === id);
-      if (game) updateGameInStore({ ...game, is_favorite: isFav });
-    },
-  });
-
-  const togglePinnedMutation = useMutation({
-    mutationFn: (id: string) => api.togglePinned(id),
-    onSuccess: (isPinned, id) => {
-      const games = useGameStore.getState().games;
-      const game = games.find((g) => g.id === id);
-      if (game) updateGameInStore({ ...game, is_pinned: isPinned });
-    },
-  });
-
   return {
     isLoading,
-    update: updateMutation.mutate,
-    remove: deleteMutation.mutate,
+    update: actions.updateGame,
+    remove: actions.moveToTrash,
     create: createMutation.mutate,
-    toggleFavorite: toggleFavMutation.mutate,
-    togglePinned: togglePinnedMutation.mutate,
+    toggleFavorite: actions.toggleFavorite,
+    togglePinned: actions.togglePinned,
   };
 }
 
@@ -108,8 +71,15 @@ export function useScan() {
     },
   });
 
-  return { scan: scanMutation.mutate, isScanning: scanMutation.isPending };
+  const isScanning = useUIStore((s) => s.isScanning);
+  const scan = () => {
+    if (useUIStore.getState().isScanning) return;
+    scanMutation.mutate();
+  };
+  return { scan, isScanning: isScanning || scanMutation.isPending };
 }
+
+let pullInFlight = false;
 
 export function usePullUninstalled() {
   const addToast = useUIStore((s) => s.addToast);
@@ -135,7 +105,12 @@ export function usePullUninstalled() {
     onError: (e) => addToast(String(e), "error"),
   });
 
-  return { pullUninstalled: mutation.mutate, isPulling: mutation.isPending };
+  const pullUninstalled = () => {
+    if (pullInFlight) return;
+    pullInFlight = true;
+    mutation.mutate(undefined, { onSettled: () => { pullInFlight = false; } });
+  };
+  return { pullUninstalled, isPulling: mutation.isPending };
 }
 
 function matchesRule(game: import("@/lib/types").Game, rule: FilterRule): boolean {
@@ -196,11 +171,7 @@ export function useDuplicateGroups() {
   const games = useGameStore((s) => s.games);
   const hiddenIds = useGameStore((s) => s.hiddenIds);
   const version = useGameStore((s) => s.duplicateVersion);
-  return useMemo(() => {
-    if (hiddenIds.length === 0) return findDuplicateGroups(games);
-    const hidden = new Set(hiddenIds);
-    return findDuplicateGroups(games.filter((g) => !hidden.has(g.id)));
-  }, [games, hiddenIds, version]);
+  return useMemo(() => getDuplicateGroups(games, hiddenIds), [games, hiddenIds, version]);
 }
 
 export function useLibraryGames() {
@@ -215,21 +186,32 @@ export function useLibraryGames() {
   }, [games, hiddenIds, collapse, groups]);
 }
 
-export function useFilteredGames() {
-  const games = useGameStore((s) => s.games);
-  const search = useGameStore((s) => s.search);
-  const searchScope = useGameStore((s) => s.searchScope);
-  const sortKey = useGameStore((s) => s.sortKey);
-  const sortAsc = useGameStore((s) => s.sortAsc);
-  const filters = useGameStore((s) => s.filters);
-  const hiddenIds = useGameStore((s) => s.hiddenIds);
-  const showHidden = useGameStore((s) => s.showHidden);
-  const filterRules = useGameStore((s) => s.filterRules);
-  const filterLogic = useGameStore((s) => s.filterLogic);
-  const collapseDuplicates = useGameStore((s) => s.collapseDuplicates);
-  const dupGroups = useDuplicateGroups();
+interface FilterInputs {
+  games: Game[];
+  search: string;
+  searchScope: "name" | "all";
+  sortKey: SortKey;
+  sortAsc: boolean;
+  filters: ReturnType<typeof useGameStore.getState>["filters"];
+  hiddenIds: string[];
+  showHidden: boolean;
+  filterRules: FilterRule[];
+  filterLogic: "and" | "or";
+  collapseDuplicates: boolean;
+  dupGroups: ReturnType<typeof getDuplicateGroups>;
+}
 
-  return useMemo(() => {
+let lastInputs: FilterInputs | null = null;
+let lastOutput: Game[] = [];
+
+function sameInputs(a: FilterInputs, b: FilterInputs) {
+  for (const k of Object.keys(a) as (keyof FilterInputs)[]) if (a[k] !== b[k]) return false;
+  return true;
+}
+
+function computeFiltered(inp: FilterInputs): Game[] {
+  if (lastInputs && sameInputs(lastInputs, inp)) return lastOutput;
+  const { games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic, collapseDuplicates, dupGroups } = inp;
     let result = [...games];
     if (!showHidden && hiddenIds.length > 0) {
       const hiddenSet = new Set(hiddenIds);
@@ -293,6 +275,26 @@ export function useFilteredGames() {
       return 0;
     });
 
+    lastInputs = inp;
+    lastOutput = result;
     return result;
-  }, [games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic, collapseDuplicates, dupGroups]);
+}
+
+export function useFilteredGames() {
+  const games = useGameStore((s) => s.games);
+  const search = useGameStore((s) => s.search);
+  const searchScope = useGameStore((s) => s.searchScope);
+  const sortKey = useGameStore((s) => s.sortKey);
+  const sortAsc = useGameStore((s) => s.sortAsc);
+  const filters = useGameStore((s) => s.filters);
+  const hiddenIds = useGameStore((s) => s.hiddenIds);
+  const showHidden = useGameStore((s) => s.showHidden);
+  const filterRules = useGameStore((s) => s.filterRules);
+  const filterLogic = useGameStore((s) => s.filterLogic);
+  const collapseDuplicates = useGameStore((s) => s.collapseDuplicates);
+  const dupGroups = useDuplicateGroups();
+  return useMemo(
+    () => computeFiltered({ games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic, collapseDuplicates, dupGroups }),
+    [games, search, searchScope, sortKey, sortAsc, filters, hiddenIds, showHidden, filterRules, filterLogic, collapseDuplicates, dupGroups]
+  );
 }

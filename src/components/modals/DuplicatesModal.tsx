@@ -5,9 +5,10 @@ import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { api } from "@/lib/tauri";
 import { cn, formatPlaytime, PLATFORM_LABELS } from "@/lib/utils";
-import { findDuplicateGroups, mergedFields, ignoreGroup, clearIgnoredPairs, REASON_LABEL, type DuplicateGroup, type DuplicateReason } from "@/lib/duplicates";
+import { getDuplicateGroups, mergedFields, ignoreGroup, clearIgnoredPairs, REASON_LABEL, type DuplicateGroup, type DuplicateReason } from "@/lib/duplicates";
 import { cleanTitle, variantKind } from "@/lib/gameName";
 import GameCover from "@/components/ui/GameCover";
+import { useProgressive } from "@/hooks/useProgressive";
 import { CloseIcon, LayersIcon, CheckIcon, EyeOffIcon, TrashIcon, SparkleIcon, InfoIcon } from "@/components/ui/Icons";
 import type { Game } from "@/lib/types";
 
@@ -83,11 +84,7 @@ export default function DuplicatesModal() {
   const [busy, setBusy] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
-  const groups = useMemo(() => {
-    if (!open) return [];
-    const hidden = new Set(hiddenIds);
-    return findDuplicateGroups(games.filter((g) => !hidden.has(g.id)));
-  }, [open, games, hiddenIds, version]);
+  const groups = useMemo(() => (open ? getDuplicateGroups(games, hiddenIds) : []), [open, games, hiddenIds, version]);
 
   const counts = useMemo(() => {
     const c: Partial<Record<DuplicateReason, number>> = {};
@@ -102,7 +99,8 @@ export default function DuplicatesModal() {
     return () => window.removeEventListener("keydown", onKey, true);
   }, [open, progress, setOpen]);
 
-  const visible = reasonFilter === "all" ? groups : groups.filter((g) => g.reason === reasonFilter);
+  const visible = useMemo(() => (reasonFilter === "all" ? groups : groups.filter((g) => g.reason === reasonFilter)), [groups, reasonFilter]);
+  const { limit, sentinel, hasMore } = useProgressive(visible.length, 25, reasonFilter + open);
   const extras = visible.reduce((a, g) => a + g.games.length - 1, 0);
   const keeperOf = (g: DuplicateGroup) => keepers[g.key] ?? g.keeperId;
 
@@ -170,7 +168,7 @@ export default function DuplicatesModal() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: "none" }}
           className="fixed inset-0 z-[60] flex items-center justify-center p-8"
           style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
           onClick={() => !progress && setOpen(false)}
@@ -178,7 +176,7 @@ export default function DuplicatesModal() {
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
             onClick={(e) => e.stopPropagation()}
             className="w-[980px] max-w-full h-[84vh] flex flex-col rounded-3xl overflow-hidden"
@@ -249,7 +247,7 @@ export default function DuplicatesModal() {
               ) : (
                 <div className="flex flex-col gap-3">
                   <AnimatePresence initial={false}>
-                    {visible.map((g) => {
+                    {visible.slice(0, limit).map((g) => {
                       const k = keeperOf(g);
                       const title = cleanTitle(g.games.find((x) => x.id === k)!.name);
                       return (
@@ -289,6 +287,7 @@ export default function DuplicatesModal() {
                       );
                     })}
                   </AnimatePresence>
+                  {hasMore && <div ref={sentinel} className="h-16 flex items-center justify-center text-[12px] text-slate-500">Loading more…</div>}
                 </div>
               )}
             </div>

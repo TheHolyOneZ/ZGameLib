@@ -10,7 +10,7 @@ const DEFAULT_STATUSES: &str = r##"[
     {"key":"on_hold","label":"On Hold","color":"#fbbf24"}
 ]"##;
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_settings(state: State<DbState>) -> Result<AppSettings, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let statuses_json = queries::get_setting(&conn, "custom_statuses")
@@ -62,7 +62,7 @@ pub fn get_settings(state: State<DbState>) -> Result<AppSettings, String> {
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn save_settings(state: State<DbState>, settings: AppSettings) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::set_setting(&conn, "theme", &settings.theme).map_err(|e| e.to_string())?;
@@ -126,7 +126,7 @@ pub fn save_settings(state: State<DbState>, settings: AppSettings) -> Result<(),
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn import_library(state: State<DbState>, path: String) -> Result<ImportResult, String> {
     let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let raw: serde_json::Value = serde_json::from_str(&json).map_err(|e| e.to_string())?;
@@ -215,7 +215,7 @@ pub fn import_library(state: State<DbState>, path: String) -> Result<ImportResul
     Ok(ImportResult { added, skipped })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn export_library(state: State<DbState>) -> Result<String, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let games = crate::db::queries::get_all_games(&conn).map_err(|e| e.to_string())?;
@@ -257,7 +257,7 @@ fn csv_escape(s: &str) -> String {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn export_library_csv(state: State<DbState>) -> Result<String, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let games = crate::db::queries::get_all_games(&conn).map_err(|e| e.to_string())?;
@@ -284,7 +284,7 @@ pub fn export_library_csv(state: State<DbState>) -> Result<String, String> {
     Ok(csv)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn export_games_by_ids(state: State<DbState>, ids: Vec<String>) -> Result<String, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let games = crate::db::queries::get_all_games(&conn).map_err(|e| e.to_string())?;
@@ -293,7 +293,7 @@ pub fn export_games_by_ids(state: State<DbState>, ids: Vec<String>) -> Result<St
     serde_json::to_string_pretty(&filtered).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn save_file(path: String, content: String) -> Result<(), String> {
     let target = std::path::Path::new(&path);
     let parent = target.parent().ok_or("Invalid path")?;
@@ -334,7 +334,7 @@ fn allowed_write_dirs() -> Vec<std::path::PathBuf> {
     dirs
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn check_for_update(ts: u64) -> Result<serde_json::Value, String> {
     let url = format!("https://zsync.eu/zgamelib/version.json?t={}", ts);
     let response = ureq::get(&url)
@@ -346,12 +346,12 @@ pub fn check_for_update(ts: u64) -> Result<serde_json::Value, String> {
     Ok(json)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn open_url(url: String) -> Result<(), String> {
     open::that(&url).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn is_portable_mode() -> bool {
     std::env::current_exe()
         .ok()
@@ -359,13 +359,13 @@ pub fn is_portable_mode() -> bool {
         .unwrap_or(false)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn save_setting(state: State<DbState>, key: String, value: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     queries::set_setting(&conn, &key, &value).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_year_in_review(state: State<DbState>, year: i32) -> Result<YearInReview, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let year_start = format!("{}-01-01", year);
@@ -468,7 +468,7 @@ pub fn get_year_in_review(state: State<DbState>, year: i32) -> Result<YearInRevi
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn sync_steam_playtime(state: State<DbState>, api_key: String, steam_id: String) -> Result<SteamSyncResult, String> {
     let url = format!(
         "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1?key={}&steamid={}&include_played_free_games=1&format=json",
@@ -529,7 +529,7 @@ pub fn sync_steam_playtime(state: State<DbState>, api_key: String, steam_id: Str
     Ok(SteamSyncResult { updated, skipped })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn pull_uninstalled_steam_games(state: State<DbState>, api_key: String, steam_id: String) -> Result<PullUninstalledResult, String> {
     let url = format!(
         "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1?key={}&steamid={}&include_played_free_games=1&include_appinfo=1&format=json",

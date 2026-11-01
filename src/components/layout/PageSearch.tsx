@@ -109,9 +109,9 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
       )}
       style={sticky ? { background: "linear-gradient(180deg, rgb(var(--bg-base) / 0.94), rgb(var(--bg-base) / 0.82))", borderBottom: "1px solid rgba(255,255,255,0.04)" } : undefined}
     >
-      <div className="flex items-center gap-3">
-        {title && <h2 className="text-[17px] font-semibold text-white mr-1 shrink-0">{title}</h2>}
-        <div className="relative w-[300px] group shrink-0" data-tour="search-input" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHelpOpen(false); }}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5">
+        {title && <h2 className="text-[17px] font-semibold text-white mr-1 shrink-0 hidden xl:block">{title}</h2>}
+        <div className="relative w-[230px] 2xl:w-[300px] group shrink min-w-[180px]" data-tour="search-input" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHelpOpen(false); }}>
           <SearchIcon size={14} className="absolute left-3.5 inset-y-0 my-auto text-slate-500 pointer-events-none group-focus-within:text-accent-300 transition-colors" />
           <input
             ref={inputRef}
@@ -202,11 +202,11 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
         {collapsed > 0 && (
           <button
             onClick={() => useUIStore.getState().setDuplicatesOpen(true)}
-            className="chip !py-1 !text-[11px]"
-            title="Duplicates are collapsed into one entry. Click to review or merge them."
+            className="chip !py-1 !text-[11px] shrink-0"
+            title={`${collapsed} duplicate entr${collapsed !== 1 ? "ies are" : "y is"} collapsed into one. Click to review or merge them.`}
           >
             <LayersIcon size={11} />
-            {collapsed} duplicate{collapsed !== 1 ? "s" : ""} collapsed
+            {collapsed} collapsed
           </button>
         )}
 
@@ -221,7 +221,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
           </button>
         )}
 
-        <div className="flex-1" />
+        <div className="flex items-center gap-3 ml-auto">
 
         {showViewToggle && viewMode === "grid" && autoColumns && (
           <div className="hidden lg:flex items-center gap-2 shrink-0" title="Card size">
@@ -233,7 +233,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
               step={4}
               value={cardSize}
               onChange={(e) => setCardSize(parseInt(e.target.value, 10))}
-              className="w-24 accent-[rgb(var(--accent-500))] cursor-pointer"
+              className="w-20 accent-[rgb(var(--accent-500))] cursor-pointer"
               aria-label="Card size"
             />
             <GridIcon size={15} className="text-slate-500" />
@@ -245,7 +245,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="input-glass h-9 py-0 text-[12.5px] pr-8 w-auto min-w-[130px] cursor-pointer"
+              className="input-glass h-9 py-0 text-[12.5px] pr-8 w-auto min-w-[120px] cursor-pointer"
               aria-label="Sort by"
             >
               {SORT_OPTIONS.map((o) => (
@@ -289,6 +289,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
             ))}
           </div>
         )}
+        </div>
       </div>
 
       <AnimatePresence initial={false}>
