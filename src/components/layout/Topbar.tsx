@@ -1,13 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
-import { useScan, usePullUninstalled, useDuplicateGroups } from "@/hooks/useGames";
+import { useScan, usePullUninstalled, useDuplicateGroups, useLibraryGames } from "@/hooks/useGames";
 import { cn } from "@/lib/utils";
 import { cleanTitle } from "@/lib/gameName";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
-import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon, SearchIcon, TvIcon, DownloadIcon } from "@/components/ui/Icons";
+import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon, SearchIcon, TvIcon, DownloadIcon, ImageIcon } from "@/components/ui/Icons";
 
 export default function Topbar() {
   const logPanelOpen = useUIStore((s) => s.logPanelOpen);
@@ -19,6 +19,8 @@ export default function Topbar() {
   const setBigPicture = useUIStore((s) => s.setBigPicture);
   const { scan, isScanning } = useScan();
   const dupCount = useDuplicateGroups().length;
+  const libraryGames = useLibraryGames();
+  const missingCovers = useMemo(() => { let n = 0; for (const g of libraryGames) if (!g.cover_path) n++; return n; }, [libraryGames]);
   const { pullUninstalled, isPulling } = usePullUninstalled();
   const [scanMenuOpen, setScanMenuOpen] = useState(false);
   const scanMenuRef = useRef<HTMLDivElement>(null);
@@ -141,6 +143,18 @@ export default function Topbar() {
             <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8.5px] font-bold leading-none text-accent-200 bg-bg-elevated border border-accent-500/30 rounded px-1 py-0.5 tabular-nums whitespace-nowrap">
               {igdbProgress}/{igdbTotal}
             </span>
+          )}
+        </button>
+        <button
+          data-tour="cover-finder-btn"
+          onClick={() => useUIStore.getState().openCoverFinder()}
+          className="btn-icon relative"
+          title={missingCovers ? `${missingCovers} game${missingCovers !== 1 ? "s" : ""} without a cover — open Cover Art Finder` : "Cover Art Finder"}
+          aria-label="Open cover art finder"
+        >
+          <ImageIcon size={15} />
+          {missingCovers > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[17px] h-[17px] px-1 rounded-full bg-accent-500 text-[9.5px] font-bold text-white flex items-center justify-center tabular-nums">{missingCovers > 99 ? "99+" : missingCovers}</span>
           )}
         </button>
         <button
