@@ -27,6 +27,7 @@ import CoverFinderModal from "@/components/modals/CoverFinderModal";
 import GamepadLauncher from "@/components/bigpicture/GamepadLauncher";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
+import type { RunningGame } from "@/lib/types";
 
 type InstallState = "idle" | "downloading" | "installing" | "done";
 
@@ -217,11 +218,18 @@ function AppBehavior() {
   }, []);
 
   useEffect(() => {
-    const promise = listen<string>("game-session-ended", () => {
-      qc.invalidateQueries({ queryKey: ["games"] });
-      useUIStore.getState().setActiveGameId(null);
-    });
-    return () => { promise.then((f) => f()); };
+    const ui = useUIStore.getState;
+    api.getRunningGame().then((s) => { if (s) ui().setSession(s); }).catch(() => {});
+    const unlisten = [
+      listen<RunningGame>("game-session-started", (e) => ui().setSession(e.payload)),
+      listen<RunningGame>("game-session-tick", (e) => ui().setSession(e.payload)),
+      listen<string>("game-session-ended", (e) => {
+        qc.invalidateQueries({ queryKey: ["games"] });
+        const cur = ui().activeGameId;
+        if (!e.payload || !cur || e.payload === cur) ui().setActiveGameId(null);
+      }),
+    ];
+    return () => { unlisten.forEach((p) => p.then((f) => f())); };
   }, [qc]);
 
   useEffect(() => {

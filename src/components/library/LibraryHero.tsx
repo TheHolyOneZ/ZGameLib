@@ -9,6 +9,7 @@ import { api } from "@/lib/tauri";
 import { sqliteWeekKey } from "@/lib/week";
 import { formatPlaytime, timeAgo, PLATFORM_LABELS, cn } from "@/lib/utils";
 import GameCover from "@/components/ui/GameCover";
+import SessionClock from "@/components/ui/SessionClock";
 import { PlayIcon, StopIcon, ClockIcon, StarIcon, TrophyIcon, EditIcon, CheckIcon } from "@/components/ui/Icons";
 
 const GOAL_KEY = "zgamelib-weekly-goal-mins";
@@ -168,6 +169,8 @@ export default function LibraryHero() {
             {running ? (
               <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10.5px] font-bold tracking-[0.14em]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> NOW PLAYING
+                <span className="text-emerald-100/70">·</span>
+                <SessionClock className="tabular-nums tracking-normal text-emerald-100" />
               </span>
             ) : (
               <span className="text-[10.5px] font-bold tracking-[0.18em] text-accent-200/90 uppercase">Continue playing</span>

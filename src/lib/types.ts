@@ -170,6 +170,16 @@ export interface CoverCandidate {
   cover_url: string;
 }
 
+export interface RunningGame {
+  game_id: string;
+  name: string;
+  started_at: string;
+  elapsed_secs: number;
+  idle_secs: number;
+  idle: boolean;
+  detected: boolean;
+}
+
 export interface CoverResult {
   source: string;
   name: string;

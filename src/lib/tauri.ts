@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, CoverResult, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult, YearInReview } from "./types";
+import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, CoverResult, RunningGame, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult, YearInReview } from "./types";
 
 let writeChain: Promise<unknown> = Promise.resolve();
 
@@ -55,6 +55,8 @@ export const api = {
   openGameFolder: (id: string) => invoke<void>("open_game_folder", { id }),
   stopTracking: () => invoke<void>("stop_tracking"),
   stopGame: () => invoke<void>("stop_game"),
+  getRunningGame: () => invoke<RunningGame | null>("get_running_game"),
+  focusRunningGame: () => invoke<boolean>("focus_running_game"),
 
   getSettings: () => invoke<AppSettings>("get_settings"),
   saveSettings: (settings: AppSettings) => serial<void>("save_settings", { settings }),

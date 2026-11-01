@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { StatusConfig } from "@/lib/types";
+import type { StatusConfig, RunningGame } from "@/lib/types";
 import type { Update } from "@tauri-apps/plugin-updater";
 
 interface Toast {
@@ -78,6 +78,9 @@ interface UIStore {
 
   activeGameId: string | null;
   setActiveGameId: (id: string | null) => void;
+  session: RunningGame | null;
+  sessionAt: number;
+  setSession: (s: RunningGame | null) => void;
 
   bigPicture: boolean;
   setBigPicture: (v: boolean) => void;
@@ -166,7 +169,10 @@ export const useUIStore = create<UIStore>((set) => ({
   setWhatsNewVersion: (v) => set({ whatsNewVersion: v }),
 
   activeGameId: null,
-  setActiveGameId: (id) => set({ activeGameId: id }),
+  setActiveGameId: (id) => set(id ? { activeGameId: id } : { activeGameId: null, session: null }),
+  session: null,
+  sessionAt: 0,
+  setSession: (s) => set(s ? { session: s, sessionAt: Date.now(), activeGameId: s.game_id } : { session: null, sessionAt: 0 }),
 
   bigPicture: false,
   setBigPicture: (v) => set({ bigPicture: v }),

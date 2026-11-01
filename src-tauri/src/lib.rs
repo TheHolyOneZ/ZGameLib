@@ -18,6 +18,13 @@ pub fn run() {
     let conn = init_db().expect("Failed to initialize database");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.show();
+                let _ = win.unminimize();
+                let _ = win.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -152,6 +159,8 @@ pub fn run() {
                 }
             }
 
+            launcher::recover_session(app.handle());
+
             let start_min = {
                 let db = app.state::<DbState>();
                 let lock = db.0.lock();
@@ -259,6 +268,8 @@ pub fn run() {
             launcher::open_game_folder,
             launcher::stop_tracking,
             launcher::stop_game,
+            launcher::get_running_game,
+            launcher::focus_running_game,
             settings::get_settings,
             settings::save_settings,
             settings::export_library,
@@ -283,6 +294,11 @@ pub fn run() {
             modloader::install_mod,
             modloader::delete_mod,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                launcher::persist_active_session(app);
+            }
+        });
 }

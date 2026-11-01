@@ -13,6 +13,9 @@ const RELEASE_NOTES: Record<string, ReleaseNote> = {
     headline: "A completely redesigned ZGameLib — plus Big Picture mode for controllers.",
     bullets: [
       "Big Picture mode: a full-screen, couch-friendly UI for Xbox, PlayStation and Nintendo controllers (Ctrl+B or Start/Options)",
+      "Now Playing card in Big Picture with a live session timer, Switch to Game and Stop",
+      "More reliable playtime tracking: Stop saves your time, sleep and long alt-tabs don't count, and sessions survive closing ZGameLib",
+      "Cover Art Finder: bulk covers from Steam, SteamGridDB and IGDB, with scene-name cleanup and your own regex rules",
       "Duplicate Manager: finds the same game across stores, editions, versions and typos, then merges or hides the extras",
       "Smart titles and smart search: clean names, typo-tolerant search, acronyms like rdr2, regex and filters like rating>=8",
       "Brand-new look across every page, with a cleaner sidebar and a command search in the top bar",

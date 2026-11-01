@@ -4,13 +4,15 @@ import { motion } from "framer-motion";
 import { cn, formatPlaytime, timeAgo, formatDate, PLATFORM_LABELS } from "@/lib/utils";
 import type { Game, StatusConfig } from "@/lib/types";
 import GameCover from "@/components/ui/GameCover";
+import SessionClock from "@/components/ui/SessionClock";
 import {
   PlayIcon, HeartIcon, StopIcon, StarIcon, ClockIcon, CheckIcon, CloseIcon,
   ScanIcon, PowerIcon, VolumeIcon, MaximizeIcon, TvIcon, SearchIcon, GamepadIcon,
 } from "@/components/ui/Icons";
 
-function BpButton({ children, onClick, primary, danger, autofocus, className, active }: {
+export function BpButton({ children, onClick, primary, danger, autofocus, className, active, scrollMargin }: {
   children: React.ReactNode;
+  scrollMargin?: string;
   onClick: () => void;
   primary?: boolean;
   danger?: boolean;
@@ -35,7 +37,7 @@ function BpButton({ children, onClick, primary, danger, autofocus, className, ac
               : "bg-white/[0.09] text-white border border-white/10",
         className
       )}
-      style={primary ? { background: "linear-gradient(180deg, rgb(var(--accent-500)), rgb(var(--accent-700)))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" } : undefined}
+      style={{ ...(primary ? { background: "linear-gradient(180deg, rgb(var(--accent-500)), rgb(var(--accent-700)))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" } : {}), ...(scrollMargin ? { scrollMargin } : {}) }}
     >
       {children}
     </button>
@@ -106,7 +108,9 @@ export function GamePage({ game, running, statuses, onPlay, onStop, onFavorite, 
           <div className="grid grid-cols-4 gap-4 mt-8 max-w-[900px]">
             {[
               { icon: <ClockIcon size={18} />, label: "Play time", value: game.playtime_mins > 0 ? formatPlaytime(game.playtime_mins) : "—" },
-              { icon: <PlayIcon size={16} />, label: "Last played", value: game.last_played ? timeAgo(game.last_played) : "Never" },
+              running
+                ? { icon: <PlayIcon size={16} />, label: "This session", value: <SessionClock className="tabular-nums text-emerald-200" /> }
+                : { icon: <PlayIcon size={16} />, label: "Last played", value: game.last_played ? timeAgo(game.last_played) : "Never" },
               { icon: <StarIcon size={17} filled />, label: "Your rating", value: game.rating !== null ? `${game.rating} / 10` : "Unrated" },
               { icon: <CheckIcon size={17} />, label: game.hltb_main_mins ? "Time to beat" : "Added", value: game.hltb_main_mins ? `${Math.round(game.hltb_main_mins / 6) / 10}h` : formatDate(game.date_added) },
             ].map((s) => (

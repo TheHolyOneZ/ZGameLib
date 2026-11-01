@@ -34,6 +34,7 @@ open = "5"
 ureq = { version = "2", features = ["tls"] }
 zip = "0.6"
 base64 = "0.22"
+tauri-plugin-single-instance = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"

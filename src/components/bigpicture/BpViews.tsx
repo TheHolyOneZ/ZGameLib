@@ -165,17 +165,18 @@ export function HeroInfo({ game, running, label }: { game: Game | null; running:
   );
 }
 
-export function HomeView({ games, runningId, focusedGame, onSelect, onOpenTab }: {
+export function HomeView({ games, runningId, focusedGame, onSelect, onOpenTab, nowPlaying }: {
   games: Game[];
   runningId: string | null;
   focusedGame: Game | null;
   onSelect: (g: Game) => void;
   onOpenTab: (t: BpTab) => void;
+  nowPlaying?: React.ReactNode;
 }) {
   const shelves = useMemo(() => {
     const recent = games.filter((g) => g.last_played).sort((a, b) => (b.last_played ?? "").localeCompare(a.last_played ?? "")).slice(0, 14);
     const running = runningId ? games.find((g) => g.id === runningId) : undefined;
-    const continuePlaying = running ? [running, ...recent.filter((g) => g.id !== running.id)] : recent;
+    const continuePlaying = running ? recent.filter((g) => g.id !== running.id) : recent;
     const favorites = games.filter((g) => g.is_favorite).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 20);
     const playNext = games
       .filter((g) => (g.status === "backlog" || g.status === "playing" || g.status === "none") && !g.not_installed && g.playtime_mins < 120 && !recent.some((r) => r.id === g.id))
@@ -187,7 +188,7 @@ export function HomeView({ games, runningId, focusedGame, onSelect, onOpenTab }:
 
   const hero = focusedGame ?? shelves.continuePlaying[0] ?? shelves.added[0] ?? null;
   const heroLabel = focusedGame ? (focusedGame.last_played ? "Continue Playing" : "From Your Library") : "Welcome Back";
-  const firstShelf = shelves.continuePlaying.length ? "continue" : shelves.favorites.length ? "fav" : "added";
+  const firstShelf = nowPlaying ? "none" : shelves.continuePlaying.length ? "continue" : shelves.favorites.length ? "fav" : "added";
 
   if (games.length === 0) {
     return (
@@ -201,7 +202,7 @@ export function HomeView({ games, runningId, focusedGame, onSelect, onOpenTab }:
 
   return (
     <div className="pb-10">
-      <HeroInfo game={hero} running={!!hero && hero.id === runningId} label={heroLabel} />
+      {nowPlaying ?? <HeroInfo game={hero} running={!!hero && hero.id === runningId} label={heroLabel} />}
       <Shelf first={firstShelf === "continue"} title={runningId ? "Jump Back In" : "Continue Playing"} icon={<PlayIcon size={18} />} games={shelves.continuePlaying} size="lg" runningId={runningId} onSelect={onSelect} />
       <Shelf first={firstShelf === "fav"} title="Favorites" icon={<HeartIcon size={18} filled />} games={shelves.favorites} runningId={runningId} onSelect={onSelect}
         extra={games.filter((g) => g.is_favorite).length > 20 ? <ViewAllTile label="All Favorites" count={games.filter((g) => g.is_favorite).length} onClick={() => onOpenTab("favorites")} /> : undefined} />

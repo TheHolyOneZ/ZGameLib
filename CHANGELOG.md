@@ -13,6 +13,8 @@
 - **Cover Art Finder** — bulk cover search for missing, selected or all games; cleans cracked and scene release names (Elden.Ring-CODEX, Hades.II.v1.0-RUNE, [FitGirl Repack]…) into searchable titles, supports your own regex rules with presets and a live preview, auto-picks confident matches and applies them in one go
 - **More art sources** — Steam store, Steam community, SteamGridDB (with your API key) and IGDB are searched in parallel and ranked by title match, so new releases and indie games get covers too
 - **New Z controller logo** in the sidebar and Big Picture, plus a new app icon
+- **Now Playing in Big Picture** — a big hero card for the game you're playing with a live session timer, total playtime, rating, status and story progress, plus Switch to Game, Game Details and Stop; the live timer also shows in the top bar, the sidebar and the library hero
+- **Single instance** — opening ZGameLib again brings the existing window to the front (also from the tray or when minimized) instead of starting a second copy
 
 - **Big Picture mode** — full-screen, controller-first interface with Home shelves, Library grid with filters and sorting, Favorites, Recent and Collections tabs, a cinematic game page, status and rating pickers, on-screen keyboard search, a quick menu and a launch splash
 - **Xbox, PlayStation and Nintendo controller support** — D-pad and left stick navigation, A/B/X/Y actions, LB/RB tab switching, LT/RT page jumps, Start/Options menu, rumble on launch; button prompts switch automatically between Xbox letters, PlayStation symbols and keyboard keys; friendly controller names (DualSense, DualShock 4, Xbox Series)
@@ -49,6 +51,14 @@
 
 ### Fixed
 
+- Playtime tracking was reworked:
+  - Stopping a game now saves the time played instead of throwing it away.
+  - Closing or restarting ZGameLib mid-game no longer loses the session; tracking resumes if the game is still running, otherwise the time is saved.
+  - Time while the PC was asleep or hibernating isn't counted, and sessions are rounded to the nearest minute instead of always rounded down.
+  - Games that restart through a launcher keep being tracked, and Stop now closes the actual game for Steam, Epic and Ubisoft titles.
+  - Stopping one game and launching another can no longer end the new session.
+  - Two quick launches can't start two trackers.
+- Games launched from an .exe now start in their own folder, fixing games that couldn't find their files when started from ZGameLib
 - Cover search for dotted or underscored names (Red.Dead.Redemption.2-EMPRESS) found nothing; the release group, version and build tags are now removed before searching
 - Rapid edits could be lost (only 7 of 15 tags added in quick succession were saved); writes are now ordered and stale responses can no longer overwrite newer changes
 - The game details panel could stay invisibly mounted after closing while switching tabs, blocking every click until restart

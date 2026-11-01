@@ -10,6 +10,7 @@ import { useLibraryGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import { useQuery } from "@tanstack/react-query";
 import GameCover from "@/components/ui/GameCover";
+import SessionClock from "@/components/ui/SessionClock";
 import {
   GamepadIcon, LibraryIcon, HeartIcon, ClockIcon, ChartIcon,
   SettingsIcon, SpinIcon, ChevronLeftIcon,
@@ -85,9 +86,10 @@ function NowPlaying({ collapsed }: { collapsed: boolean }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
             </span>
-            <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.14em]">Now Playing</span>
+            <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.14em] whitespace-nowrap">Now Playing</span>
           </div>
           <p className="text-[12.5px] font-semibold text-white truncate mt-0.5">{displayName(game.name)}</p>
+          <SessionClock className="block text-[11px] font-semibold tabular-nums text-emerald-200/75 leading-tight" />
         </div>
         <button onClick={stop} title="Stop game" className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-red-500/30 transition-colors shrink-0">
           <StopIcon size={12} />

@@ -19,6 +19,9 @@ import {
   type BpTab, type LibraryFilter, type LibrarySort,
 } from "./BpViews";
 import { GamePage, Picker, OnScreenKeyboard, MenuPanel, ConfirmDialog, LaunchSplash } from "./BpOverlays";
+import { NowPlayingCard } from "./BpNowPlaying";
+import LiveSessionClock from "@/components/ui/SessionClock";
+import { displayName } from "@/lib/gameName";
 import { GamepadIcon, SearchIcon, CloseIcon } from "@/components/ui/Icons";
 
 export const BP_AUTOSTART_KEY = "zgamelib-bp-autostart";
@@ -191,6 +194,17 @@ function BigPictureShell() {
       .catch((e) => useUIStore.getState().addToast(String(e), "error"));
   }, []);
 
+  const confirmStop = useCallback((name: string) => {
+    useUIStore.getState().openConfirm(`Stop "${displayName(name)}"? Your playtime so far is saved.`, doStop, "Stop Game");
+  }, [doStop]);
+
+  const switchToGame = useCallback(() => {
+    playSound("select");
+    api.focusRunningGame()
+      .then((ok) => { if (!ok) useUIStore.getState().addToast("Couldn't find the game window — switch with Alt+Tab", "info"); })
+      .catch(() => {});
+  }, []);
+
   const openKeyboard = useCallback(() => {
     pushLayer();
     setKeyboardOpen(true);
@@ -353,7 +367,8 @@ function BigPictureShell() {
   const favoriteGames = useMemo(() => games.filter((g) => g.is_favorite).sort((a, b) => a.name.localeCompare(b.name)), [games]);
   const recentGames = useMemo(() => games.filter((g) => g.last_played).sort((a, b) => (b.last_played ?? "").localeCompare(a.last_played ?? "")), [games]);
 
-  const backdropGame = pageGame ?? settledGame ?? recentGames[0] ?? games[0] ?? null;
+  const runningGame = activeGameId ? games.find((g) => g.id === activeGameId) ?? null : null;
+  const backdropGame = pageGame ?? settledGame ?? runningGame ?? recentGames[0] ?? games[0] ?? null;
 
   const hints: { action: PadAction; label: string }[] = (() => {
     if (confirmDialog) return [{ action: "a", label: "Select" }, { action: "b", label: "Cancel" }];
@@ -450,9 +465,10 @@ function BigPictureShell() {
           <div className="flex-1" />
           <div className="flex items-center gap-5 text-[18px] font-semibold text-white/75">
             {activeGameId && (
-              <span className="flex items-center gap-2 text-emerald-300 text-[15px]">
+              <span className="flex items-center gap-2.5 pl-3 pr-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-400/25 text-emerald-200 text-[15px]">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                {games.find((g) => g.id === activeGameId)?.name ?? "Game running"}
+                <span className="max-w-[18vw] truncate">{runningGame ? displayName(runningGame.name) : "Game running"}</span>
+                <LiveSessionClock className="tabular-nums text-emerald-100/80 font-bold" />
               </span>
             )}
             <span className={`flex items-center gap-2 text-[14px] ${kind ? "text-white/70" : "text-white/35"}`} title={controllerName ?? undefined}>
@@ -465,7 +481,22 @@ function BigPictureShell() {
 
         <div data-bp-content className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
           {tab === "home" && (
-            <HomeView games={games} runningId={activeGameId} focusedGame={settledGame} onSelect={openGame} onOpenTab={(t) => setTab(t)} />
+            <HomeView
+              games={games}
+              runningId={activeGameId}
+              focusedGame={settledGame}
+              onSelect={openGame}
+              onOpenTab={(t) => setTab(t)}
+              nowPlaying={runningGame ? (
+                <NowPlayingCard
+                  game={runningGame}
+                  statuses={customStatuses}
+                  onSwitch={switchToGame}
+                  onDetails={() => openGame(runningGame)}
+                  onStop={() => confirmStop(runningGame.name)}
+                />
+              ) : undefined}
+            />
           )}
           {tab === "library" && (
             <GridView title="Library" games={libraryGames} runningId={activeGameId} onSelect={openGame} chips={chips} empty={query ? `No games match “${query}”.` : "No games match this filter."} />
@@ -504,7 +535,7 @@ function BigPictureShell() {
           running={activeGameId === pageGame.id}
           statuses={customStatuses}
           onPlay={() => doLaunch(pageGame)}
-          onStop={doStop}
+          onStop={() => confirmStop(pageGame.name)}
           onFavorite={() => toggleFavorite(pageGame.id)}
           onStatus={() => openPicker({ kind: "status" })}
           onRate={() => openPicker({ kind: "rating" })}
