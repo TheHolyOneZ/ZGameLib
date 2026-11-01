@@ -1,6 +1,6 @@
 import { displayName } from "@/lib/gameName";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, animate } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { useLibraryGames } from "@/hooks/useGames";
 import { useUIStore } from "@/store/useUIStore";
@@ -21,10 +21,30 @@ const SEG_PALETTE = [
   ["#43434f", "#30303a"],
 ];
 
-const SIZE = 420;
+const SIZE = 440;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
-const R = 186;
+const R = 198;
+const LABEL_OUTER = R * 0.9;
+const LABEL_INNER = R * 0.25;
+
+function labelLayout(name: string, n: number) {
+  const span = LABEL_OUTER - LABEL_INNER;
+  const arcAtMiddle = (2 * Math.PI * ((LABEL_OUTER + LABEL_INNER) / 2)) / Math.max(1, n);
+  const maxSize = Math.min(18, arcAtMiddle * 0.5);
+  const fitSize = span / (0.6 * Math.max(1, name.length));
+  const size = Math.max(10, Math.min(maxSize, fitSize));
+  const maxChars = Math.floor(span / (0.6 * size));
+  const text = name.length > maxChars ? name.slice(0, Math.max(1, maxChars - 1)).trimEnd() + "\u2026" : name;
+  return { size, text };
+}
+
+export function indexAtPointer(rotationDeg: number, n: number) {
+  if (n <= 0) return -1;
+  const seg = 360 / n;
+  const atTop = ((360 - (rotationDeg % 360)) % 360 + 360) % 360;
+  return Math.min(n - 1, Math.floor(atTop / seg));
+}
 
 function polar(angleDeg: number, radius = R) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -45,31 +65,14 @@ function Wheel({ pool, rotation, isSpinning }: {
 }) {
   const n = pool.length;
   const segAngle = n > 0 ? 360 / n : 0;
-  const fontSize = n <= 6 ? 11 : n <= 12 ? 9 : n <= 20 ? 7.5 : 6;
-  const maxChars = n <= 6 ? 16 : n <= 12 ? 12 : n <= 20 ? 8 : 6;
-  const textR = R * 0.62;
 
   return (
     <div className="relative select-none" style={{ width: SIZE, height: SIZE }}>
-      <div
-        className="absolute -inset-6 rounded-full transition-all duration-700"
-        style={{
-          background: isSpinning
-            ? "radial-gradient(circle, rgb(var(--accent-500) /0.3) 0%, rgb(var(--accent-600) /0.1) 50%, transparent 70%)"
-            : "radial-gradient(circle, rgb(var(--accent-500) /0.1) 0%, transparent 65%)",
-          filter: "blur(30px)",
-        }}
-      />
-
       {isSpinning && (
         <motion.div
           className="absolute rounded-full pointer-events-none"
-          style={{
-            inset: -16,
-            border: "2px solid rgb(var(--accent-500) /0.4)",
-            borderRadius: "50%",
-          }}
-          animate={{ opacity: [0.2, 0.8, 0.2], scale: [0.98, 1.02, 0.98] }}
+          style={{ inset: -10, border: "2px solid rgba(255,255,255,0.18)", borderRadius: "50%" }}
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
           transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
@@ -110,21 +113,24 @@ function Wheel({ pool, rotation, isSpinning }: {
           const start = i * segAngle;
           const end = (i + 1) * segAngle;
           const mid = start + segAngle / 2;
-          const tp = polar(mid, textR);
-          const full = displayName(game.name);
-          const name = full.length > maxChars ? full.slice(0, maxChars - 1) + "\u2026" : full;
+          const { size, text } = labelLayout(displayName(game.name), n);
+          const leftHalf = mid > 180;
           return (
             <g key={game.id}>
-              <path d={segmentPath(start, end)} fill={`url(#seg-${i})`} stroke="rgba(0,0,0,0.3)" strokeWidth="1" />
+              <path d={segmentPath(start, end)} fill={`url(#seg-${i})`} stroke="rgba(0,0,0,0.35)" strokeWidth="1" />
               {n <= 30 && (
                 <text
-                  x={tp.x} y={tp.y}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fontSize={fontSize} fontWeight="700" fill="white" opacity="0.95"
-                  style={{ fontFamily: "inherit", pointerEvents: "none" }}
-                  transform={`rotate(${mid}, ${tp.x}, ${tp.y})`}
+                  x={leftHalf ? CX - LABEL_OUTER : CX + LABEL_OUTER}
+                  y={CY}
+                  textAnchor={leftHalf ? "start" : "end"}
+                  dominantBaseline="central"
+                  fontSize={size}
+                  fontWeight="600"
+                  fill="white"
+                  style={{ fontFamily: "Inter Variable, Inter, system-ui, sans-serif", pointerEvents: "none", paintOrder: "stroke", stroke: "rgba(0,0,0,0.35)", strokeWidth: 2.5 }}
+                  transform={`rotate(${leftHalf ? mid + 90 : mid - 90}, ${CX}, ${CY})`}
                 >
-                  {name}
+                  {text}
                 </text>
               )}
             </g>
@@ -157,6 +163,24 @@ function Wheel({ pool, rotation, isSpinning }: {
           fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="0.75"
         />
       </svg>
+    </div>
+  );
+}
+
+function PointerReadout({ game, spinning }: { game: Game | null; spinning: boolean }) {
+  return (
+    <div className="h-14 w-full max-w-[460px] flex items-center justify-center">
+      {game ? (
+        <div className="flex items-center gap-3 min-w-0 px-3 py-2 rounded-xl bg-white/[0.04]">
+          <div className="w-8 h-11 rounded-md overflow-hidden shrink-0 bg-white/5">
+            <CoverThumb game={game} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11.5px] text-slate-500 leading-none">{spinning ? "Spinning…" : "Under the pointer"}</p>
+            <p className="mt-1 text-[17px] font-semibold text-white truncate leading-tight" title={game.name}>{displayName(game.name)}</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -301,7 +325,7 @@ function HistoryRow({ game, time }: { game: Game; time: Date }) {
   );
 }
 
-const WHEEL_MAX = 24;
+const WHEEL_MAX = 16;
 
 function drawWheel(pool: Game[]): Game[] {
   if (pool.length <= WHEEL_MAX) return pool;
@@ -385,6 +409,17 @@ export default function Spin() {
   }, [allGames, selected, excludeLastWinner, history]);
 
   const [wheelPool, setWheelPool] = useState<Game[]>([]);
+  const [pointerIdx, setPointerIdx] = useState(0);
+  const wheelLenRef = useRef(0);
+  wheelLenRef.current = wheelPool.length;
+  useMotionValueEvent(rotation, "change", (v) => {
+    const i = indexAtPointer(v, wheelLenRef.current);
+    setPointerIdx((p) => (p === i ? p : i));
+  });
+  useEffect(() => {
+    setPointerIdx(indexAtPointer(rotation.get(), wheelPool.length));
+  }, [wheelPool, rotation]);
+  const pointerGame = wheelPool.length >= 2 ? wheelPool[pointerIdx] ?? null : null;
   const spinningRef = useRef(false);
   spinningRef.current = isSpinning;
   const poolKey = useMemo(() => pool.map((g) => g.id).join(","), [pool]);
@@ -404,7 +439,9 @@ export default function Spin() {
     const segAngle = 360 / wheel.length;
     const extraAngle = (360 - (winnerIndex * segAngle + segAngle / 2) + 360) % 360;
     const spins = 6 + Math.floor(Math.random() * 4);
-    const targetRotation = rotation.get() + spins * 360 + extraAngle;
+    const current = rotation.get();
+    const offset = ((extraAngle - (current % 360)) % 360 + 360) % 360;
+    const targetRotation = current + spins * 360 + offset;
 
     animate(rotation, targetRotation, {
       duration: 6 + Math.random() * 1.5,
@@ -616,8 +653,12 @@ export default function Spin() {
               )}
             </div>
 
+            <div className="-mt-2 w-full flex justify-center">
+              <PointerReadout game={pointerGame} spinning={isSpinning} />
+            </div>
+
             {pool.length > WHEEL_MAX && (
-              <p className="-mt-2 text-center text-[12px] text-slate-500">
+              <p className="-mt-4 text-center text-[12px] text-slate-500">
                 Showing {WHEEL_MAX} of {pool.length} · every spin draws a fresh random set
               </p>
             )}

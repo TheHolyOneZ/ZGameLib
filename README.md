@@ -8,7 +8,7 @@ Track, organize, rate and launch every game you own — Steam, Epic, GOG, Ubisof
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7c3aed?style=flat-square" alt="MIT License"/></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square&logo=windows" alt="Windows"/>
-  <img src="https://img.shields.io/badge/Version-1.3.0-22c55e?style=flat-square" alt="v1.3.0"/>
+  <img src="https://img.shields.io/badge/Version-1.3.1-22c55e?style=flat-square" alt="v1.3.1"/>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-FFC131?style=flat-square" alt="Tauri 2"/></a>
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React 18"/>
   <img src="https://img.shields.io/badge/Rust-backend-CE422B?style=flat-square&logo=rust" alt="Rust"/>
@@ -102,8 +102,8 @@ Grab the latest installer from **[GitHub Releases](https://github.com/TheHolyOne
 
 | Installer | Format | Notes |
 |-----------|--------|-------|
-| `ZGameLib_1.3.0_x64_en-US.msi` | `.msi` | **Recommended** — Windows Installer |
-| `ZGameLib_1.3.0_x64-setup.exe` | `.exe` | NSIS alternative installer |
+| `ZGameLib_1.3.1_x64_en-US.msi` | `.msi` | **Recommended** — Windows Installer |
+| `ZGameLib_1.3.1_x64-setup.exe` | `.exe` | NSIS alternative installer |
 
 > **Windows SmartScreen:** On first launch you may see *"Windows protected your PC"* — click **More info → Run anyway**. This is expected for unsigned indie apps.
 
@@ -508,7 +508,8 @@ Can't decide what to play? Let the wheel decide.
 
 **Wheel**
 - SVG wheel in your theme's accent colors
-- Shows a fair random set of up to 24 games per spin, so huge pools stay readable
+- Names run along each slice and are sized to fit; a live readout under the wheel shows the game under the pointer
+- Shows a fair random set of up to 16 games per spin, so huge pools stay readable
 - Tick marks around the outer ring
 - Pointer triangle fixed at the top
 - Smooth animated spin with easing: `cubic-bezier(0.08, 0.82, 0.12, 1.0)`
@@ -1153,8 +1154,8 @@ npx tauri build
 ```
 
 Outputs installers to `src-tauri/target/release/bundle/`:
-- `msi/ZGameLib_1.3.0_x64_en-US.msi`
-- `nsis/ZGameLib_1.3.0_x64-setup.exe`
+- `msi/ZGameLib_1.3.1_x64_en-US.msi`
+- `nsis/ZGameLib_1.3.1_x64-setup.exe`
 
 ### Release Builds on GitHub
 

@@ -1,7 +1,7 @@
 import Logo from "@/components/ui/Logo";
 import * as gameActions from "@/lib/gameActions";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useScan, useLibraryGames } from "@/hooks/useGames";
@@ -38,16 +38,42 @@ function writeFlag(key: string, v: boolean) {
   try { localStorage.setItem(key, v ? "1" : "0"); } catch {}
 }
 
-async function setWindowFullscreen(v: boolean): Promise<boolean | null> {
+async function appWindow() {
   try {
     const { getCurrentWindow } = await import("@tauri-apps/api/window");
-    const w = getCurrentWindow();
+    return getCurrentWindow();
+  } catch {
+    return null;
+  }
+}
+
+async function setWindowFullscreen(v: boolean): Promise<boolean | null> {
+  const w = await appWindow();
+  if (!w) return null;
+  try {
     const prev = await w.isFullscreen();
     await w.setFullscreen(v);
     return prev;
   } catch {
     return null;
   }
+}
+
+async function enterBigPictureWindow(fullscreen: boolean): Promise<boolean | null> {
+  const w = await appWindow();
+  if (!w) return null;
+  const before = await w.isFullscreen().catch(() => null);
+  if (fullscreen && before === false) await w.setFullscreen(true).catch(() => {});
+  return before;
+}
+
+async function leaveBigPictureWindow(before: boolean | null) {
+  const w = await appWindow();
+  if (!w) return;
+  if (before === false && (await w.isFullscreen().catch(() => false))) {
+    await w.setFullscreen(false).catch(() => {});
+  }
+  await w.setFocus().catch(() => {});
 }
 
 function Clock() {
@@ -112,17 +138,19 @@ function BigPictureShell() {
   }, [focusedGameId]);
   const settledGame = settledId ? games.find((g) => g.id === settledId) ?? null : null;
 
+  const present = useIsPresent();
+  const presentRef = useRef(true);
+  presentRef.current = present;
+
   useEffect(() => {
-    let prev: boolean | null = null;
-    if (readFlag(BP_FULLSCREEN_KEY, true)) {
-      setWindowFullscreen(true).then((p) => { prev = p; });
-    }
+    if (!present) return;
+    const entered = enterBigPictureWindow(readFlag(BP_FULLSCREEN_KEY, true));
     document.documentElement.style.overflow = "hidden";
     return () => {
-      if (prev === false) setWindowFullscreen(false);
       document.documentElement.style.overflow = "";
+      entered.then(leaveBigPictureWindow);
     };
-  }, []);
+  }, [present]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -328,14 +356,17 @@ function BigPictureShell() {
   };
 
   useEffect(() => {
+    if (!present) return;
     return startGamepadLoop(
-      (action, src, k) => handlersRef.current(action, src, k),
+      (action, src, k) => { if (presentRef.current) handlersRef.current(action, src, k); },
       (k, name) => { setKind(k); setControllerName(name); if (k) setSource("gamepad"); },
     );
-  }, []);
+  }, [present]);
 
   useEffect(() => {
+    if (!present) return;
     const onKey = (e: KeyboardEvent) => {
+      if (!presentRef.current) return;
       e.stopPropagation();
       if (e.ctrlKey && (e.key === "b" || e.key === "B")) { e.preventDefault(); exit(); return; }
       if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -353,7 +384,7 @@ function BigPictureShell() {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [exit, closeKeyboard]);
+  }, [exit, closeKeyboard, present]);
 
   const onMouseMove = (e: React.MouseEvent) => {
     if (source !== "mouse") setSource("mouse");
@@ -411,15 +442,15 @@ function BigPictureShell() {
       ref={rootRef}
       initial={{ opacity: 0, scale: 1.02 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.02 }}
+      exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.16, ease: "easeOut" } }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      onMouseMove={onMouseMove}
-      className={`bp-root fixed inset-0 z-[90] overflow-clip ${source === "gamepad" ? "bp-hide-cursor" : ""}`}
+      onMouseMove={present ? onMouseMove : undefined}
+      className={`bp-root fixed inset-0 z-[90] overflow-clip ${source === "gamepad" && present ? "bp-hide-cursor" : ""}`}
       style={{ ["--bp-card" as string]: "clamp(150px, 11vw, 230px)", ["--bp-card-lg" as string]: "clamp(180px, 13.5vw, 280px)" }}
     >
       <div className="absolute inset-0 pointer-events-none">
         <AnimatePresence>
-          {backdropGame && (
+          {backdropGame && present && (
             <motion.div
               key={backdropGame.id}
               initial={{ opacity: 0 }}

@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.1] — 2026-11-01
+
+### Changed
+
+- **Game Spin wheel** — names now run along the whole slice and are sized to fit (about 2–3× larger), the wheel shows at most 16 games per spin (a fresh random set each time) and a readout under the wheel shows the cover and full name of the game under the pointer, ticking along while it spins
+
+### Fixed
+
+- Leaving Big Picture could freeze the app for a moment: the overlay kept capturing keys, blocking clicks and locking scrolling until its exit animation finished, and the heavy blurred backdrop was redrawn on every frame of that animation; input is now handed back immediately and the exit is a short fade
+- After leaving Big Picture fullscreen the window could lose keyboard focus; it is refocused, and fullscreen is restored correctly even when Big Picture is closed right after opening
+- From the second spin on, the Game Spin wheel could visually stop on a different game than the one announced as the winner
+- "Launch on Windows startup" now quotes the program path, so it also works from install folders with spaces
+
 ## [1.3.0] — 2026-10-31
 
 ### Added

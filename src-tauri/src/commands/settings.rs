@@ -115,7 +115,7 @@ pub fn save_settings(state: State<DbState>, settings: AppSettings) -> Result<(),
         ) {
             if settings.autostart {
                 if let Ok(exe) = std::env::current_exe() {
-                    let _ = run.set_value("ZGameLib", &exe.to_string_lossy().to_string());
+                    let _ = run.set_value("ZGameLib", &format!("\"{}\"", exe.to_string_lossy()));
                 }
             } else {
                 let _ = run.delete_value("ZGameLib");

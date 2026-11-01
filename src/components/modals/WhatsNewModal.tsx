@@ -9,6 +9,15 @@ interface ReleaseNote {
 }
 
 const RELEASE_NOTES: Record<string, ReleaseNote> = {
+  "1.3.1": {
+    headline: "Smoother Big Picture exits and a much easier to read Game Spin wheel.",
+    bullets: [
+      "Leaving Big Picture no longer freezes the app for a moment, and keyboard input works right away",
+      "Game Spin: bigger names that use the whole slice, at most 16 games per spin and a live readout of the game under the pointer",
+      "Game Spin: the wheel now always stops on the game that wins (from the second spin on it could land elsewhere)",
+      "Launch on Windows startup works when ZGameLib is installed in a folder with spaces",
+    ],
+  },
   "1.3.0": {
     headline: "A completely redesigned ZGameLib — plus Big Picture mode for controllers.",
     bullets: [
