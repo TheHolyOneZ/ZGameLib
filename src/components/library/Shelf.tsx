@@ -31,7 +31,7 @@ export function ShelfCard({ game, sub, badge, onDismiss, index = 0 }: { game: Ga
           <button
             onClick={(e) => { e.stopPropagation(); launch(game); }}
             className="absolute inset-0 m-auto w-11 h-11 rounded-full flex items-center justify-center text-white opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300"
-            style={{ background: "linear-gradient(180deg, rgb(var(--accent-400)), rgb(var(--accent-600)))", boxShadow: "0 8px 24px -6px rgb(var(--accent-500) / 0.9)" }}
+            style={{ background: "rgb(var(--accent-500))", boxShadow: "0 8px 24px -6px rgba(0,0,0,0.55)" }}
             title="Play"
           >
             <PlayIcon size={16} className="ml-0.5" />
@@ -91,8 +91,7 @@ export default function Shelf({ title, icon, storageKey, hint, children, count }
     <section className="px-8 pt-6">
       <div className="flex items-center gap-2.5 mb-3">
         <button onClick={toggle} className="flex items-center gap-2.5 group">
-          <span className="w-7 h-7 rounded-lg flex items-center justify-center text-accent-300" style={{ background: "rgb(var(--accent-500) / 0.14)" }}>{icon}</span>
-          <h2 className="text-[15px] font-semibold text-white">{title}</h2>
+          <h2 className="text-[17px] font-semibold text-white tracking-tight">{title}</h2>
           {count !== undefined && <span className="text-[12px] text-slate-500 tabular-nums">{count}</span>}
           <motion.span animate={{ rotate: open ? 0 : -90 }} className="text-slate-600 group-hover:text-slate-300 transition-colors"><ChevronDownIcon size={12} /></motion.span>
         </button>

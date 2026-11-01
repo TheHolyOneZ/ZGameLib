@@ -12,6 +12,11 @@ const TICK: Duration = Duration::from_secs(5);
 const MAX_SESSION_SECS: u64 = 86_400;
 const IDLE_THRESHOLD_SECS: u64 = 300;
 const SUSPEND_GAP_SECS: u64 = 90;
+const MISSING_POLL: Duration = Duration::from_secs(2);
+const EXIT_GRACE_SECS: u64 = 15;
+const EARLY_EXIT_GRACE_SECS: u64 = 12;
+const EXE_START_WAIT_SECS: u64 = 20;
+const STORE_START_WAIT_SECS: u64 = 60;
 
 #[cfg(windows)]
 fn show_native_alert(title: &str, message: &str) {
@@ -216,6 +221,13 @@ impl SessionState {
             install_dir: self.install_dir.clone(),
         }
     }
+}
+
+#[derive(Clone, Serialize)]
+struct LaunchProblem {
+    game_id: String,
+    name: String,
+    reason: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -520,20 +532,33 @@ impl Tracker {
                 clear_checkpoint(&conn, &self.sid);
             }
         }
-        let was_current = {
+        let ended = {
             let ap = self.app.state::<ActivePids>();
             let mut guard = ap.session.lock().unwrap_or_else(|e| e.into_inner());
             if guard.as_ref().map(|s| s.token) == Some(self.token) {
-                *guard = None;
+                let name = guard.take().map(|s| s.name).unwrap_or_default();
                 ap.game_active.store(false, Ordering::SeqCst);
                 ap.pids.lock().unwrap_or_else(|e| e.into_inner()).clear();
-                true
+                Some(name)
             } else {
-                false
+                None
             }
         };
+        let was_current = ended.is_some();
         let _ = self.app.emit("game-session-ended", &self.game_id);
-        if was_current {
+        if let Some(name) = ended {
+            let reason = if !self.detected {
+                Some("not_started")
+            } else if self.clock.base_secs == 0 && secs < 20 {
+                Some("exited")
+            } else {
+                None
+            };
+            if let Some(reason) = reason {
+                let _ = self.app.emit("game-launch-failed", LaunchProblem { game_id: self.game_id.clone(), name, reason: reason.to_string() });
+            }
+        }
+        if was_current && self.detected {
             if let Some(win) = self.app.get_webview_window("main") {
                 let _ = win.unminimize();
                 let _ = win.set_focus();
@@ -601,13 +626,16 @@ impl Tracker {
         };
         self.mark_detected(Some(pid));
 
-        let mut empty_ticks: u32 = 0;
-        let mut continuous_secs: u64 = 0;
+        let mut missing_since: Option<Instant> = None;
+        let mut running_since = Instant::now();
         let mut confirmed = self.clock.base_secs > 0;
 
         loop {
-            if !self.rest(TICK) {
-                self.tick(Some(probe.is_foreground(pid)));
+            let pause = if missing_since.is_some() { MISSING_POLL } else { TICK };
+            if !self.rest(pause) {
+                if missing_since.is_none() {
+                    self.tick(Some(probe.is_foreground(pid)));
+                }
                 break;
             }
             match probe.locate(Some(pid)) {
@@ -616,14 +644,11 @@ impl Tracker {
                         pid = p;
                         self.register(p);
                     }
-                    if empty_ticks > 0 {
-                        confirmed = true;
-                        continuous_secs = 0;
+                    if missing_since.take().is_some() {
+                        running_since = Instant::now();
                         self.skip();
                     }
-                    empty_ticks = 0;
-                    continuous_secs += TICK.as_secs();
-                    if continuous_secs >= 30 {
+                    if running_since.elapsed().as_secs() >= 30 {
                         confirmed = true;
                     }
                     let fg = probe.is_foreground(pid);
@@ -631,10 +656,14 @@ impl Tracker {
                     self.publish();
                 }
                 None => {
-                    self.skip();
-                    empty_ticks += 1;
-                    let grace = if confirmed { 6 } else { 36 };
-                    if empty_ticks >= grace {
+                    if missing_since.is_none() {
+                        self.tick(Some(probe.is_foreground(pid)));
+                        missing_since = Some(Instant::now());
+                    } else {
+                        self.skip();
+                    }
+                    let grace = if confirmed { EXIT_GRACE_SECS } else { EARLY_EXIT_GRACE_SECS };
+                    if missing_since.map(|t| t.elapsed().as_secs() >= grace).unwrap_or(false) {
                         break;
                     }
                 }
@@ -831,7 +860,7 @@ fn after_launch(app: &AppHandle, state: &DbState, game_id: &str, info: LaunchInf
 fn store_watch(info: &LaunchInfo, resolved_dir: Option<String>) -> Watch {
     let probe = Probe::new(resolved_dir.or_else(|| info.install_dir.clone()), exe_file_name(&info.exe_path));
     if probe.is_usable() {
-        Watch::Process { probe, pid: None, wait_secs: 300 }
+        Watch::Process { probe, pid: None, wait_secs: STORE_START_WAIT_SECS }
     } else {
         Watch::Manual
     }
@@ -886,7 +915,7 @@ pub fn launch_game(app: AppHandle, state: State<DbState>, id: String) -> Result<
     let watch = {
         let pid = child.id();
         drop(child);
-        Watch::Process { probe: Probe::new(info.install_dir.clone(), exe_file_name(&info.exe_path)), pid: Some(pid), wait_secs: 300 }
+        Watch::Process { probe: Probe::new(info.install_dir.clone(), exe_file_name(&info.exe_path)), pid: Some(pid), wait_secs: EXE_START_WAIT_SECS }
     };
     #[cfg(not(windows))]
     let watch = Watch::Child(child);

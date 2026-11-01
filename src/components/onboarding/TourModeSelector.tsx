@@ -92,8 +92,8 @@ export default function TourModeSelector({ onStart, onSkip }: TourModeSelectorPr
             transition={{ type: "spring", stiffness: 350, damping: 20, delay: 0.1 }}
             className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)))",
-              boxShadow: "0 0 60px rgb(var(--accent-500) / 0.45), 0 16px 40px rgba(0,0,0,0.4)",
+              background: "rgb(var(--accent-500))",
+              boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
             }}
           >
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -144,7 +144,7 @@ export default function TourModeSelector({ onStart, onSkip }: TourModeSelectorPr
                   layoutId="mode-selected"
                   className="absolute inset-0 rounded-2xl"
                   style={{
-                    boxShadow: "0 0 40px rgb(var(--accent-500) / 0.15)",
+                    
                     background: "rgb(var(--accent-500) / 0.05)",
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}

@@ -28,6 +28,7 @@ import GamepadLauncher from "@/components/bigpicture/GamepadLauncher";
 import { CloseIcon, DownloadIcon, GlobeIcon, CheckIcon } from "@/components/ui/Icons";
 import type { Update } from "@tauri-apps/plugin-updater";
 import type { RunningGame } from "@/lib/types";
+import { displayName } from "@/lib/gameName";
 
 type InstallState = "idle" | "downloading" | "installing" | "done";
 
@@ -75,7 +76,7 @@ function UpdateBanner({ update, onDismiss }: { update: Update; onDismiss: () => 
         className="glass rounded-2xl p-6 w-[440px] max-w-[90vw] relative"
         style={{
           border: "1px solid rgb(var(--accent-500) / 0.35)",
-          boxShadow: "0 0 80px rgb(var(--accent-500) / 0.15), 0 24px 60px rgba(0,0,0,0.5)",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
         }}
       >
         {installState === "idle" && (
@@ -91,8 +92,8 @@ function UpdateBanner({ update, onDismiss }: { update: Update; onDismiss: () => 
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
             style={{
-              background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)))",
-              boxShadow: "0 4px 20px rgb(var(--accent-500) / 0.4)",
+              background: "rgb(var(--accent-500))",
+              
             }}
           >
             {installState === "done" ? (
@@ -119,7 +120,7 @@ function UpdateBanner({ update, onDismiss }: { update: Update; onDismiss: () => 
             className="rounded-xl p-3.5 mb-5"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
           >
-            <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">What's new</p>
+            <p className="text-[12px] text-slate-500 font-semibold mb-1.5">What's new</p>
             <p className="text-[12.5px] text-slate-300 leading-relaxed">{update.body ?? "No release notes."}</p>
           </div>
         )}
@@ -133,7 +134,7 @@ function UpdateBanner({ update, onDismiss }: { update: Update; onDismiss: () => 
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, rgb(var(--accent-600)), rgb(var(--accent-400)))" }}
+                style={{ background: "rgb(var(--accent-500))" }}
                 initial={{ width: "0%" }}
                 animate={{ width: installState === "installing" ? "100%" : `${progress}%` }}
                 transition={{ ease: "linear" }}
@@ -223,6 +224,10 @@ function AppBehavior() {
     const unlisten = [
       listen<RunningGame>("game-session-started", (e) => ui().setSession(e.payload)),
       listen<RunningGame>("game-session-tick", (e) => ui().setSession(e.payload)),
+      listen<{ game_id: string; name: string; reason: string }>("game-launch-failed", (e) => {
+        const name = displayName(e.payload.name || "The game");
+        ui().addToast(e.payload.reason === "exited" ? `${name} closed right after starting` : `${name} didn't start, so nothing was tracked`, "info");
+      }),
       listen<string>("game-session-ended", (e) => {
         qc.invalidateQueries({ queryKey: ["games"] });
         const cur = ui().activeGameId;

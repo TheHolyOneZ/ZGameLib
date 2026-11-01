@@ -51,7 +51,7 @@ function FeaturedRecent({ game }: { game: Game }) {
       <button
         onClick={(e) => { e.stopPropagation(); launch(game); }}
         className="w-10 h-10 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-        style={{ background: "linear-gradient(180deg, rgb(var(--accent-400)), rgb(var(--accent-600)))" }}
+        style={{ background: "rgb(var(--accent-500))" }}
         title="Play"
       >
         <PlayIcon size={15} className="ml-0.5" />

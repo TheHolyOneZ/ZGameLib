@@ -27,7 +27,7 @@ export default function ToastContainer() {
                   : "rgba(255,255,255,0.06)",
               boxShadow:
                 t.type === "success"
-                  ? "0 0 30px rgb(var(--accent-500) /0.1), 0 8px 24px rgba(0,0,0,0.3)"
+                  ? "0 8px 24px rgba(0,0,0,0.3)"
                   : t.type === "error"
                   ? "0 0 30px rgba(239,68,68,0.1), 0 8px 24px rgba(0,0,0,0.3)"
                   : "0 8px 24px rgba(0,0,0,0.3)",

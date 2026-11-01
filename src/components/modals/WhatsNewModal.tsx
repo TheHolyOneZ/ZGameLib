@@ -103,7 +103,7 @@ export default function WhatsNewModal() {
             style={{
               border: "1px solid rgb(var(--accent-500) / 0.3)",
               background: "linear-gradient(135deg, rgba(13,12,20,0.98) 0%, rgba(18,16,28,0.98) 100%)",
-              boxShadow: "0 0 80px rgb(var(--accent-500) / 0.12), 0 24px 60px rgba(0,0,0,0.6)",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
             }}
           >
             <div
@@ -116,8 +116,8 @@ export default function WhatsNewModal() {
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                 style={{
-                  background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)))",
-                  boxShadow: "0 4px 20px rgb(var(--accent-500) / 0.35)",
+                  background: "rgb(var(--accent-500))",
+                  
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

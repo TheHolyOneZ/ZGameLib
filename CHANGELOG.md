@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Cleaner, flatter look in the style of modern game launchers: no glowing buttons or neon outlines, solid buttons, white focus rings, sentence-case labels, plain page and shelf headers, simpler sidebar highlight, collection names under their artwork and a calmer Game Spin wheel
 - Complete visual redesign: new type (Inter and Outfit, now bundled), surfaces, buttons, inputs, chips, sidebar, top bar with command search, cards, dialogs and every page
 - Sidebar reduced to navigation, collections, Now Playing, Big Picture and Settings; filters moved to the library toolbar
 - Game Spin starts with the whole installed library selected
@@ -51,6 +52,8 @@
 
 ### Fixed
 
+- A game that never starts, or closes right after launching, no longer stays stuck on "Playing / Stop". ZGameLib gives up after about 20 seconds (60 seconds for Steam, Epic and Ubisoft, which may need to start first), shows "Starting…" in the meantime and tells you when a game didn't start
+- Some borders and backgrounds (theme picker, grid-column buttons and others) rendered as bright light-grey outlines because their opacity values weren't generated
 - Playtime tracking was reworked:
   - Stopping a game now saves the time played instead of throwing it away.
   - Closing or restarting ZGameLib mid-game no longer loses the session; tracking resumes if the game is still running, otherwise the time is saved.

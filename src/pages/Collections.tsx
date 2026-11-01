@@ -80,8 +80,8 @@ function Mosaic({ games, className }: { games: Game[]; className?: string }) {
   const covers = games.slice(0, 4);
   if (covers.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center", className)} style={{ background: "linear-gradient(150deg, rgb(var(--accent-600) / 0.35), rgb(var(--accent-900) / 0.4))" }}>
-        <CollectionIcon size={34} className="text-accent-200/70" />
+      <div className={cn("flex items-center justify-center", className)} style={{ background: "rgba(255,255,255,0.04)" }}>
+        <CollectionIcon size={34} className="text-slate-600" />
       </div>
     );
   }
@@ -119,14 +119,14 @@ function CollectionCard({ col, renaming, renameVal, setRenameVal, onCommitRename
       onContextMenu={onContext}
       className="group cursor-pointer"
     >
-      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden ring-1 ring-white/[0.08] card-lift" style={{ boxShadow: "0 16px 34px -16px rgba(0,0,0,0.85)" }}>
+      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden card-lift">
         <Mosaic games={games} className="absolute inset-0" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
         <div className="absolute top-2.5 right-2.5 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
           <button onClick={onStartRename} className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur flex items-center justify-center text-white/80 hover:text-white" title="Rename"><EditIcon size={13} /></button>
           <button onClick={onDelete} className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur flex items-center justify-center text-white/80 hover:text-red-300" title="Delete"><TrashIcon size={13} /></button>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+      </div>
+      <div className="pt-3 px-0.5">
           {renaming ? (
             <input
               autoFocus
@@ -142,12 +142,12 @@ function CollectionCard({ col, renaming, renameVal, setRenameVal, onCommitRename
               className="input-glass h-9 py-0 text-[14px] font-semibold"
             />
           ) : (
-            <p className="text-[17px] font-semibold text-white leading-tight truncate">{col.name}</p>
+            <p className="text-[15px] font-semibold text-white leading-tight truncate">{col.name}</p>
           )}
-          <p className="text-[12px] text-slate-300/80 mt-1">{col.game_count} game{col.game_count !== 1 ? "s" : ""}</p>
-        </div>
+          <p className="text-[12.5px] text-slate-500 mt-1 truncate">
+            {col.game_count} game{col.game_count !== 1 ? "s" : ""}{col.description ? ` · ${col.description}` : ""}
+          </p>
       </div>
-      {col.description && <p className="text-[12px] text-slate-500 mt-2.5 px-0.5 line-clamp-2 leading-snug">{col.description}</p>}
     </motion.div>
   );
 }
@@ -387,7 +387,7 @@ export default function Collections() {
                 <Mosaic games={collectionGames} className="w-full h-full" />
               </div>
               <div className="flex-1 min-w-0 pb-1">
-                <p className="text-[11px] font-bold tracking-[0.18em] text-accent-200/90 uppercase">Collection</p>
+                <p className="text-[12px] font-bold text-accent-200/90">Collection</p>
                 {renamingId === selected.id ? (
                   <input
                     autoFocus

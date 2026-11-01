@@ -44,7 +44,7 @@ export default function StarRating({
               filled={isActive}
               className={cn(
                 "transition-all duration-200",
-                isActive ? "text-accent-400 drop-shadow-[0_0_6px_rgb(var(--accent-500)/0.4)]" : "text-slate-700"
+                isActive ? "text-accent-400" : "text-slate-700"
               )}
             />
           </motion.button>

@@ -52,7 +52,7 @@ export default function GameListRow({ game, collectionId, onRemoveFromCollection
             <PlatformBadge platform={game.platform} />
             {running && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide bg-emerald-500/20 text-emerald-300">PLAYING</span>}
             {game.not_installed && (
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-white/[0.05] border border-white/10 text-slate-400">Not Installed</span>
+              <span className="px-1.5 py-0.5 rounded text-[12px] font-semibold bg-white/[0.05] border border-white/10 text-slate-400">Not Installed</span>
             )}
             {sc && game.status !== "none" && (
               <span className="text-[11px] font-medium flex items-center gap-1.5">
@@ -106,7 +106,7 @@ export default function GameListRow({ game, collectionId, onRemoveFromCollection
           <button
             onClick={(e) => { e.stopPropagation(); launch(game); }}
             className="w-8 h-8 rounded-xl flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ background: "linear-gradient(180deg, rgb(var(--accent-400)), rgb(var(--accent-600)))" }}
+            style={{ background: "rgb(var(--accent-500))" }}
             title="Play"
           >
             <PlayIcon size={12} className="ml-0.5" />

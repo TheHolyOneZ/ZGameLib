@@ -88,7 +88,7 @@ export function PromoCards() {
   return (
     <div className="flex flex-col gap-3">
       <div className="mb-1">
-        <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-semibold">
+        <p className="text-[12px] text-slate-500 font-semibold">
           From the developer
         </p>
         <h2 className="text-[15px] font-bold text-slate-300 mt-0.5">Related Projects</h2>
@@ -103,7 +103,7 @@ export function PromoCards() {
           className="glass rounded-2xl p-5 flex flex-col gap-3 cursor-default"
           style={{
             border: `1px solid ${card.accentColor.replace("rgb", "rgba").replace(")", ", 0.15)")}`,
-            boxShadow: `0 0 32px ${card.glowColor}`,
+            
           }}
         >
           <div className="flex items-start justify-between gap-3">
@@ -120,7 +120,7 @@ export function PromoCards() {
               </div>
               <div>
                 <p
-                  className="text-[9px] uppercase tracking-[0.18em] font-semibold mb-0.5"
+                  className="text-[12px] font-semibold mb-0.5"
                   style={{ color: card.accentColor.replace("rgb", "rgba").replace(")", ", 0.7)") }}
                 >
                   {card.label}

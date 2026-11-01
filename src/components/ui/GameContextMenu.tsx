@@ -110,7 +110,7 @@ function CollectionsSubmenu({
       className="fixed z-[10000] min-w-[200px] p-1.5 glass-strong rounded-2xl shadow-2xl"
       style={pos ? { left: pos.x, top: pos.y } : { left: -9999, top: -9999 }}
     >
-      <p className="text-[10px] text-slate-600 uppercase tracking-[0.12em] font-semibold px-3.5 pt-1 pb-1.5">Collections</p>
+      <p className="text-[12px] text-slate-600 font-semibold px-3.5 pt-1 pb-1.5">Collections</p>
       {allCollections.length === 0 ? (
         <p className="text-[12px] text-slate-600 px-3.5 pb-2.5">No collections yet</p>
       ) : (
@@ -267,7 +267,7 @@ function ContextMenuPortal({
 
       <div className="my-1 mx-2 border-t border-white/[0.06]" />
       <div className="px-3.5 pt-1 pb-1.5">
-        <p className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold mb-1.5">Rate</p>
+        <p className="text-[12px] text-slate-500 font-semibold mb-1.5">Rate</p>
         <div className="flex gap-0.5">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
             <button

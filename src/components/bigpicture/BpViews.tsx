@@ -72,7 +72,7 @@ const BpCardInner = ({ game, size = "md", running, onSelect, autofocus }: { game
       {running && (
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/90 text-[11px] font-bold text-white">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          RUNNING
+          Playing
         </div>
       )}
       {game.is_favorite && (
@@ -81,7 +81,7 @@ const BpCardInner = ({ game, size = "md", running, onSelect, autofocus }: { game
         </div>
       )}
       {game.not_installed && (
-        <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/70 text-[10px] font-semibold text-slate-300 tracking-wide">NOT INSTALLED</div>
+        <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/70 text-[12px] font-semibold text-slate-300">Not installed</div>
       )}
     </div>
     <p className="mt-2.5 px-1 text-[15px] font-semibold text-white/60 truncate group-data-[bp-active=true]:text-white transition-colors">{displayName(game.name)}</p>
@@ -147,10 +147,10 @@ export function HeroInfo({ game, running, label }: { game: Game | null; running:
       <div className="flex items-center gap-3 mb-3">
         {running ? (
           <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[13px] font-bold tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> NOW PLAYING
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Now playing
           </span>
         ) : (
-          <span className="text-[13px] font-bold tracking-[0.2em] text-accent-200/80 uppercase">{label}</span>
+          <span className="text-[13px] font-bold text-accent-200/80">{label}</span>
         )}
       </div>
       <h1 className="text-[clamp(34px,4.2vw,72px)] font-bold leading-[1.02] text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.6)] line-clamp-2">{displayName(game.name)}</h1>

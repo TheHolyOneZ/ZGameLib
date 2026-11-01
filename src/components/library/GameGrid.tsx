@@ -73,10 +73,10 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
             style={
               p === page
                 ? {
-                    background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-700)))",
+                    background: "rgb(var(--accent-500))",
                     border: "1px solid rgb(var(--accent-400) / 0.3)",
                     color: "white",
-                    boxShadow: "0 0 16px rgb(var(--accent-500) / 0.25)",
+                    
                   }
                 : {
                     background: "rgba(255,255,255,0.03)",
@@ -196,7 +196,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
             className="relative w-24 h-24 rounded-[28px] flex items-center justify-center"
-            style={{ background: "linear-gradient(140deg, rgb(var(--accent-400)), rgb(var(--accent-700)))", boxShadow: "0 20px 50px -12px rgb(var(--accent-500) / 0.8), inset 0 1px 0 rgba(255,255,255,0.3)" }}
+            style={{ background: "rgb(var(--accent-500))", boxShadow: "0 20px 50px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.3)" }}
           >
             <GamepadIcon size={44} className="text-white" />
           </motion.div>
@@ -269,7 +269,7 @@ export default function GameGrid({ isLoading = false }: { isLoading?: boolean })
     return (
       <>
         <div className="flex flex-col gap-1 px-6 pt-3 pb-10 page-enter">
-          <div className="flex items-center gap-4 px-4 py-2.5 text-[10px] text-slate-500 font-semibold uppercase tracking-[0.15em]"
+          <div className="flex items-center gap-4 px-4 py-2.5 text-[12px] text-slate-500 font-semibold"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="w-5 shrink-0" />
             <div className="w-10 shrink-0" />

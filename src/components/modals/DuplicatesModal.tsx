@@ -183,7 +183,7 @@ export default function DuplicatesModal() {
             style={{ background: "rgb(17 17 25)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 50px 120px -20px rgba(0,0,0,0.9)" }}
           >
             <div className="flex items-start gap-4 px-7 pt-6 pb-5 border-b border-white/[0.06]">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(140deg, rgb(var(--accent-500) / 0.35), rgb(var(--accent-700) / 0.1))", border: "1px solid rgb(var(--accent-400) / 0.3)" }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <LayersIcon size={22} className="text-accent-200" />
               </div>
               <div className="flex-1 min-w-0">

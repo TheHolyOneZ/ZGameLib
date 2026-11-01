@@ -2,7 +2,7 @@ import { useId } from "react";
 
 export const LOGO_Z = "M20.5 18.5h23.4c2.4 0 3.6 2.9 1.9 4.6L28.6 40.8h14.9c1.8 0 3.3 1.5 3.3 3.3s-1.5 3.3-3.3 3.3H20.1c-2.4 0-3.6-2.9-1.9-4.6L35.4 25.1H20.5c-1.8 0-3.3-1.5-3.3-3.3s1.5-3.3 3.3-3.3z";
 
-export default function Logo({ size = 40, className, glow = true }: { size?: number; className?: string; glow?: boolean }) {
+export default function Logo({ size = 40, className, glow = false }: { size?: number; className?: string; glow?: boolean }) {
   const id = useId().replace(/:/g, "");
   return (
     <svg

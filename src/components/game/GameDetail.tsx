@@ -16,6 +16,7 @@ import GameNotes from "./GameNotes";
 import ModLoaderPanel from "./ModLoaderPanel";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 import GameCover from "@/components/ui/GameCover";
+import SessionClock from "@/components/ui/SessionClock";
 import CoverSearchModal from "@/components/modals/CoverSearchModal";
 import {
   CloseIcon, HeartIcon, PlayIcon, FolderIcon, TrashIcon,
@@ -112,7 +113,7 @@ function IgdbMetadataCard({ game, onClear }: { game: Game; onClear: () => void }
           >
             <span className="text-slate-500 shrink-0 mt-0.5">{f.icon}</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold">{f.label}</p>
+              <p className="text-[12px] text-slate-500 font-semibold">{f.label}</p>
               <p className="text-[12.5px] text-slate-100 font-medium leading-snug break-words mt-0.5">{f.value}</p>
             </div>
           </div>
@@ -242,7 +243,7 @@ function HistoryTab({ sessions, loading }: { sessions: Session[] | null; loading
           { label: "Longest", value: formatPlaytime(longest) },
         ].map((s) => (
           <div key={s.label} className="surface px-3.5 py-3">
-            <p className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold">{s.label}</p>
+            <p className="text-[12px] text-slate-500 font-semibold">{s.label}</p>
             <p className="text-[16px] font-bold text-white mt-0.5 tabular-nums">{s.value}</p>
           </div>
         ))}
@@ -672,7 +673,7 @@ export default function GameDetail() {
                 <div className="relative flex items-center justify-between px-5 pt-4">
                   <div className="flex items-center gap-2">
                     <PlatformBadge platform={game.platform} />
-                    {game.not_installed && <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-black/30 border border-white/10 text-slate-300">Not installed</span>}
+                    {game.not_installed && <span className="px-2 py-0.5 rounded-md text-[12px] font-semibold bg-black/30 border border-white/10 text-slate-300">Not installed</span>}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <AnimatePresence>
@@ -739,14 +740,13 @@ export default function GameDetail() {
 
                     <div className="flex items-center gap-2 mt-auto pt-4">
                       {running ? (
-                        <button onClick={handleStop} data-tour="play-btn" className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-[14px] font-semibold text-white bg-emerald-600/90 hover:bg-red-500/90 transition-colors group/stop">
-                          <span className="relative flex h-2.5 w-2.5 group-hover/stop:hidden"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" /><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" /></span>
-                          <StopIcon size={13} className="hidden group-hover/stop:block" />
-                          <span className="group-hover/stop:hidden">Playing</span>
-                          <span className="hidden group-hover/stop:inline">Stop</span>
+                        <button onClick={handleStop} data-tour="play-btn" className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-[14px] font-semibold text-white bg-white/[0.1] hover:bg-white/[0.16] transition-colors">
+                          <StopIcon size={13} />
+                          Stop
+                          <SessionClock className="text-slate-400 font-medium tabular-nums" />
                         </button>
                       ) : (
-                        <button data-tour="play-btn" onClick={handlePlay} className={cn("btn-primary flex-1 h-11 justify-center text-[14px]", gameStarted && "!bg-emerald-600")}>
+                        <button data-tour="play-btn" onClick={handlePlay} className={cn("btn-primary flex-1 h-11 justify-center text-[14px]")}>
                           {gameStarted ? <><CheckIcon size={15} /> Launched</> : game.not_installed ? <><DownloadIcon size={15} /> Install</> : <><PlayIcon size={15} /> Play</>}
                         </button>
                       )}
@@ -864,7 +864,7 @@ export default function GameDetail() {
                         { icon: <PlusIcon size={12} />, label: "Added", value: formatDate(game.date_added) },
                       ].map((s) => (
                         <div key={s.label} className="surface px-3.5 py-3">
-                          <p className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold">{s.icon}{s.label}</p>
+                          <p className="flex items-center gap-1.5 text-[12px] text-slate-500 font-semibold">{s.icon}{s.label}</p>
                           <p className="text-[14.5px] font-semibold text-white mt-1 truncate">{s.value}</p>
                         </div>
                       ))}
@@ -900,7 +900,7 @@ export default function GameDetail() {
                               animate={{ width: `${hltbPct}%` }}
                               transition={{ duration: 0.8, ease: "easeOut" }}
                               className="h-full rounded-full"
-                              style={{ background: hltbPct >= 100 ? "linear-gradient(90deg, #10b981, #34d399)" : "linear-gradient(90deg, rgb(var(--accent-600)), rgb(var(--accent-400)))" }}
+                              style={{ background: hltbPct >= 100 ? "linear-gradient(90deg, #10b981, #34d399)" : "rgb(var(--accent-500))" }}
                             />
                           </div>
                           <p className="text-[11px] text-slate-500 mt-1.5">

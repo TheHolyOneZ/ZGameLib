@@ -110,7 +110,7 @@ export default function ButtonGlyph({
           color: face.color,
           background: "radial-gradient(circle at 35% 30%, rgba(60,62,72,1), rgba(16,17,22,1))",
           border: `1.5px solid ${face.color}66`,
-          boxShadow: `0 0 12px ${face.color}33`,
+          
         }}
       >
         {face.label}

@@ -216,7 +216,7 @@ function Finder({ presetIds, onClose }: { presetIds: string[] | null; onClose: (
         style={{ background: "rgb(16 16 24)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 50px 120px -20px rgba(0,0,0,0.9)" }}
       >
         <div className="flex items-center gap-4 px-7 pt-6 pb-5 border-b border-white/[0.06]">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(140deg, rgb(var(--accent-500) / 0.35), rgb(var(--accent-700) / 0.1))", border: "1px solid rgb(var(--accent-400) / 0.3)" }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
             <ImageIcon size={22} className="text-accent-200" />
           </div>
           <div className="flex-1 min-w-0">
@@ -310,7 +310,7 @@ function Finder({ presetIds, onClose }: { presetIds: string[] | null; onClose: (
 
               {sample.length > 0 && (
                 <div className="mt-4 rounded-xl bg-black/25 border border-white/[0.06] p-3 flex flex-col gap-2">
-                  <p className="text-[10.5px] text-slate-500 uppercase tracking-wider font-semibold">Preview</p>
+                  <p className="text-[12px] text-slate-500 font-semibold">Preview</p>
                   {sample.map((g) => (
                     <div key={g.id} className="text-[11.5px] leading-snug">
                       <p className="text-slate-500 truncate font-mono">{g.name}</p>

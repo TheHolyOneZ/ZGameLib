@@ -37,18 +37,13 @@ export default function Recommendations() {
 
   return (
     <Shelf title="Play Next" icon={<SparkleIcon size={13} />} storageKey="section_playnext_open" hint="Picked from the tags and genres of your top-rated games">
-      {visible.map(({ game, tagMatches }, i) => (
+      {visible.map(({ game }, i) => (
         <ShelfCard
           key={game.id}
           game={game}
           index={i}
           sub={game.genre ?? (game.tags[0] ? `#${game.tags[0]}` : undefined)}
           onDismiss={() => setDismissed((s) => new Set([...s, game.id]))}
-          badge={tagMatches > 0 ? (
-            <span className="block text-center text-[9.5px] font-semibold px-1 py-0.5 rounded-md backdrop-blur" style={{ background: "rgb(var(--accent-600) / 0.85)", color: "white" }}>
-              {tagMatches} match{tagMatches !== 1 ? "es" : ""}
-            </span>
-          ) : undefined}
         />
       ))}
     </Shelf>

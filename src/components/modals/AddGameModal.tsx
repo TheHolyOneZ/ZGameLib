@@ -131,7 +131,7 @@ export default function AddGameModal() {
               data-tour="add-game-modal"
               className="glass-strong rounded-3xl w-full max-w-md pointer-events-auto overflow-hidden"
               style={{
-                boxShadow: "0 0 80px rgb(var(--accent-500) /0.12), 0 30px 80px rgba(0,0,0,0.6)",
+                boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
                 borderColor: "rgb(var(--accent-500) /0.12)",
               }}
             >
@@ -199,7 +199,7 @@ export default function AddGameModal() {
                     className="px-6 pb-6 flex flex-col gap-4"
                   >
                     <div>
-                      <label className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[12px] text-slate-500 font-semibold mb-1.5 block">
                         Game Name
                       </label>
                       <input
@@ -212,7 +212,7 @@ export default function AddGameModal() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[12px] text-slate-500 font-semibold mb-1.5 block">
                         Executable (.exe)
                       </label>
                       <div className="flex gap-2">
@@ -272,7 +272,7 @@ export default function AddGameModal() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[12px] text-slate-500 font-semibold mb-1.5 block">
                         Games Folder
                       </label>
                       <div className="flex gap-2">

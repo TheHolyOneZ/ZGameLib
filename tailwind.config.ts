@@ -41,6 +41,13 @@ export default {
         "glow-pink": "0 0 20px rgba(236,72,153,0.35)",
         card: "0 8px 32px rgba(0,0,0,0.4)",
       },
+      opacity: {
+        "3": "0.03",
+        "4": "0.04",
+        "6": "0.06",
+        "8": "0.08",
+        "12": "0.12",
+      },
       fontFamily: {
         sans: ["Inter Variable", "Inter", "system-ui", "sans-serif"],
         display: ["Outfit Variable", "Inter Variable", "system-ui", "sans-serif"],

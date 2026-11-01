@@ -251,7 +251,7 @@ export default function FilterBuilder() {
               <div className="flex items-center justify-between px-2.5 pt-2 pb-1">
                 <div className="flex items-center gap-1.5">
                   {filterRules.length > 1 && (
-                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">
+                    <span className="text-[12px] font-bold text-slate-600">
                       {filterLogic === "and" ? (idx === 0 ? "WHERE" : "AND") : (idx === 0 ? "WHERE" : "OR")}
                     </span>
                   )}

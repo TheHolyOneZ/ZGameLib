@@ -37,7 +37,7 @@ export function BpButton({ children, onClick, primary, danger, autofocus, classN
               : "bg-white/[0.09] text-white border border-white/10",
         className
       )}
-      style={{ ...(primary ? { background: "linear-gradient(180deg, rgb(var(--accent-500)), rgb(var(--accent-700)))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" } : {}), ...(scrollMargin ? { scrollMargin } : {}) }}
+      style={{ ...(primary ? { background: "rgb(var(--accent-500))" } : {}), ...(scrollMargin ? { scrollMargin } : {}) }}
     >
       {children}
     </button>
@@ -115,7 +115,7 @@ export function GamePage({ game, running, statuses, onPlay, onStop, onFavorite, 
               { icon: <CheckIcon size={17} />, label: game.hltb_main_mins ? "Time to beat" : "Added", value: game.hltb_main_mins ? `${Math.round(game.hltb_main_mins / 6) / 10}h` : formatDate(game.date_added) },
             ].map((s) => (
               <div key={s.label} className="rounded-2xl px-5 py-4 bg-white/[0.06] border border-white/[0.08]">
-                <div className="flex items-center gap-2 text-white/50 text-[13px] font-semibold uppercase tracking-[0.12em]">{s.icon}{s.label}</div>
+                <div className="flex items-center gap-2 text-white/50 text-[13px] font-semibold">{s.icon}{s.label}</div>
                 <p className="text-[22px] font-semibold text-white mt-1.5 truncate">{s.value}</p>
               </div>
             ))}
@@ -341,18 +341,18 @@ export function LaunchSplash({ game }: { game: Game }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 18 }}
         className="w-[clamp(180px,16vw,300px)] aspect-[3/4] rounded-[26px] overflow-hidden ring-1 ring-white/20"
-        style={{ boxShadow: "0 0 120px -10px rgb(var(--accent-500) / 0.8)" }}
+        style={{ boxShadow: "0 30px 80px -20px rgba(0,0,0,0.9)" }}
       >
         <GameCover game={game} eager large />
       </motion.div>
       <div className="text-center">
-        <p className="text-[16px] font-bold tracking-[0.3em] text-accent-200 uppercase">Launching</p>
+        <p className="text-[16px] font-bold text-accent-200">Launching</p>
         <p className="text-[40px] font-bold text-white mt-2">{displayName(game.name)}</p>
       </div>
       <div className="w-[280px] h-1.5 rounded-full bg-white/10 overflow-hidden">
         <motion.div
           className="h-full rounded-full"
-          style={{ background: "linear-gradient(90deg, rgb(var(--accent-400)), rgb(var(--accent-200)))" }}
+          style={{ background: "rgb(var(--accent-500))" }}
           initial={{ x: "-100%" }}
           animate={{ x: "100%" }}
           transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}

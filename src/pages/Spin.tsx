@@ -15,13 +15,10 @@ import VirtualGrid from "@/components/library/VirtualGrid";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 
 const SEG_PALETTE = [
-  ["#7c3aed", "#6d28d9"], ["#2563eb", "#1d4ed8"], ["#db2777", "#be185d"],
-  ["#059669", "#047857"], ["#d97706", "#b45309"], ["#dc2626", "#b91c1c"],
-  ["#0891b2", "#0e7490"], ["#65a30d", "#4d7c0f"], ["#ea580c", "#c2410c"],
-  ["#8b5cf6", "#7c3aed"], ["#3b82f6", "#2563eb"], ["#ec4899", "#db2777"],
-  ["#10b981", "#059669"], ["#f59e0b", "#d97706"], ["#ef4444", "#dc2626"],
-  ["#06b6d4", "#0891b2"], ["#84cc16", "#65a30d"], ["#f97316", "#ea580c"],
-  ["#a855f7", "#9333ea"], ["#14b8a6", "#0d9488"],
+  ["rgb(var(--accent-500))", "rgb(var(--accent-700))"],
+  ["#34343f", "#26262f"],
+  ["rgb(var(--accent-400) / 0.75)", "rgb(var(--accent-600) / 0.75)"],
+  ["#43434f", "#30303a"],
 ];
 
 const SIZE = 420;
@@ -91,8 +88,8 @@ function Wheel({ pool, rotation, isSpinning }: {
             const e = polar(mid, R);
             return (
               <linearGradient key={i} id={`seg-${i}`} x1={CX} y1={CY} x2={e.x} y2={e.y} gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor={c2} stopOpacity="0.7" />
-                <stop offset="100%" stopColor={c1} />
+                <stop offset="0%" style={{ stopColor: c2 }} />
+                <stop offset="100%" style={{ stopColor: c1 }} />
               </linearGradient>
             );
           })}
@@ -153,7 +150,7 @@ function Wheel({ pool, rotation, isSpinning }: {
         <polygon
           points={`${CX - 11},${CY - R - 4} ${CX + 11},${CY - R - 4} ${CX},${CY - R + 20}`}
           fill="url(#pointerGrad)"
-          filter="drop-shadow(0 0 10px rgb(var(--accent-400) /0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))"
+          filter="drop-shadow() drop-shadow(0 2px 4px rgba(0,0,0,0.6))"
         />
         <polygon
           points={`${CX - 11},${CY - R - 4} ${CX + 11},${CY - R - 4} ${CX},${CY - R + 20}`}
@@ -210,7 +207,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
       style={{
         background: "linear-gradient(135deg, rgb(var(--accent-600) /0.12), rgb(var(--accent-400) /0.06), rgb(var(--accent-600) /0.12))",
         border: "1px solid rgb(var(--accent-500) /0.3)",
-        boxShadow: "0 0 60px rgb(var(--accent-600) /0.2), 0 20px 40px rgba(0,0,0,0.3)",
+        boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
       }}
     >
       <motion.div
@@ -236,7 +233,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
             <motion.div animate={{ rotate: [0, 15, -15, 0] }} transition={{ duration: 0.5, delay: 0.3 }}>
               <SparkleIcon size={14} className="text-accent-400" />
             </motion.div>
-            <span className="text-[10px] font-bold text-accent-400 uppercase tracking-[0.16em]">Winner</span>
+            <span className="text-[12px] font-bold text-accent-400">Winner</span>
           </div>
           <p className="text-[18px] font-bold text-white leading-tight truncate mb-1.5">{displayName(game.name)}</p>
           <PlatformBadge platform={game.platform} />
@@ -253,7 +250,7 @@ function WinnerCard({ game, onPlayAgain, onExclude }: {
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={handlePlay}
             className="btn-primary text-[12px] py-2.5 px-5"
-            style={{ boxShadow: "0 0 20px rgb(var(--accent-600) /0.3)" }}
+            style={{ boxShadow: "none" }}
           >
             <PlayIcon size={13} />
             Play
@@ -449,19 +446,9 @@ export default function Spin() {
   return (
     <div className="h-full overflow-hidden flex flex-col">
       <div className="flex items-center gap-4 px-6 py-4 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-          style={{
-            background: "linear-gradient(135deg, rgb(var(--accent-500) /0.3), rgb(var(--accent-800) /0.2))",
-            border: "1px solid rgb(var(--accent-500) /0.25)",
-            boxShadow: "0 0 20px rgb(var(--accent-500) /0.15)",
-          }}
-        >
-          <SpinIcon size={18} className="text-accent-400" />
-        </div>
         <div>
-          <h1 className="text-[16px] font-bold text-white tracking-tight">Game Spin</h1>
-          <p className="text-[11px] text-slate-500">Can&apos;t decide? Let fate choose your next game</p>
+          <h1 className="text-[22px] font-bold text-white tracking-tight">Game Spin</h1>
+          <p className="text-[12.5px] text-slate-400">Can&apos;t decide? Let fate choose your next game</p>
         </div>
 
         <div className="ml-auto flex items-center gap-4">
@@ -557,8 +544,8 @@ export default function Spin() {
                       "w-full h-[38px] flex items-center gap-2.5 px-2.5 rounded-xl text-left transition-colors group",
                       isLastWinner ? "opacity-40" : "",
                       isSelected
-                        ? "bg-accent-600/15 border border-accent-500/20"
-                        : "border border-transparent hover:bg-white/3"
+                        ? "bg-white/[0.05] border border-transparent"
+                        : "border border-transparent hover:bg-white/[0.03]"
                     )}
                   >
                     <div className={cn(
@@ -594,7 +581,7 @@ export default function Spin() {
               className={cn(
                 "flex items-center gap-2 px-2.5 py-2 rounded-xl text-[11px] transition-all border w-full",
                 excludeLastWinner
-                  ? "text-accent-300 bg-accent-600/15 border-accent-500/25"
+                  ? "text-white bg-white/[0.06] border-transparent"
                   : "text-slate-500 border-white/5 hover:text-slate-300 hover:bg-white/4"
               )}
             >
@@ -615,11 +602,6 @@ export default function Spin() {
           <div className="flex flex-col items-center gap-6 pt-6 pb-4 shrink-0">
             <div className="relative">
               <Wheel pool={wheelPool} rotation={rotation} isSpinning={isSpinning} />
-              {pool.length > WHEEL_MAX && (
-                <p className="absolute -bottom-7 left-0 right-0 text-center text-[11px] text-slate-500">
-                  Showing {WHEEL_MAX} of {pool.length} — every spin draws a fresh random set
-                </p>
-              )}
 
               {pool.length === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none z-30">
@@ -634,31 +616,27 @@ export default function Spin() {
               )}
             </div>
 
+            {pool.length > WHEEL_MAX && (
+              <p className="-mt-2 text-center text-[12px] text-slate-500">
+                Showing {WHEEL_MAX} of {pool.length} · every spin draws a fresh random set
+              </p>
+            )}
+
             <motion.button
-              whileHover={!isSpinning && pool.length >= 2 ? { scale: 1.06, y: -2 } : {}}
-              whileTap={!isSpinning && pool.length >= 2 ? { scale: 0.96 } : {}}
+              whileTap={!isSpinning && pool.length >= 2 ? { scale: 0.97 } : {}}
               onClick={handleSpin}
               disabled={isSpinning || pool.length < 2}
               className={cn(
-                "relative px-12 py-4 rounded-2xl text-[15px] font-bold transition-all overflow-hidden",
+                "relative px-10 h-12 rounded-xl text-[15px] font-semibold transition-[filter] overflow-hidden hover:brightness-110",
                 pool.length >= 2 && !isSpinning ? "text-white cursor-pointer" : "text-slate-500 cursor-not-allowed"
               )}
               style={pool.length >= 2 && !isSpinning ? {
-                background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)), rgb(var(--accent-600)))",
-                backgroundSize: "200% 100%",
-                boxShadow: "0 0 50px rgb(var(--accent-600) /0.4), 0 8px 32px rgba(0,0,0,0.3)",
+                background: "rgb(var(--accent-500))",
               } : {
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.06)",
               }}
             >
-              {pool.length >= 2 && !isSpinning && (
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                  animate={{ x: ["-100%", "200%"] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
-                />
-              )}
               <span className="relative flex items-center gap-3">
                 <motion.span
                   animate={isSpinning ? { rotate: 360 } : {}}
@@ -690,7 +668,7 @@ export default function Spin() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col gap-1.5 w-full"
                 >
-                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.14em] px-1">Recent spins</p>
+                  <p className="text-[12px] font-semibold text-slate-600 px-1">Recent spins</p>
                   <div className="flex flex-col gap-1">
                     {history.slice(0, 5).map((h, i) => (
                       <HistoryRow key={`${h.game.id}-${i}`} game={h.game} time={h.time} />

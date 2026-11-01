@@ -99,7 +99,7 @@ export default function TourCard({ step, stepIndex, totalSteps, onNext, onBack, 
           border: "1px solid rgba(255,255,255,0.06)",
           borderTop: "none",
           borderRadius: "0 0 20px 20px",
-          boxShadow: "0 0 80px rgb(var(--accent-500) / 0.1), 0 32px 80px rgba(0,0,0,0.65)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.65)",
         }}
       >
         <div className="p-5 pb-0">
@@ -107,7 +107,7 @@ export default function TourCard({ step, stepIndex, totalSteps, onNext, onBack, 
             <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, rgb(var(--accent-600)), rgb(var(--accent-400)))" }}
+                style={{ background: "rgb(var(--accent-500))" }}
                 initial={{ width: 0 }}
                 animate={{ width: `${progress * 100}%` }}
                 transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.6 }}
@@ -203,7 +203,7 @@ export default function TourCard({ step, stepIndex, totalSteps, onNext, onBack, 
                 className="flex-1 h-1 rounded-full transition-all duration-500"
                 style={{
                   background: i <= chapterIdx
-                    ? "linear-gradient(90deg, rgb(var(--accent-500)), rgb(var(--accent-400)))"
+                    ? "rgb(var(--accent-500))"
                     : "rgba(255,255,255,0.04)",
                 }}
               />

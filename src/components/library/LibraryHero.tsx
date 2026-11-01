@@ -148,10 +148,10 @@ export default function LibraryHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="relative rounded-[24px] overflow-hidden flex"
-        style={{ border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 30px 60px -30px rgba(0,0,0,0.9)" }}
+        style={{ background: "rgba(255,255,255,0.025)" }}
       >
         <div className="absolute inset-0">
-          <div className="absolute -inset-10 blur-[50px] opacity-70 saturate-150">
+          <div className="absolute -inset-10 blur-[60px] opacity-45">
             <GameCover game={hero} eager />
           </div>
           <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgb(var(--bg-base) / 0.92) 0%, rgb(var(--bg-base) / 0.72) 50%, rgb(var(--bg-base) / 0.55) 100%)" }} />
@@ -167,13 +167,13 @@ export default function LibraryHero() {
           </button>
           <div className="min-w-0 flex-1">
             {running ? (
-              <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10.5px] font-bold tracking-[0.14em]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> NOW PLAYING
-                <span className="text-emerald-100/70">·</span>
-                <SessionClock className="tabular-nums tracking-normal text-emerald-100" />
+              <span className="inline-flex items-center gap-2 text-[12.5px] font-medium text-emerald-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Now playing
+                <span className="text-slate-500">·</span>
+                <SessionClock className="tabular-nums text-slate-300" />
               </span>
             ) : (
-              <span className="text-[10.5px] font-bold tracking-[0.18em] text-accent-200/90 uppercase">Continue playing</span>
+              <span className="text-[12.5px] font-medium text-slate-400">Continue playing</span>
             )}
             <h2 className="text-[30px] font-bold text-white leading-tight mt-2 truncate">{displayName(hero.name)}</h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[12.5px] text-slate-300/80">
@@ -184,7 +184,7 @@ export default function LibraryHero() {
             </div>
             <div className="flex items-center gap-2 mt-5">
               {running ? (
-                <button onClick={stopGame} className="h-11 px-6 rounded-xl flex items-center gap-2 text-[14px] font-semibold text-white bg-red-500/80 hover:bg-red-500 transition-colors">
+                <button onClick={stopGame} className="h-11 px-6 rounded-xl flex items-center gap-2 text-[14px] font-semibold text-white bg-white/[0.1] hover:bg-white/[0.16] transition-colors">
                   <StopIcon size={14} /> Stop
                 </button>
               ) : (
@@ -207,7 +207,7 @@ export default function LibraryHero() {
               { label: "Completed", value: String(stats.completed) },
             ].map((s) => (
               <div key={s.label}>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-semibold">{s.label}</p>
+                <p className="text-[12px] text-slate-500 font-semibold">{s.label}</p>
                 <p className="text-[16px] font-bold text-white tabular-nums">{s.value}</p>
               </div>
             ))}

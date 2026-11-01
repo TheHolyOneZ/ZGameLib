@@ -46,7 +46,7 @@ export default function GameNotes({ gameId }: { gameId: string }) {
 
   return (
     <div>
-      <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold mb-3 flex items-center gap-1.5">
+      <p className="text-[12px] text-slate-500 font-semibold mb-3 flex items-center gap-1.5">
         <NoteIcon size={11} className="text-slate-500" />
         Notes
         {notes.length > 0 && (

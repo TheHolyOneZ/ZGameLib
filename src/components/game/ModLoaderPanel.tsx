@@ -121,7 +121,7 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
     <div className="flex flex-col gap-5">
 
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold">Mod Loaders</p>
+        <p className="text-[12px] text-slate-500 font-semibold">Mod Loaders</p>
         {loaders.map((loader) => {
           const isInstalling = op === loader.installOp;
           const isUninstalling = op === loader.uninstallOp;
@@ -186,7 +186,7 @@ export default function ModLoaderPanel({ installDir, exePath }: Props) {
       {anyInstalled && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-semibold">
+            <p className="text-[12px] text-slate-500 font-semibold">
               Mods ({status.mods.length})
             </p>
             <div className="flex gap-2">

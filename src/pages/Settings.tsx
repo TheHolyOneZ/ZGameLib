@@ -52,9 +52,9 @@ function sectionId(title: string) {
   return "settings-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-function Section({ title, icon, delay = 0, dataTour, description, children }: {
+function Section({ title, delay = 0, dataTour, description, children }: {
   title: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   delay?: number;
   dataTour?: string;
   description?: string;
@@ -71,9 +71,8 @@ function Section({ title, icon, delay = 0, dataTour, description, children }: {
       className="surface overflow-hidden scroll-mt-6"
     >
       <div className="flex items-center gap-3 px-6 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <span className="w-8 h-8 rounded-xl flex items-center justify-center text-accent-300 shrink-0" style={{ background: "rgb(var(--accent-500) / 0.14)" }}>{icon}</span>
         <div>
-          <h2 className="text-[15px] font-semibold text-white leading-tight">{title}</h2>
+          <h2 className="text-[16px] font-semibold text-white leading-tight">{title}</h2>
           {description && <p className="text-[12px] text-slate-500 mt-0.5">{description}</p>}
         </div>
       </div>
@@ -222,8 +221,8 @@ function ControllerSection() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "linear-gradient(120deg, rgb(var(--accent-600) / 0.25), rgba(255,255,255,0.02))", border: "1px solid rgb(var(--accent-400) / 0.2)" }}>
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(140deg, rgb(var(--accent-400)), rgb(var(--accent-700)))" }}>
+      <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.04]">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.06)" }}>
           <TvIcon size={22} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -233,7 +232,7 @@ function ControllerSection() {
         <button onClick={() => useUIStore.getState().setBigPicture(true)} className="btn-primary shrink-0">Launch</button>
       </div>
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-        <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", pad ? "bg-emerald-400 shadow-[0_0_10px_#34d399]" : "bg-slate-600")} />
+        <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", pad ? "bg-emerald-400" : "bg-slate-600")} />
         <div className="flex-1 min-w-0">
           <p className="text-[13px] text-slate-100">{pad ? prettyControllerName(pad) : "No controller detected"}</p>
           <p className="text-[11.5px] text-slate-500 truncate">{pad ? `${kind === "playstation" ? "PlayStation" : kind === "xbox" ? "Xbox" : kind === "nintendo" ? "Nintendo" : "Generic"} button layout` : "Connect a controller and press any button so the app can see it."}</p>
@@ -649,14 +648,9 @@ export default function Settings() {
       <div className="flex gap-8 max-w-[1180px] mx-auto px-8 pt-7 pb-32">
         <aside className="w-[210px] shrink-0 hidden lg:block">
           <div className="sticky top-7">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(140deg, rgb(var(--accent-500) / 0.3), rgb(var(--accent-700) / 0.08))", border: "1px solid rgb(var(--accent-400) / 0.25)" }}>
-                <SettingsIcon size={20} className="text-accent-300" />
-              </div>
-              <div>
-                <h1 className="text-[22px] font-bold text-white leading-none">Settings</h1>
-                <p className="text-[11.5px] text-slate-500 mt-1">v{APP_VERSION}</p>
-              </div>
+            <div className="mb-6 px-3">
+              <h1 className="text-[28px] font-bold text-white leading-none tracking-tight">Settings</h1>
+              <p className="text-[12px] text-slate-500 mt-2">Version {APP_VERSION}</p>
             </div>
             <nav className="flex flex-col gap-0.5">
               {NAV_SECTIONS.map((n) => (
@@ -686,7 +680,7 @@ export default function Settings() {
           <Section title="General" description="Theme and default view" icon={<SparkleIcon size={15} />} delay={0.04}>
             <div className="flex flex-col gap-5">
               <div className="w-48">
-                <label className="text-xs text-slate-500 uppercase tracking-[0.14em] font-semibold block mb-2">
+                <label className="text-xs text-slate-500 font-semibold block mb-2">
                   Default View
                 </label>
                 <select
@@ -699,7 +693,7 @@ export default function Settings() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-[0.14em] font-semibold block mb-3">
+                <label className="text-xs text-slate-500 font-semibold block mb-3">
                   Theme
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -820,7 +814,7 @@ export default function Settings() {
 
                         <div className="flex flex-col gap-4">
                           <div>
-                            <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-1.5">Theme Name</label>
+                            <label className="text-[12px] text-slate-500 font-semibold block mb-1.5">Theme Name</label>
                             <input
                               value={themeName}
                               onChange={(e) => setThemeName(e.target.value)}
@@ -831,7 +825,7 @@ export default function Settings() {
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Accent Color</label>
+                            <label className="text-[12px] text-slate-500 font-semibold block mb-2">Accent Color</label>
                             <div className="flex items-center gap-3">
                               <div className="relative">
                                 <input
@@ -842,7 +836,7 @@ export default function Settings() {
                                 />
                                 <div
                                   className="w-8 h-8 rounded-xl border border-white/15 cursor-pointer transition-transform hover:scale-110"
-                                  style={{ background: themeAccent, boxShadow: `0 0 16px ${themeAccent}40` }}
+                                  style={{ background: themeAccent }}
                                 />
                               </div>
                               <div className="flex gap-1.5 flex-wrap flex-1">
@@ -874,7 +868,7 @@ export default function Settings() {
 
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Background</label>
+                              <label className="text-[12px] text-slate-500 font-semibold block mb-2">Background</label>
                               <div className="flex items-center gap-2">
                                 <div className="relative">
                                   <input
@@ -904,7 +898,7 @@ export default function Settings() {
                               </div>
                             </div>
                             <div>
-                              <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Sidebar</label>
+                              <label className="text-[12px] text-slate-500 font-semibold block mb-2">Sidebar</label>
                               <div className="flex items-center gap-2">
                                 <div className="relative">
                                   <input
@@ -924,7 +918,7 @@ export default function Settings() {
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">Preview</label>
+                            <label className="text-[12px] text-slate-500 font-semibold block mb-2">Preview</label>
                             <div
                               className="rounded-xl overflow-hidden flex h-20"
                               style={{ border: "1px solid rgba(255,255,255,0.08)" }}
@@ -979,7 +973,7 @@ export default function Settings() {
           <Section title="Appearance" description="How the library grid looks" icon={<GridIcon size={15} />} delay={0.06} dataTour="settings-appearance">
             <div className="flex flex-col gap-5">
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-[0.14em] font-semibold block mb-2.5">
+                <label className="text-xs text-slate-500 font-semibold block mb-2.5">
                   Grid Columns
                 </label>
                 <div className="flex gap-2">
@@ -1043,7 +1037,7 @@ export default function Settings() {
                       className="overflow-hidden"
                     >
                       <div className="pt-1">
-                        <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-2">
+                        <label className="text-[12px] text-slate-500 font-semibold block mb-2">
                           Games per page
                         </label>
                         <div className="flex gap-2 flex-wrap">
@@ -1171,7 +1165,7 @@ export default function Settings() {
           <Section title="Platform Paths" description="Only needed if auto-detection fails" icon={<GamepadIcon size={15} />} delay={0.14}>
             <div className="flex flex-col gap-3">
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-[0.14em] font-semibold block mb-2">
+                <label className="text-xs text-slate-500 font-semibold block mb-2">
                   Steam Path Override
                 </label>
                 <input
@@ -1182,7 +1176,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-[0.14em] font-semibold block mb-2">
+                <label className="text-xs text-slate-500 font-semibold block mb-2">
                   Epic Path Override
                 </label>
                 <input
@@ -1368,7 +1362,7 @@ export default function Settings() {
                   Fetches genre, developer, publisher, and release year for any game.
                 </p>
                 <div className="text-[11px] text-slate-500 mb-3 leading-relaxed space-y-1">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-[0.1em] font-semibold mb-1.5">How to get your keys</p>
+                  <p className="text-[12px] text-slate-500 font-semibold mb-1.5">How to get your keys</p>
                   <p>1. Go to{" "}
                     <button type="button" onClick={() => api.openUrl("https://dev.twitch.tv/console/apps/create").catch(() => {})} className="text-accent-400 hover:text-accent-300 underline underline-offset-2">
                       dev.twitch.tv/console
@@ -1383,7 +1377,7 @@ export default function Settings() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <div>
-                    <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-1.5">Client ID</label>
+                    <label className="text-[12px] text-slate-500 font-semibold block mb-1.5">Client ID</label>
                     <input
                       type="text"
                       value={settings.igdb_client_id ?? ""}
@@ -1393,7 +1387,7 @@ export default function Settings() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-1.5">Client Secret</label>
+                    <label className="text-[12px] text-slate-500 font-semibold block mb-1.5">Client Secret</label>
                     <input
                       type="password"
                       value={settings.igdb_client_secret ?? ""}
@@ -1414,7 +1408,7 @@ export default function Settings() {
                 </p>
                 <div className="flex flex-col gap-3 mb-3">
                   <div>
-                    <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-1.5">Steam Web API Key</label>
+                    <label className="text-[12px] text-slate-500 font-semibold block mb-1.5">Steam Web API Key</label>
                     <input
                       type="text"
                       value={settings.steam_api_key ?? ""}
@@ -1429,7 +1423,7 @@ export default function Settings() {
                     </p>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 uppercase tracking-[0.12em] font-semibold block mb-1.5">SteamID64</label>
+                    <label className="text-[12px] text-slate-500 font-semibold block mb-1.5">SteamID64</label>
                     <input
                       type="text"
                       value={settings.steam_id_64 ?? ""}
@@ -1589,7 +1583,7 @@ export default function Settings() {
               <div className="flex flex-col items-center text-center gap-3 py-1">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-400)))", boxShadow: "0 4px 16px rgb(var(--accent-600) / 0.35)" }}
+                  style={{ background: "rgb(var(--accent-500))", boxShadow: "none" }}
                 >
                   <GamepadIcon size={16} className="text-white" />
                 </div>
@@ -1701,7 +1695,7 @@ export default function Settings() {
             exit={{ opacity: 0, y: 30, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 400, damping: 32 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 pl-5 pr-2 py-2 rounded-2xl glass-strong"
-            style={{ boxShadow: "0 20px 50px -10px rgba(0,0,0,0.8), 0 0 0 1px rgb(var(--accent-400) / 0.25)" }}
+            style={{ boxShadow: "0 20px 50px -10px rgba(0,0,0,0.8), 0 " }}
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-[13px] text-slate-200">You have unsaved changes</span>
@@ -1737,7 +1731,7 @@ export default function Settings() {
                 style={{
                   background: "linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)",
                   border: "1px solid rgb(var(--accent-500) / 0.2)",
-                  boxShadow: "0 0 60px rgb(var(--accent-500) / 0.1), 0 30px 60px rgba(0,0,0,0.6)",
+                  boxShadow: "0 30px 60px rgba(0,0,0,0.6)",
                   backdropFilter: "blur(40px) saturate(180%)",
                 }}
               >
@@ -1750,7 +1744,7 @@ export default function Settings() {
                     style={{
                       background: "linear-gradient(135deg, rgb(var(--accent-500) / 0.2), rgb(var(--accent-700) / 0.1))",
                       border: "1px solid rgb(var(--accent-400) / 0.2)",
-                      boxShadow: "0 0 24px rgb(var(--accent-500) / 0.15)",
+                      
                     }}
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-accent-400">
@@ -1813,9 +1807,9 @@ export default function Settings() {
                     }}
                     className="flex-1 justify-center flex items-center gap-2 font-semibold px-4 py-2.5 rounded-xl text-[13px] transition-all duration-200 cursor-pointer text-white"
                     style={{
-                      background: "linear-gradient(135deg, rgb(var(--accent-600)), rgb(var(--accent-700)))",
+                      background: "rgb(var(--accent-500))",
                       border: "1px solid rgb(var(--accent-400) / 0.3)",
-                      boxShadow: "0 0 24px rgb(var(--accent-500) / 0.2)",
+                      
                     }}
                   >
                     <CheckIcon size={14} />

@@ -26,7 +26,7 @@ function SectionHeader({ label, open, onToggle, dot }: { label: string; open?: b
       disabled={!onToggle}
       className="w-full flex items-center gap-2 px-3 pt-4 pb-1.5 group"
     >
-      <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-[0.16em] group-hover:text-slate-300 transition-colors">{label}</span>
+      <span className="text-[12px] font-semibold text-slate-500 group-hover:text-slate-300 transition-colors">{label}</span>
       {dot && <span className="w-1.5 h-1.5 rounded-full bg-accent-400" />}
       <span className="flex-1" />
       {onToggle && (
@@ -58,7 +58,7 @@ function NowPlaying({ collapsed }: { collapsed: boolean }) {
       <button
         onClick={() => { setSelectedGameId(game.id); setDetailOpen(true); }}
         title={`Now playing: ${game.name}`}
-        className="relative w-10 h-10 mx-auto rounded-xl overflow-hidden ring-2 ring-emerald-400/60"
+        className="relative w-10 h-10 mx-auto rounded-xl overflow-hidden"
       >
         <GameCover game={game} />
         <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-black" />
@@ -70,8 +70,7 @@ function NowPlaying({ collapsed }: { collapsed: boolean }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-1 rounded-2xl overflow-hidden relative"
-      style={{ border: "1px solid rgba(52,211,153,0.25)", background: "linear-gradient(160deg, rgba(16,185,129,0.14), rgba(16,185,129,0.03))" }}
+      className="rounded-xl overflow-hidden relative bg-white/[0.05]"
     >
       <div className="flex items-center gap-3 p-2.5">
         <button
@@ -82,11 +81,8 @@ function NowPlaying({ collapsed }: { collapsed: boolean }) {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-            </span>
-            <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.14em] whitespace-nowrap">Now Playing</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[11.5px] font-medium text-emerald-300 whitespace-nowrap">Now playing</span>
           </div>
           <p className="text-[12.5px] font-semibold text-white truncate mt-0.5">{displayName(game.name)}</p>
           <SessionClock className="block text-[11px] font-semibold tabular-nums text-emerald-200/75 leading-tight" />
@@ -151,24 +147,18 @@ export default function Sidebar() {
           <motion.span
             layoutId="sidebar-active"
             className="absolute inset-0 rounded-xl"
-            style={{
-              background: "linear-gradient(90deg, rgb(var(--accent-500) / 0.24), rgb(var(--accent-500) / 0.06))",
-              boxShadow: "inset 0 0 0 1px rgb(var(--accent-400) / 0.22)",
-            }}
+            style={{ background: "rgba(255, 255, 255, 0.075)" }}
             transition={{ type: "spring", stiffness: 500, damping: 38 }}
           />
         )}
-        {isActive && !collapsed && (
-          <motion.span layoutId="sidebar-active-bar" className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-accent-400" />
-        )}
-        <span className={cn("relative z-10 shrink-0", isActive ? "text-accent-300" : "text-slate-500 group-hover:text-slate-300")}>
+        <span className={cn("relative z-10 shrink-0", isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300")}>
           <Icon size={17} />
         </span>
         {!collapsed && (
           <>
             <span className="relative z-10 flex-1 text-left truncate">{label}</span>
             {count !== undefined && count > 0 && (
-              <span className={cn("relative z-10 text-[11px] tabular-nums", isActive ? "text-accent-200" : "text-slate-600")}>{count}</span>
+              <span className={cn("relative z-10 text-[11px] tabular-nums", isActive ? "text-slate-300" : "text-slate-600")}>{count}</span>
             )}
           </>
         )}
@@ -251,29 +241,22 @@ export default function Sidebar() {
 
       <div className={cn("shrink-0 flex flex-col gap-2 pb-4 pt-3 border-t border-white/[0.05]", collapsed ? "px-3" : "px-3")}>
         <NowPlaying collapsed={collapsed} />
-        <motion.button
-          whileHover={{ scale: 1.015 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={() => setBigPicture(true)}
           title="Big Picture Mode (Ctrl+B)"
           className={cn(
-            "relative overflow-hidden rounded-xl flex items-center text-[13px] font-semibold text-white group",
-            collapsed ? "h-10 justify-center" : "h-10 gap-3 px-3"
+            "rounded-xl flex items-center text-[13px] font-medium text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors group",
+            collapsed ? "h-10 justify-center" : "h-9 gap-3 px-3"
           )}
-          style={{
-            background: "linear-gradient(110deg, rgb(var(--accent-600) / 0.5), rgb(var(--accent-800) / 0.35))",
-            border: "1px solid rgb(var(--accent-400) / 0.3)",
-          }}
         >
-          <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "linear-gradient(110deg, rgb(var(--accent-500) / 0.35), transparent)" }} />
-          <TvIcon size={17} className="relative text-accent-200" />
+          <TvIcon size={17} className="text-slate-400 group-hover:text-white transition-colors" />
           {!collapsed && (
             <>
-              <span className="relative flex-1 text-left">Big Picture</span>
-              <span className="relative kbd !h-5 !text-[9px] !bg-black/20">Ctrl B</span>
+              <span className="flex-1 text-left">Big Picture</span>
+              <span className="text-[11px] text-slate-500">Ctrl B</span>
             </>
           )}
-        </motion.button>
+        </button>
         {navItem("/settings", SettingsIcon, "Settings", undefined, "nav-settings")}
       </div>
     </motion.aside>

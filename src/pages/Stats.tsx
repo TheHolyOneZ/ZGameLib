@@ -57,12 +57,11 @@ function Kpi({ icon, label, value, sub, onClick, delay, tint }: { icon: ReactNod
       onClick={onClick}
       className="surface-interactive p-4 text-left group relative overflow-hidden"
     >
-      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity" style={{ background: tint }} />
       <div className="relative flex items-center gap-2 text-slate-400">
-        <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${tint}22`, color: tint }}>{icon}</span>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em]">{label}</span>
+        <span className="flex items-center" style={{ color: tint }}>{icon}</span>
+        <span className="text-[12.5px] font-medium">{label}</span>
       </div>
-      <p className="relative text-[28px] font-bold text-white mt-3 leading-none tabular-nums font-display">{value}</p>
+      <p className="relative text-[30px] font-semibold text-white mt-3 leading-none tabular-nums font-display">{value}</p>
       {sub && <p className="relative text-[11.5px] text-slate-500 mt-1.5">{sub}</p>}
     </motion.button>
   );
@@ -182,7 +181,7 @@ export default function Stats() {
                         style={{ height: `${Math.max(2, (w.mins / maxWeek) * 100)}%`, originY: 1 }}
                         className={cn("w-full rounded-lg transition-all", hoverWeek === i ? "brightness-125" : "")}
                       >
-                        <div className="w-full h-full rounded-lg" style={{ background: i === weeklyPlaytime.length - 1 ? "linear-gradient(180deg, rgb(var(--accent-300)), rgb(var(--accent-600)))" : "linear-gradient(180deg, rgb(var(--accent-500) / 0.85), rgb(var(--accent-700) / 0.5))" }} />
+                        <div className="w-full h-full rounded-lg" style={{ background: i === weeklyPlaytime.length - 1 ? "rgb(var(--accent-400))" : "rgb(var(--accent-500) / 0.55)" }} />
                       </motion.div>
                     </div>
                   ))}
@@ -220,7 +219,7 @@ export default function Stats() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-[24px] font-bold text-white font-display leading-none">{completionRate}%</span>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">complete</span>
+                  <span className="text-[12px] text-slate-500 mt-1">complete</span>
                 </div>
               </div>
               <div className="flex-1 flex flex-col gap-1.5 min-w-0">
@@ -258,7 +257,7 @@ export default function Stats() {
                       animate={{ width: `${(p.count / totalGames) * 100}%` }}
                       transition={{ delay: 0.25 + i * 0.06, duration: 0.7, ease: "easeOut" }}
                       className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, ${PLATFORM_HEX[p.p]}, ${PLATFORM_HEX[p.p]}99)` }}
+                      style={{ background: PLATFORM_HEX[p.p] }}
                     />
                   </div>
                 </button>

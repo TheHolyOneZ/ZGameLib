@@ -6,7 +6,7 @@ import { formatPlaytime, PLATFORM_LABELS } from "@/lib/utils";
 import { useUIStore } from "@/store/useUIStore";
 import { formatClock, useSessionSeconds } from "@/hooks/useSession";
 import { BpButton } from "./BpOverlays";
-import { ClockIcon, StarIcon, StopIcon, MaximizeIcon, InfoIcon, TrophyIcon } from "@/components/ui/Icons";
+import { StopIcon, MaximizeIcon, InfoIcon } from "@/components/ui/Icons";
 
 const REVEAL = "460px 0 60px";
 
@@ -36,93 +36,64 @@ export function NowPlayingCard({ game, statuses, onSwitch, onDetails, onStop }: 
   const meta = [game.genre, game.developer, game.release_year].filter(Boolean).join(" · ");
 
   const stats = [
-    { icon: <ClockIcon size={16} />, label: "Total playtime", value: totalMins > 0 ? formatPlaytime(totalMins) : "Under a minute" },
-    { icon: <StarIcon size={16} filled />, label: "Your rating", value: game.rating !== null ? `${game.rating} / 10` : "Unrated" },
-    { icon: <TrophyIcon size={16} />, label: "Status", value: status && game.status !== "none" ? status.label : "No status", color: status && game.status !== "none" ? status.color : undefined },
+    { label: "Total playtime", value: totalMins > 0 ? formatPlaytime(totalMins) : "Under a minute" },
+    { label: "Your rating", value: game.rating !== null ? `${game.rating}/10` : "Unrated" },
+    { label: "Status", value: status && game.status !== "none" ? status.label : "No status", color: status && game.status !== "none" ? status.color : undefined },
+    ...(progress !== null ? [{ label: "Story progress", value: `${Math.round(progress * 100)}%` }] : []),
   ];
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="px-[5vw] pt-[3.5vh] pb-[3vh]"
     >
-      <div className="relative overflow-clip rounded-[32px] ring-1 ring-white/[0.12] shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+      <div className="relative overflow-clip rounded-[24px] bg-white/[0.03]">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute opacity-60" style={{ left: "-10%", top: "-30%", width: "30%", height: "40%", transform: "scale(4.4)", transformOrigin: "0 0", filter: "blur(14px) saturate(1.6)" }}>
+          <div className="absolute opacity-50" style={{ left: "-10%", top: "-30%", width: "30%", height: "40%", transform: "scale(4.4)", transformOrigin: "0 0", filter: "blur(24px) saturate(1.2)" }}>
             <GameCover game={game} eager />
           </div>
-          <div className="absolute inset-0" style={{ background: "linear-gradient(100deg, rgb(var(--bg-base) / 0.55) 0%, rgb(var(--bg-base) / 0.82) 45%, rgb(var(--bg-base) / 0.94) 100%)" }} />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(70% 120% at 0% 100%, rgba(16,185,129,0.22), transparent 60%), radial-gradient(60% 90% at 100% 0%, rgb(var(--accent-500) / 0.22), transparent 65%)" }} />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgb(var(--bg-base) / 0.5) 0%, rgb(var(--bg-base) / 0.85) 40%, rgb(var(--bg-base) / 0.95) 100%)" }} />
         </div>
 
-        <div className="relative flex items-stretch gap-[3vw] p-[2.2vw]">
-          <div className="relative shrink-0 self-center" style={{ width: "clamp(170px, 14vw, 280px)" }}>
-            <motion.div
-              className="absolute -inset-3 rounded-[26px]"
-              style={{ background: "radial-gradient(closest-side, rgba(16,185,129,0.45), transparent)" }}
-              animate={{ opacity: idle || waiting ? 0.25 : [0.45, 0.9, 0.45] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <div className="relative aspect-[3/4] rounded-[22px] overflow-hidden ring-2 ring-emerald-400/50 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.9)]">
-              <GameCover game={game} eager />
-            </div>
+        <div className="relative flex items-center gap-[2.6vw] p-[2.2vw]">
+          <div className="relative shrink-0 aspect-[3/4] rounded-[16px] overflow-hidden" style={{ width: "clamp(160px, 13vw, 260px)" }}>
+            <GameCover game={game} eager />
           </div>
 
-          <div className="min-w-0 flex-1 flex flex-col justify-center">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-2 pl-2.5 pr-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[13px] font-bold tracking-[0.14em]">
-                <span className="relative flex w-2.5 h-2.5">
-                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-60" />
-                  <span className="relative w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                </span>
-                NOW PLAYING
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px]">
+              <span className="flex items-center gap-2 font-semibold text-emerald-300">
+                <span className={`w-2 h-2 rounded-full ${idle || waiting ? "bg-white/40" : "bg-emerald-400"}`} />
+                {waiting ? "Starting" : idle ? "In the background" : "Now playing"}
               </span>
-              <span className="text-[15px] text-white/55">{PLATFORM_LABELS[game.platform]}</span>
-              {started && <span className="text-[15px] text-white/40">· Started {started}</span>}
-              {waiting && <span className="px-3 py-1 rounded-full bg-white/10 text-white/70 text-[13px] font-semibold">Waiting for the game to start…</span>}
-              {idle && !waiting && <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[13px] font-semibold">Paused · game is in the background</span>}
+              <span className="text-white/45">{PLATFORM_LABELS[game.platform]}{started ? ` · Started ${started}` : ""}</span>
             </div>
 
-            <h1 className="mt-3 text-[clamp(32px,3.6vw,64px)] font-bold leading-[1.02] text-white tracking-tight line-clamp-2 drop-shadow-[0_4px_30px_rgba(0,0,0,0.6)]">{displayName(game.name)}</h1>
-            {meta && <p className="mt-2 text-[16px] text-white/50 truncate">{meta}</p>}
+            <h1 className="mt-2 text-[clamp(32px,3.4vw,60px)] font-bold leading-[1.04] text-white tracking-tight line-clamp-2">{displayName(game.name)}</h1>
+            {meta && <p className="mt-1.5 text-[16px] text-white/50 truncate">{meta}</p>}
 
-            <div className="mt-6 flex flex-wrap items-end gap-x-10 gap-y-5">
+            <div className="mt-6 flex flex-wrap items-end gap-x-12 gap-y-5">
               <div>
-                <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-white/45">This session</p>
-                <p className={`mt-1 font-display tabular-nums leading-none text-[clamp(44px,4.4vw,80px)] font-bold ${idle || waiting ? "text-white/55" : "text-white"}`}>{formatClock(secs)}</p>
+                <p className="text-[14px] text-white/50">This session</p>
+                <p className={`mt-0.5 font-display tabular-nums leading-none text-[clamp(40px,4vw,72px)] font-semibold ${idle || waiting ? "text-white/50" : "text-white"}`}>{waiting ? "–:––" : formatClock(secs)}</p>
               </div>
-              <div className="flex flex-wrap gap-3 pb-1">
-                {stats.map((s) => (
-                  <div key={s.label} className="rounded-2xl px-4 py-3 bg-white/[0.06] border border-white/[0.08] min-w-[150px]">
-                    <div className="flex items-center gap-2 text-white/45 text-[11.5px] font-bold uppercase tracking-[0.14em]">{s.icon}{s.label}</div>
-                    <p className="mt-1 text-[19px] font-semibold text-white truncate flex items-center gap-2">
-                      {s.color && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color }} />}
-                      {s.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              {stats.map((s) => (
+                <div key={s.label} className="pb-1">
+                  <p className="text-[14px] text-white/50">{s.label}</p>
+                  <p className="mt-1 text-[20px] font-semibold text-white flex items-center gap-2 whitespace-nowrap">
+                    {s.color && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />}
+                    {s.value}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            {progress !== null && (
-              <div className="mt-5 max-w-[640px]">
-                <div className="flex justify-between text-[13px] text-white/45 mb-1.5">
-                  <span>Story progress (HowLongToBeat)</span>
-                  <span className="tabular-nums">{Math.round(progress * 100)}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-accent-400" style={{ width: `${progress * 100}%` }} />
-                </div>
-              </div>
-            )}
-
-            <div data-bp-row className="mt-7 flex flex-wrap items-center gap-3">
-              <BpButton primary autofocus onClick={onSwitch} className="min-w-[220px]" scrollMargin={REVEAL}><MaximizeIcon size={19} /> Switch to Game</BpButton>
-              <BpButton onClick={onDetails} scrollMargin={REVEAL}><InfoIcon size={19} /> Game Details</BpButton>
-              <BpButton danger onClick={onStop} scrollMargin={REVEAL}><StopIcon size={19} /> Stop Game</BpButton>
+            <div data-bp-row className="mt-8 flex flex-wrap items-center gap-3">
+              <BpButton primary autofocus onClick={onSwitch} className="min-w-[210px]" scrollMargin={REVEAL}><MaximizeIcon size={19} /> Switch to Game</BpButton>
+              <BpButton onClick={onDetails} scrollMargin={REVEAL}><InfoIcon size={19} /> Details</BpButton>
+              <BpButton onClick={onStop} scrollMargin={REVEAL}><StopIcon size={18} /> Stop</BpButton>
             </div>
           </div>
         </div>

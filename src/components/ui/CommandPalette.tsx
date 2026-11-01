@@ -166,7 +166,7 @@ export default function CommandPalette() {
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
             className="w-[620px] max-h-[520px] flex flex-col rounded-3xl overflow-hidden glass-strong"
-            style={{ boxShadow: "0 40px 120px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04), 0 0 80px -30px rgb(var(--accent-500) / 0.5)" }}
+            style={{ boxShadow: "0 40px 120px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)" }}
           >
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <SearchIcon size={18} className="text-accent-300 shrink-0" />
