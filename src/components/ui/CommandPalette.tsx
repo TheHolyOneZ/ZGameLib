@@ -7,7 +7,7 @@ import GameCover from "@/components/ui/GameCover";
 import PlatformBadge from "@/components/ui/PlatformBadge";
 import {
   SearchIcon, GamepadIcon, LibraryIcon, HeartIcon,
-  ChartIcon, SpinIcon, SettingsIcon, PlusIcon, TvIcon, ClockIcon, CollectionIcon, WrappedIcon, LayersIcon,
+  ChartIcon, SpinIcon, SettingsIcon, PlusIcon, TvIcon, ClockIcon, CollectionIcon, WrappedIcon, LayersIcon, ImageIcon,
 } from "@/components/ui/Icons";
 import { cn, timeAgo, formatPlaytime } from "@/lib/utils";
 import { searchGames } from "@/lib/search";
@@ -81,6 +81,7 @@ export default function CommandPalette() {
     { type: "action", id: "library", label: "Library", icon: <LibraryIcon size={14} />, action: () => { guardedNavigate("/"); setOpen(false); } },
     { type: "action", id: "favorites", label: "Favorites", icon: <HeartIcon size={14} />, action: () => { guardedNavigate("/favorites"); setOpen(false); } },
     { type: "action", id: "big-picture", label: "Big Picture Mode", icon: <TvIcon size={14} />, action: () => { setOpen(false); useUIStore.getState().setBigPicture(true); } },
+    { type: "action", id: "covers", label: "Find Cover Art", icon: <ImageIcon size={14} />, action: () => { setOpen(false); useUIStore.getState().openCoverFinder(); } },
     { type: "action", id: "duplicates", label: "Find Duplicate Games", icon: <LayersIcon size={14} />, action: () => { setOpen(false); useUIStore.getState().setDuplicatesOpen(true); } },
     { type: "action", id: "recent", label: "Recently Played", icon: <ClockIcon size={14} />, action: () => { guardedNavigate("/recent"); setOpen(false); } },
     { type: "action", id: "collections", label: "Collections", icon: <CollectionIcon size={14} />, action: () => { guardedNavigate("/collections"); setOpen(false); } },

@@ -10,6 +10,10 @@
 - **Smart search** — typo-tolerant (wticher → The Witcher), acronyms (rdr2, gtav, ds3), roman numerals, relevance ranking, `/regex/` patterns, and filters such as `platform:steam`, `status:playing`, `rating>=8`, `playtime>10h`, `played<7d`, `year>=2020`, `is:fav`, `-tag:multiplayer`; a `?` button shows the syntax and invalid queries are flagged
 - **Library Intelligence** settings section, and Hide / Unhide in the right-click menu
 
+- **Cover Art Finder** — bulk cover search for missing, selected or all games; cleans cracked and scene release names (Elden.Ring-CODEX, Hades.II.v1.0-RUNE, [FitGirl Repack]…) into searchable titles, supports your own regex rules with presets and a live preview, auto-picks confident matches and applies them in one go
+- **More art sources** — Steam store, Steam community, SteamGridDB (with your API key) and IGDB are searched in parallel and ranked by title match, so new releases and indie games get covers too
+- **New Z controller logo** in the sidebar and Big Picture, plus a new app icon
+
 - **Big Picture mode** — full-screen, controller-first interface with Home shelves, Library grid with filters and sorting, Favorites, Recent and Collections tabs, a cinematic game page, status and rating pickers, on-screen keyboard search, a quick menu and a launch splash
 - **Xbox, PlayStation and Nintendo controller support** — D-pad and left stick navigation, A/B/X/Y actions, LB/RB tab switching, LT/RT page jumps, Start/Options menu, rumble on launch; button prompts switch automatically between Xbox letters, PlayStation symbols and keyboard keys; friendly controller names (DualSense, DualShock 4, Xbox Series)
 - **Ways into Big Picture** — Ctrl+B, Start/Options on any connected controller, the sidebar button, the top bar, the command palette, or "Start in Big Picture" on launch; optional fullscreen and interface sounds
@@ -34,6 +38,7 @@
 - Big Picture backdrop and hero update once focus settles and use a much cheaper blur
 - Game Spin's wheel shows a fair random set of up to 24 games instead of drawing thousands of slices
 - Scan log updates are batched
+- Downloaded covers are stored as files instead of inside the database, and the previous cover file is cleaned up when replaced
 
 ### Changed
 
@@ -44,6 +49,7 @@
 
 ### Fixed
 
+- Cover search for dotted or underscored names (Red.Dead.Redemption.2-EMPRESS) found nothing; the release group, version and build tags are now removed before searching
 - Rapid edits could be lost (only 7 of 15 tags added in quick succession were saved); writes are now ordered and stale responses can no longer overwrite newer changes
 - The game details panel could stay invisibly mounted after closing while switching tabs, blocking every click until restart
 - Switching quickly between games could show the previous game's sessions or screenshots

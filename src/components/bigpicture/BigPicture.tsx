@@ -1,3 +1,4 @@
+import Logo from "@/components/ui/Logo";
 import * as gameActions from "@/lib/gameActions";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -428,9 +429,7 @@ function BigPictureShell() {
       <div className="relative h-full flex flex-col">
         <header className="shrink-0 flex items-center gap-6 px-[5vw] pt-6 pb-2">
           <div className="flex items-center gap-3 mr-4">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(140deg, rgb(var(--accent-400)), rgb(var(--accent-700)))", boxShadow: "0 10px 30px -8px rgb(var(--accent-500) / 0.8)" }}>
-              <GamepadIcon size={22} className="text-white" />
-            </div>
+            <Logo size={46} />
           </div>
           <ButtonGlyph action="lb" kind={kind} source={source} size={32} />
           <nav className="flex items-center gap-1">

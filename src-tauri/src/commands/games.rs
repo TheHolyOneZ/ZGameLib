@@ -439,7 +439,7 @@ pub fn get_library_growth(state: State<DbState>) -> Result<Vec<LibraryGrowthEntr
     Ok(month_map.into_values().collect())
 }
 
-fn fetch_fresh_igdb_token(client_id: &str, client_secret: &str, now_secs: u64) -> Result<(String, u64), String> {
+pub(crate) fn fetch_fresh_igdb_token(client_id: &str, client_secret: &str, now_secs: u64) -> Result<(String, u64), String> {
     let token_body = format!(
         "client_id={}&client_secret={}&grant_type=client_credentials",
         client_id.trim(), client_secret.trim()
@@ -479,7 +479,7 @@ pub fn fetch_igdb_metadata(
         .unwrap_or(0);
 
     let access_token = {
-        let mut cached = token_state.0.lock().map_err(|e| e.to_string())?;
+        let cached = token_state.0.lock().map_err(|e| e.to_string())?;
         if let Some((ref token, expires_at)) = *cached {
             if now_secs + 60 < expires_at {
                 token.clone()

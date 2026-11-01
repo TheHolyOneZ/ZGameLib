@@ -170,6 +170,14 @@ export interface CoverCandidate {
   cover_url: string;
 }
 
+export interface CoverResult {
+  source: string;
+  name: string;
+  url: string;
+  thumb: string;
+  score: number;
+}
+
 export interface UpdateInfo {
   version: string;
   notes: string;

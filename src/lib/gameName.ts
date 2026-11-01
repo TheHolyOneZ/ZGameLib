@@ -1,3 +1,50 @@
+const SCENE_GROUPS = [
+  "codex", "plaza", "skidrow", "reloaded", "flt", "fairlight", "empress", "tenoke", "rune", "doge", "cpy", "hoodlum",
+  "razor1911", "razor", "darksiders", "simplex", "tinyiso", "anomaly", "prophet", "dinobytes", "goldberg", "0xdeadc0de",
+  "elamigos", "fitgirl", "dodi", "kaos", "xatab", "r.g. mechanics", "rg mechanics", "gog", "p2p", "i_know", "unleashed",
+  "chronos", "ali213", "3dm", "steampunks", "voksi", "postmortem", "suxxors", "kirigiri", "masquerade", "rzr",
+];
+
+const REPACKERS = ["fitgirl", "dodi", "elamigos", "kaos", "xatab", "r.g. mechanics", "rg mechanics", "goldberg"];
+
+const NOISE_WORDS = /\b(?:repack|multi\s?\d+|multi|eng|english|rus|ger|fre|spa|ita|jpn|incl(?:uding)?\s+(?:all\s+)?(?:dlcs?|updates?)|all\s+dlcs?|dlc\s+unlocker|crack(?:ed)?(?:\s+only)?|fix(?:ed)?|portable|pre-?installed|selective\s+download|lossless|x64|x86|win(?:dows)?\s?(?:7|8|10|11|64|32)?|setup|installer|steam\s?rip|gog\s?rip|proper|internal|readnfo|update\s?v?\d+(?:\.\d+)*|build\s?\d+|hotfix\s?\d*|patch\s?v?\d+(?:\.\d+)*)\b/gi;
+
+export function sceneClean(raw: string): string {
+  let s = ` ${raw} `;
+  s = s.replace(/\[[^\]]*\]|\{[^}]*\}/g, " ");
+  s = s.replace(/\(([^)]*)\)/g, (m, inner: string) => (/\d|repack|multi|build|update|dlc|fitgirl|dodi|gog|x64|v\d|ost/i.test(inner) ? " " : m));
+  s = s.replace(/(?<=[-_.\s])v\d+(?:[._]\d+)*[a-z]?(?=[-_.\s])/gi, " ");
+  s = s.replace(/(?<=[-_.\s])\d+(?:[._]\d+){2,}[a-z]?(?=[-_.\s])/g, " ");
+  s = s.replace(/(?<=[-_.\s])build[-_.\s]?\d+(?:[._]\d+)*(?=[-_.\s])/gi, " ");
+  s = s.replace(/(?<=[-_.\s])\d{6,}(?=[-_.\s])/g, " ");
+  s = s.replace(NOISE_WORDS, " ");
+  const groups = SCENE_GROUPS.map((g) => g.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const repackers = REPACKERS.map((g) => g.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  for (let i = 0; i < 2; i++) {
+    s = s.replace(new RegExp(`(?:[-_.]+|\\s+-\\s*)(?:${groups})[-_.\\s]*$`, "i"), " ");
+    s = s.replace(new RegExp(`[-_.\\s]+(?:${repackers})[-_.\\s]*$`, "i"), " ");
+  }
+  const trimmed = s.trim();
+  const dotted = (trimmed.match(/\./g) ?? []).length;
+  if (dotted >= 2 || (!/\s/.test(trimmed) && /[._]/.test(trimmed))) s = s.replace(/\.+/g, " ");
+  s = s.replace(/_+/g, " ");
+  s = s.replace(/\s+-+\s*$|^\s*-+\s+/g, " ");
+  s = s.replace(/\s{2,}/g, " ").trim();
+  return s;
+}
+
+
+export function looksLikeSceneName(raw: string): boolean {
+  if (/\[[^\]]*(?:repack|multi|fitgirl|dodi|gog|elamigos|kaos|build|v\d)/i.test(raw)) return true;
+  if (/(?:^|[^\s])\.(?:[^\s.]+\.){1,}[^\s.]+/.test(raw) && !/\s/.test(raw.trim())) return true;
+  if (/_/.test(raw) && !/\s/.test(raw.trim())) return true;
+  if (/[-_.]v\d+(?:[._]\d+)+/i.test(raw)) return true;
+  if (new RegExp(`\\s-\\s*(?:${REPACKERS.map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?:\\s+repack)?$`, "i").test(raw.trim())) return true;
+  if (/\brepack\b/i.test(raw)) return true;
+  if (new RegExp(`-(?:${SCENE_GROUPS.map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})$`, "i").test(raw.trim())) return true;
+  return false;
+}
+
 const TRADEMARKS = /[\u2122\u00AE\u00A9\u2120]|\(tm\)|\(r\)|\(c\)/gi;
 
 const BRACKET_NOISE = /\s*[\[(](?:x64|x86|64[- ]?bit|32[- ]?bit|win(?:dows)?(?:\s*\d+)?|steam|gog(?:\.com)?|epic(?:\s*games)?|ubisoft(?:\s*connect)?|uplay|origin|ea app|drm[- ]?free|portable|repack|multi\d*|eng?|en|us|eu|retail|digital|pc|dx\d+|directx\s*\d+|vulkan|opengl|launcher|beta|alpha|early access|preview|playtest|demo|trial|v?\d+(?:[._]\d+)+[a-z]?|build\s*\d+|update\s*\d+|rev\s*\d+|r\d+|\d{6,})[\])]/gi;
@@ -56,6 +103,7 @@ function titleCaseIfLower(s: string) {
 export function cleanTitle(raw: string): string {
   if (!raw) return raw;
   let s = raw.replace(TRADEMARKS, "").trim();
+  if (looksLikeSceneName(s)) s = sceneClean(s) || s;
   s = splitIdentifier(s);
   s = s.replace(/\s+/g, " ").trim();
   for (let i = 0; i < 4; i++) {

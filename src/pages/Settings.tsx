@@ -11,7 +11,7 @@ import type { AppSettings, StatusConfig, Game, CustomTheme } from "@/lib/types";
 import { COVER_PLACEHOLDER } from "@/lib/utils";
 import {
   DownloadIcon, SettingsIcon, CheckIcon, PlusIcon, TrashIcon,
-  CloseIcon, GamepadIcon, SparkleIcon, GlobeIcon, TvIcon, PowerIcon, InfoIcon, GridIcon, LayersIcon,
+  CloseIcon, GamepadIcon, SparkleIcon, GlobeIcon, TvIcon, PowerIcon, InfoIcon, GridIcon, LayersIcon, ImageIcon,
 } from "@/components/ui/Icons";
 import { BP_AUTOSTART_KEY } from "@/components/bigpicture/BigPicture";
 import { useGameStore } from "@/store/useGameStore";
@@ -108,6 +108,52 @@ const NAV_SECTIONS: { title: string; icon: React.ReactNode }[] = [
   { title: "Trash", icon: <TrashIcon size={14} /> },
   { title: "About", icon: <InfoIcon size={14} /> },
 ];
+
+function SteamGridDbKey() {
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ["setting", "steamgriddb_api_key"], queryFn: () => api.getSetting("steamgriddb_api_key").catch(() => null) });
+  const [val, setVal] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const current = val ?? data ?? "";
+  const save = async () => {
+    if (val === null || val === (data ?? "")) return;
+    try {
+      await api.saveSetting("steamgriddb_api_key", val.trim());
+      qc.setQueryData(["setting", "steamgriddb_api_key"], val.trim());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1600);
+    } catch (e) {
+      useUIStore.getState().addToast(String(e), "error");
+    }
+  };
+  return (
+    <div className="pt-4 border-t border-white/[0.04]">
+      <div className="flex items-center gap-2 mb-1">
+        <p className="text-[11px] font-semibold text-slate-400">SteamGridDB</p>
+        {saved && <span className="text-[10.5px] text-emerald-300">Saved</span>}
+      </div>
+      <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
+        The biggest free library of game artwork — covers for new releases, indie, DRM-free and non-Steam games that Steam and IGDB miss. Used by the Cover Art Finder and the cover search.
+      </p>
+      <div className="text-[11px] text-slate-500 mb-3 leading-relaxed space-y-1">
+        <p>1. Sign in at{" "}
+          <button type="button" onClick={() => api.openUrl("https://www.steamgriddb.com/profile/preferences/api").catch(() => {})} className="text-accent-400 hover:text-accent-300 underline underline-offset-2">
+            steamgriddb.com/profile/preferences/api
+          </button>{" "}with your Steam account (free).</p>
+        <p>2. Click <span className="text-slate-300 font-medium">Generate API Key</span>, copy it, and paste it below. It saves automatically.</p>
+      </div>
+      <input
+        type="password"
+        value={current}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+        placeholder="SteamGridDB API key"
+        className="input-glass text-[12px] font-mono"
+      />
+    </div>
+  );
+}
 
 function IntelligenceSection() {
   const [smart, setSmart] = useState(isSmartTitles());
@@ -1359,6 +1405,8 @@ export default function Settings() {
                 </div>
               </div>
 
+              <SteamGridDbKey />
+
               <div className="pt-4 border-t border-white/[0.04]">
                 <p className="text-[11px] font-semibold text-slate-400 mb-1">Steam Playtime Sync</p>
                 <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
@@ -1465,7 +1513,16 @@ export default function Settings() {
                   ) : (
                     <DownloadIcon size={13} />
                   )}
-                  {fetchingCovers ? "Fetching covers…" : "Fetch Missing Covers"}
+                  {fetchingCovers ? "Fetching covers…" : "Quick-fetch Missing Covers"}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => useUIStore.getState().openCoverFinder()}
+                  className="btn-primary w-full justify-center text-[12px]"
+                >
+                  <ImageIcon size={13} />
+                  Cover Art Finder
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}

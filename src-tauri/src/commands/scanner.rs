@@ -332,6 +332,25 @@ fn download_image_to_cache(url: &str, filename: &str, app: &AppHandle) -> Option
 
 pub(crate) fn clean_title_for_search(raw: &str) -> String {
     let mut s: String = raw.chars().filter(|c| !matches!(c, '\u{2122}' | '\u{00AE}' | '\u{00A9}')).collect();
+    let trimmed = s.trim().to_string();
+    if !trimmed.contains(' ') && (trimmed.contains('.') || trimmed.contains('_')) {
+        let mut base = trimmed.clone();
+        if let Some(idx) = base.rfind('-') {
+            let tail = &base[idx + 1..];
+            if !tail.is_empty() && tail.len() <= 12 && tail.chars().all(|c| c.is_ascii_alphanumeric()) && idx > 0 {
+                base.truncate(idx);
+            }
+        }
+        let words: Vec<String> = base.split(|c| c == '.' || c == '_').filter(|w| !w.is_empty()).map(|w| w.to_string()).collect();
+        let mut kept: Vec<String> = Vec::new();
+        for w in words {
+            let lw = w.to_lowercase();
+            let is_version = lw.starts_with('v') && lw[1..].chars().next().map_or(false, |c| c.is_ascii_digit());
+            if is_version || lw == "build" || lw == "repack" || lw == "multi" || (lw.len() >= 6 && lw.chars().all(|c| c.is_ascii_digit())) { break; }
+            kept.push(w);
+        }
+        if !kept.is_empty() { s = kept.join(" "); }
+    }
     loop {
         let before = s.clone();
         if let (Some(a), Some(b)) = (s.rfind('['), s.rfind(']')) {

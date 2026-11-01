@@ -84,6 +84,10 @@ interface UIStore {
 
   duplicatesOpen: boolean;
   setDuplicatesOpen: (v: boolean) => void;
+
+  coverFinder: { open: boolean; ids: string[] | null };
+  openCoverFinder: (ids?: string[] | null) => void;
+  closeCoverFinder: () => void;
 }
 
 let logBuffer: LogEntry[] = [];
@@ -169,4 +173,8 @@ export const useUIStore = create<UIStore>((set) => ({
 
   duplicatesOpen: false,
   setDuplicatesOpen: (v) => set({ duplicatesOpen: v }),
+
+  coverFinder: { open: false, ids: null },
+  openCoverFinder: (ids = null) => set({ coverFinder: { open: true, ids } }),
+  closeCoverFinder: () => set({ coverFinder: { open: false, ids: null } }),
 }));

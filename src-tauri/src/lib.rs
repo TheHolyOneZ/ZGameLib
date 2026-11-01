@@ -5,7 +5,7 @@ mod commands;
 use db::{DbState, IgdbTokenState, init_db, queries};
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
-use commands::{games, scanner, launcher, settings, modloader, collections, logger};
+use commands::{games, scanner, launcher, settings, modloader, collections, logger, covers};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -247,6 +247,9 @@ pub fn run() {
             scanner::read_image_base64,
             scanner::fetch_url_as_base64,
             scanner::search_game_covers,
+            covers::search_cover_art,
+            covers::apply_cover_url,
+            covers::get_setting,
             scanner::get_game_screenshots,
             scanner::fetch_missing_covers,
             launcher::launch_game,

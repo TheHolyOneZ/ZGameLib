@@ -5,3 +5,4 @@ pub mod settings;
 pub mod modloader;
 pub mod collections;
 pub mod logger;
+pub mod covers;

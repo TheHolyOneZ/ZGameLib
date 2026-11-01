@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult, YearInReview } from "./types";
+import type { Game, Note, Session, CreateGamePayload, UpdateGamePayload, ScanResult, AppSettings, ImportResult, FetchCoversResult, CoverCandidate, CoverResult, UpdateInfo, ModLoaderStatus, ModInfo, HltbData, WeeklyPlaytime, Collection, IgdbMetadata, LibraryGrowthEntry, SteamSyncResult, PullUninstalledResult, YearInReview } from "./types";
 
 let writeChain: Promise<unknown> = Promise.resolve();
 
@@ -42,6 +42,9 @@ export const api = {
   readImageBase64: (filePath: string) => invoke<string>("read_image_base64", { filePath }),
   fetchUrlAsBase64: (url: string) => invoke<string>("fetch_url_as_base64", { url }),
   searchGameCovers: (query: string) => invoke<CoverCandidate[]>("search_game_covers", { query }),
+  searchCoverArt: (query: string, providers?: string[]) => invoke<CoverResult[]>("search_cover_art", { query, providers: providers ?? null }),
+  applyCoverUrl: (gameId: string, url: string) => serial<string>("apply_cover_url", { gameId, url }),
+  getSetting: (key: string) => invoke<string | null>("get_setting", { key }),
   fetchMissingCovers: () => invoke<FetchCoversResult>("fetch_missing_covers"),
   getGameScreenshots: (steamAppId: string) => invoke<string[]>("get_game_screenshots", { steamAppId }),
 

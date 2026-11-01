@@ -6,7 +6,7 @@ import { api } from "@/lib/tauri";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import type { Collection } from "@/lib/types";
-import { HeartIcon, CollectionIcon, TrashIcon, CloseIcon } from "@/components/ui/Icons";
+import { HeartIcon, CollectionIcon, TrashIcon, CloseIcon, ImageIcon } from "@/components/ui/Icons";
 
 const STATUSES = [
   { key: "none", label: "None" },
@@ -202,6 +202,9 @@ export default function BatchActionBar({ visibleIds = [] }: { visibleIds?: strin
 
           <div className="w-px h-6 bg-white/10 mx-1" />
 
+          <button onClick={() => useUIStore.getState().openCoverFinder([...selectedIds])} disabled={loading} className="btn-icon hover:!text-accent-200" title="Find cover art for the selected games">
+            <ImageIcon size={14} />
+          </button>
           <button onClick={favoriteAll} disabled={loading} className="btn-icon hover:!text-pink-300" title="Add all to favorites">
             <HeartIcon size={14} />
           </button>

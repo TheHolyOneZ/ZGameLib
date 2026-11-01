@@ -8,7 +8,7 @@ import FilterBuilder from "./FilterBuilder";
 import { useDuplicateGroups } from "@/hooks/useGames";
 import {
   SteamIcon, EpicIcon, GogIcon, UbisoftIcon, CustomGameIcon, ImageIcon, DownloadIcon,
-  SlidersIcon, ChevronDownIcon, HeartIcon, StarIcon,
+  SlidersIcon, ChevronDownIcon, HeartIcon, StarIcon, SparkleIcon,
 } from "@/components/ui/Icons";
 
 const PLATFORMS: { key: Platform; label: string; icon: typeof SteamIcon }[] = [
@@ -148,6 +148,11 @@ export default function FilterPopover({ hideFavorite }: { hideFavorite?: boolean
                   <button onClick={() => setFilter("hasCover", filters.hasCover === false ? null : false)} className={chip(filters.hasCover === false)}>
                     <ImageIcon size={12} /> Missing cover <span className="text-[10.5px] opacity-60 tabular-nums">{counts.noCover}</span>
                   </button>
+                  {counts.noCover > 0 && (
+                    <button onClick={() => { setOpen(false); useUIStore.getState().openCoverFinder(); }} className="chip !py-1.5 !text-accent-200">
+                      <SparkleIcon size={12} /> Find covers
+                    </button>
+                  )}
                   {counts.notInstalled > 0 && (
                     <button onClick={() => setFilter("notInstalledOnly", !filters.notInstalledOnly)} className={chip(filters.notInstalledOnly)}>
                       <DownloadIcon size={12} /> Not installed <span className="text-[10.5px] opacity-60 tabular-nums">{counts.notInstalled}</span>

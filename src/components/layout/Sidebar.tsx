@@ -1,3 +1,4 @@
+import Logo from "@/components/ui/Logo";
 import { displayName } from "@/lib/gameName";
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -180,16 +181,8 @@ export default function Sidebar() {
       className="shrink-0 flex flex-col h-full glass-sidebar relative z-10"
     >
       <div className={cn("flex items-center pt-5 pb-4", collapsed ? "flex-col gap-3 px-2" : "gap-3 px-5")}>
-        <motion.div
-          whileHover={{ rotate: -8, scale: 1.06 }}
-          transition={{ type: "spring", stiffness: 400 }}
-          className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0 relative"
-          style={{
-            background: "linear-gradient(140deg, rgb(var(--accent-400)) 0%, rgb(var(--accent-600)) 55%, rgb(var(--accent-800)) 100%)",
-            boxShadow: "0 8px 24px -6px rgb(var(--accent-500) / 0.7), inset 0 1px 0 rgba(255,255,255,0.25)",
-          }}
-        >
-          <GamepadIcon size={20} className="text-white" />
+        <motion.div whileHover={{ rotate: -6, scale: 1.06 }} transition={{ type: "spring", stiffness: 400 }} className="shrink-0">
+          <Logo size={40} />
         </motion.div>
         {!collapsed && (
           <div className="flex-1 min-w-0">

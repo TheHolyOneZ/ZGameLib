@@ -1,3 +1,4 @@
+import Logo from "@/components/ui/Logo";
 import { displayName } from "@/lib/gameName";
 import { motion } from "framer-motion";
 import { cn, formatPlaytime, timeAgo, formatDate, PLATFORM_LABELS } from "@/lib/utils";
@@ -283,9 +284,7 @@ export function MenuPanel({ sound, fullscreen, autostart, controllerName, onResu
         style={{ background: "linear-gradient(180deg, rgba(26,26,36,0.98), rgba(12,12,18,0.99))" }}
       >
         <div className="flex items-center gap-4 mb-6 mt-2">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(140deg, rgb(var(--accent-400)), rgb(var(--accent-700)))" }}>
-            <GamepadIcon size={28} className="text-white" />
-          </div>
+          <Logo size={56} />
           <div className="min-w-0">
             <p className="text-[24px] font-bold text-white leading-tight">ZGameLib</p>
             <p className="text-[14px] text-white/50 truncate">{controllerName ?? "No controller detected"}</p>
