@@ -81,7 +81,7 @@ const BpCardInner = ({ game, size = "md", running, onSelect, autofocus }: { game
         </div>
       )}
       {game.not_installed && (
-        <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/70 text-[12px] font-semibold text-slate-300">Not installed</div>
+        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/70 text-[12px] font-semibold text-slate-300">Not installed</div>
       )}
     </div>
     <p className="mt-2.5 px-1 text-[15px] font-semibold text-white/60 truncate group-data-[bp-active=true]:text-white transition-colors">{displayName(game.name)}</p>
@@ -287,23 +287,21 @@ function CollectionTile({ col, games, onOpen, autofocus }: { col: Collection; ga
       data-bp-focusable
       data-bp-autofocus={autofocus || undefined}
       onClick={onOpen}
-      className="bp-focusable bp-ring bp-card relative rounded-[22px] overflow-hidden text-left aspect-[16/10]"
-      style={{ background: "linear-gradient(150deg, rgb(var(--accent-600) / 0.35), rgba(255,255,255,0.04))", border: "1px solid rgba(255,255,255,0.1)", scrollMargin: "140px" }}
+      className="bp-focusable bp-ring bp-card relative rounded-[22px] overflow-hidden text-left flex flex-col"
+      style={{ background: "rgba(255,255,255,0.05)", scrollMargin: "140px" }}
     >
-      <div className="absolute inset-0 flex justify-end items-end gap-0 pr-4 pb-4 pointer-events-none">
-        {covers.map((g, i) => (
-          <div key={g.id} className="w-[30%] aspect-[3/4] rounded-xl overflow-hidden ring-1 ring-black/40 shadow-2xl" style={{ transform: `translateX(${(covers.length - 1 - i) * 22}%) rotate(${(i - 1) * 6}deg)`, zIndex: i }}>
+      <div className="relative aspect-[16/8] flex items-end justify-center gap-3 px-6 pt-6 overflow-hidden" style={{ background: "linear-gradient(160deg, rgb(var(--accent-600) / 0.3), rgba(255,255,255,0.02))" }}>
+        {covers.length === 0 ? (
+          <CollectionIcon size={44} className="self-center text-white/30" />
+        ) : covers.map((g, i) => (
+          <div key={g.id} className="w-[28%] aspect-[3/4] rounded-t-xl overflow-hidden shadow-2xl shrink-0" style={{ transform: `translateY(${i === 1 && covers.length === 3 ? 0 : 14}%)` }}>
             <GameCover game={g} />
           </div>
         ))}
       </div>
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
-      <div className="relative p-6 flex flex-col h-full">
-        <CollectionIcon size={28} className="text-accent-200" />
-        <div className="mt-auto">
-          <p className="text-[24px] font-bold text-white leading-tight line-clamp-2 max-w-[60%]">{col.name}</p>
-          <p className="text-[15px] text-white/60 mt-1">{col.game_count} games</p>
-        </div>
+      <div className="px-6 py-4">
+        <p className="text-[22px] font-bold text-white leading-tight truncate">{col.name}</p>
+        <p className="text-[15px] text-white/55 mt-0.5">{col.game_count} {col.game_count === 1 ? "game" : "games"}</p>
       </div>
     </button>
   );

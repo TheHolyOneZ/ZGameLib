@@ -203,7 +203,7 @@ export default function LibraryHero() {
           <div className="flex-1 flex flex-col justify-center gap-3">
             {[
               { label: "Total playtime", value: formatPlaytime(stats.total) === "Never played" ? "0h" : formatPlaytime(stats.total) },
-              { label: "Playing now", value: String(stats.playing) },
+              { label: "In progress", value: String(stats.playing) },
               { label: "Completed", value: String(stats.completed) },
             ].map((s) => (
               <div key={s.label}>

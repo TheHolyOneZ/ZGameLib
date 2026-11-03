@@ -90,11 +90,13 @@ export default function GameNotes({ gameId }: { gameId: string }) {
               ) : (
                 <>
                   {previewId === note.id ? (
+                    <p className="text-[13px] text-slate-300 leading-relaxed whitespace-pre-wrap font-mono">{note.content}</p>
+                  ) : (
                     <div className="prose prose-invert prose-sm max-w-none text-[13px] leading-relaxed
                       [&_h1]:text-[15px] [&_h2]:text-[14px] [&_h3]:text-[13px]
                       [&_h1]:font-bold [&_h2]:font-semibold [&_h3]:font-semibold
                       [&_h1]:text-white [&_h2]:text-white [&_h3]:text-slate-200
-                      [&_p]:text-slate-300 [&_strong]:text-white [&_em]:text-slate-300
+                      [&_p]:text-slate-300 [&_p]:my-0 [&_strong]:text-white [&_em]:text-slate-300
                       [&_code]:bg-white/8 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[11px] [&_code]:text-accent-300
                       [&_pre]:bg-white/5 [&_pre]:border [&_pre]:border-white/8 [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:text-[11px]
                       [&_ul]:text-slate-300 [&_ol]:text-slate-300
@@ -102,8 +104,6 @@ export default function GameNotes({ gameId }: { gameId: string }) {
                       [&_blockquote]:border-l-2 [&_blockquote]:border-accent-500/40 [&_blockquote]:pl-3 [&_blockquote]:text-slate-400">
                       <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{note.content}</ReactMarkdown>
                     </div>
-                  ) : (
-                    <p className="text-[13px] text-slate-300 leading-relaxed whitespace-pre-wrap">{note.content}</p>
                   )}
                   <div className="flex items-center justify-between mt-2.5 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.03)" }}>
                     <span className="text-[10px] text-slate-600">{formatDate(note.updated_at)}</span>
@@ -112,14 +112,15 @@ export default function GameNotes({ gameId }: { gameId: string }) {
                         whileTap={{ scale: 0.85 }}
                         onClick={() => setPreviewId(previewId === note.id ? null : note.id)}
                         className={`btn-icon w-6 h-6 ${previewId === note.id ? "text-accent-400 border-accent-500/30" : ""}`}
-                        title={previewId === note.id ? "Raw" : "Preview"}
+                        title={previewId === note.id ? "Show formatted" : "Show markdown source"}
                       >
-                        {previewId === note.id ? <EditIcon size={10} /> : <EyeIcon size={10} />}
+                        <EyeIcon size={10} />
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.85 }}
                         onClick={() => { setEditVal(note.content); setEditingId(note.id); setPreviewId(null); }}
                         className="btn-icon w-6 h-6"
+                        title="Edit note"
                       >
                         <EditIcon size={10} />
                       </motion.button>

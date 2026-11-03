@@ -306,7 +306,7 @@ export default function Wrapped() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.32, duration: 0.4 }}
-              className="rounded-2xl p-5"
+              className="rounded-2xl p-5 col-span-2"
               style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.06)" }}
             >
               <div className="flex items-center gap-2 mb-3">

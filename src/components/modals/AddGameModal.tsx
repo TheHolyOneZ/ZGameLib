@@ -6,7 +6,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { useGames } from "@/hooks/useGames";
 import { api } from "@/lib/tauri";
 import type { Platform } from "@/lib/types";
-import { CloseIcon, FolderIcon, PlusIcon, GamepadIcon, ScanIcon } from "@/components/ui/Icons";
+import { CloseIcon, FolderIcon, PlusIcon, ScanIcon } from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/store/useGameStore";
 import { canonicalKey, cleanTitle, displayName } from "@/lib/gameName";
@@ -132,22 +132,12 @@ export default function AddGameModal() {
               className="glass-strong rounded-3xl w-full max-w-md pointer-events-auto overflow-hidden"
               style={{
                 boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
-                borderColor: "rgb(var(--accent-500) /0.12)",
               }}
             >
               <div className="flex items-center justify-between p-6 pb-4">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{
-                      background: "linear-gradient(135deg, rgb(var(--accent-500) /0.2), rgb(var(--accent-800) /0.15))",
-                      border: "1px solid rgb(var(--accent-500) /0.2)",
-                    }}
-                  >
-                    <GamepadIcon size={18} className="text-accent-400" />
-                  </div>
                   <div>
-                    <h2 className="text-[15px] font-semibold text-white">Add Games</h2>
+                    <h2 className="text-[18px] font-semibold text-white">Add Games</h2>
                     <p className="text-[11px] text-slate-500">
                       {mode === "single" ? "Add a single game" : "Bulk scan a folder"}
                     </p>

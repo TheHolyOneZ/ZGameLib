@@ -144,12 +144,12 @@ export default function BatchActionBar({ visibleIds = [] }: { visibleIds?: strin
     <AnimatePresence>
       {count > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.98, pointerEvents: "none" }}
+          initial={{ opacity: 0, x: "-50%", y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, x: "-50%", y: 0, scale: 1 }}
+          exit={{ opacity: 0, x: "-50%", y: 24, scale: 0.98, pointerEvents: "none" }}
           transition={{ type: "spring", stiffness: 420, damping: 34 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 pl-4 pr-2 py-2 rounded-2xl glass-strong whitespace-nowrap"
-          style={{ boxShadow: "0 24px 60px -12px rgba(0,0,0,0.85), 0 " }}
+          className="fixed bottom-6 left-1/2 z-50 flex items-center gap-2 pl-4 pr-2 py-2 rounded-2xl glass-strong whitespace-nowrap"
+          style={{ boxShadow: "0 24px 60px -12px rgba(0,0,0,0.85)" }}
         >
           <span className="flex items-center gap-2 text-[13px] font-semibold text-white tabular-nums pr-1">
             <span className="min-w-[24px] h-6 px-1.5 rounded-lg bg-accent-500 flex items-center justify-center text-[12px]">{count}</span>

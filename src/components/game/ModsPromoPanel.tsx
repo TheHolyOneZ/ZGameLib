@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { api } from "@/lib/tauri";
-import { useUIStore } from "@/store/useUIStore";
 
 interface PromoCard {
   id: string;
@@ -169,22 +168,5 @@ export function PromoCards() {
         These projects are made by the same developer — all free and open source.
       </p>
     </div>
-  );
-}
-
-export default function ModsPromoPanel() {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      onClick={(e) => { if (e.target === e.currentTarget) useUIStore.getState().setDetailOpen(false); }}
-      className="fixed left-0 top-0 bottom-0 right-[580px] z-[35] overflow-y-auto hidden xl:flex flex-col justify-center items-center px-8 py-10"
-    >
-      <div className="w-full max-w-[380px]" onClick={(e) => e.stopPropagation()}>
-        <PromoCards />
-      </div>
-    </motion.div>
   );
 }

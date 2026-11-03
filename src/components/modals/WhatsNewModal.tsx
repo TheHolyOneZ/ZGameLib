@@ -9,6 +9,16 @@ interface ReleaseNote {
 }
 
 const RELEASE_NOTES: Record<string, ReleaseNote> = {
+  "1.3.2": {
+    headline: "A polish pass across the whole app.",
+    bullets: [
+      "The selection bar no longer runs off the edge of the window",
+      "Notes now show formatted text, Big Picture collection names are readable again and nothing gets cut off",
+      "Cleaner covers, a calmer search box, quick labels on the top bar buttons and matching drop-downs everywhere",
+      "Game details open without the side panel of other projects, which now lives in Settings → About",
+      "Tidier Recently Played, Settings → Data, Year in Review and Statistics",
+    ],
+  },
   "1.3.1": {
     headline: "Smoother Big Picture exits and a much easier to read Game Spin wheel.",
     bullets: [
@@ -135,7 +145,7 @@ export default function WhatsNewModal() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[15px] font-bold text-white leading-tight">What's New in v{version}</p>
-                <p className="text-[11px] text-slate-500 mt-0.5 truncate">{note.headline}</p>
+                <p className="text-[12px] text-slate-400 mt-0.5 leading-snug">{note.headline}</p>
               </div>
               <span className="shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-bold" style={{ background: "rgb(var(--accent-500) / 0.2)", color: "rgb(var(--accent-300))", border: "1px solid rgb(var(--accent-500) / 0.3)" }}>
                 v{version}

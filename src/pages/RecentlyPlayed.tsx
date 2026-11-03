@@ -21,9 +21,7 @@ function bucketOf(iso: string): string {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const t = d.getTime();
-  if (t >= startOfDay) return "Today";
-  if (t >= startOfDay - 86400000) return "Yesterday";
-  if (t >= startOfDay - 6 * 86400000) return "This Week";
+  if (t >= startOfDay - 6 * 86400000) return "This week";
   if (t >= startOfDay - 29 * 86400000) return "This Month";
   if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString(undefined, { month: "long" });
   return String(d.getFullYear());
@@ -76,14 +74,14 @@ export default function RecentlyPlayedPage() {
 
   const groups = useMemo(() => {
     const out: { label: string; games: Game[] }[] = [];
-    for (const g of recent.slice(0, limit)) {
+    for (const g of recent.slice(query ? 0 : 3, limit)) {
       const label = bucketOf(g.last_played!);
       const last = out[out.length - 1];
       if (last && last.label === label) last.games.push(g);
       else out.push({ label, games: [g] });
     }
     return out;
-  }, [recent, limit]);
+  }, [recent, limit, query]);
 
   const weekCount = useMemo(() => {
     const cutoff = Date.now() - 7 * 86400000;
@@ -131,7 +129,7 @@ export default function RecentlyPlayedPage() {
                 <div className="grid gap-x-5 gap-y-6" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
                   {group.games.map((g, i) => (
                     <motion.div key={g.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 12) * 0.025 }}>
-                      <GameCard game={g} subtitle={`${timeAgo(g.last_played)} · ${formatPlaytime(g.playtime_mins)}`} />
+                      <GameCard game={g} subtitle={timeAgo(g.last_played)} />
                     </motion.div>
                   ))}
                 </div>

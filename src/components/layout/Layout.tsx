@@ -17,7 +17,6 @@ import ConfirmModal from "@/components/modals/ConfirmModal";
 import LogPanel from "@/components/ui/LogPanel";
 import LoadingBeam from "@/components/ui/LoadingBeam";
 import CommandPalette from "@/components/ui/CommandPalette";
-import ModsPromoPanel from "@/components/game/ModsPromoPanel";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import TourModeSelector from "@/components/onboarding/TourModeSelector";
 import WhatsNewModal from "@/components/modals/WhatsNewModal";
@@ -343,7 +342,6 @@ export default function Layout() {
         <main className="flex-1 overflow-y-auto relative">
           <Outlet />
           <AnimatePresence>
-            {isDetailOpen && <ModsPromoPanel />}
           </AnimatePresence>
         </main>
       </div>

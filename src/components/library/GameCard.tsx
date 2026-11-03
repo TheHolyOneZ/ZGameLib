@@ -110,7 +110,7 @@ function GameCard({ game, subtitle, collectionId, onRemoveFromCollection }: Game
             <div className="flex items-center gap-1.5">
               {game.rating !== null && (
                 <span className="flex items-center gap-1 px-1.5 h-6 rounded-lg bg-black/55 backdrop-blur text-[11px] font-bold text-white tabular-nums group-hover:opacity-0 transition-opacity">
-                  <StarIcon size={10} filled className={game.rating >= 8 ? "text-amber-300" : "text-accent-300"} />
+                  <StarIcon size={10} filled className="text-amber-300" />
                   {game.rating}
                 </span>
               )}
@@ -145,13 +145,11 @@ function GameCard({ game, subtitle, collectionId, onRemoveFromCollection }: Game
                 Playing
               </span>
             ) : (
-              <span className="w-6 h-6 rounded-lg bg-black/55 backdrop-blur flex items-center justify-center text-white/80" title={game.platform}>
+              <span className="w-6 h-6 rounded-lg bg-black/55 backdrop-blur flex items-center justify-center text-white/80 opacity-0 group-hover:opacity-100 transition-opacity" title={game.platform}>
                 {PlatformIcon && <PlatformIcon size={12} />}
               </span>
             )}
-            {game.not_installed ? (
-              <span className="px-2 h-6 flex items-center rounded-lg bg-black/65 backdrop-blur text-[11px] font-semibold text-slate-200">Not installed</span>
-            ) : (
+            {game.not_installed ? null : (
               <button
                 onClick={async (e) => { stop(e); try { await api.openGameFolder(game.id); } catch (err) { addToast(String(err), "error"); } }}
                 className="w-6 h-6 rounded-lg bg-black/55 backdrop-blur flex items-center justify-center text-white/80 hover:text-accent-200 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -173,7 +171,7 @@ function GameCard({ game, subtitle, collectionId, onRemoveFromCollection }: Game
                 <span className="text-slate-700 text-[11px]">·</span>
               </>
             )}
-            <span className="text-[11px] text-slate-500 truncate tabular-nums">{meta}</span>
+            <span className="text-[11px] text-slate-500 truncate tabular-nums">{game.not_installed ? "Not installed" : meta}</span>
           </div>
         </div>
       </div>

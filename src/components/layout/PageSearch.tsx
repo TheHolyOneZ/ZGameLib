@@ -110,15 +110,15 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
       style={sticky ? { background: "linear-gradient(180deg, rgb(var(--bg-base) / 0.94), rgb(var(--bg-base) / 0.82))", borderBottom: "1px solid rgba(255,255,255,0.04)" } : undefined}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5">
-        {title && <h2 className="text-[17px] font-semibold text-white mr-1 shrink-0 hidden xl:block">{title}</h2>}
-        <div className="relative w-[230px] 2xl:w-[300px] group shrink min-w-[180px]" data-tour="search-input" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHelpOpen(false); }}>
+        {title && <h2 className="text-[17px] font-semibold text-white mr-1 shrink-0">{title}</h2>}
+        <div className="relative w-[260px] 2xl:w-[320px] group shrink min-w-[200px]" data-tour="search-input" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHelpOpen(false); }}>
           <SearchIcon size={14} className="absolute left-3.5 inset-y-0 my-auto text-slate-500 pointer-events-none group-focus-within:text-accent-300 transition-colors" />
           <input
             ref={inputRef}
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Search — try rdr2, is:fav, rating>=8"
-            className={cn("input-glass h-9 py-0 pl-9 pr-24 text-[13px]", searchError && "!border-red-400/60 !shadow-[0_0_0_4px_rgba(248,113,113,0.12)]")}
+            placeholder="Search games"
+            className={cn("input-glass h-9 py-0 pl-9 pr-14 text-[13px]", searchError && "!border-red-400/60 !shadow-[0_0_0_4px_rgba(248,113,113,0.12)]")}
             title={searchError ?? undefined}
             aria-label="Search games"
           />
@@ -136,7 +136,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
                   <CloseIcon size={11} />
                 </motion.button>
               ) : (
-                <span className="kbd !h-5 !min-w-[18px] !text-[10px]">/</span>
+                <span className="kbd !h-5 !min-w-[18px] !text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">/</span>
               )}
             </AnimatePresence>
             <button
@@ -147,14 +147,6 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
             >
               ?
             </button>
-            <button
-              onClick={() => setSearchScope(searchScope === "name" ? "all" : "name")}
-              title={searchScope === "all" ? "Searching names and descriptions" : "Searching names only — click to include descriptions"}
-              aria-label="Toggle search scope"
-              className={cn("h-5 px-1 rounded text-[9px] font-bold transition-colors", searchScope === "all" ? "text-accent-300 bg-accent-500/15" : "text-slate-500 hover:text-slate-300")}
-            >
-              {searchScope === "all" ? "ALL" : "NAME"}
-            </button>
           </div>
           <AnimatePresence>
             {(helpOpen || searchError) && (
@@ -163,7 +155,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.14 }}
-                className="absolute left-0 top-full mt-2 w-[420px] rounded-2xl z-50 p-3"
+                className="absolute left-0 top-full mt-2 w-[480px] rounded-2xl z-50 p-3"
                 style={{ background: "rgb(19 19 28)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 30px 80px -20px rgba(0,0,0,0.85)" }}
               >
                 {searchError && (
@@ -181,11 +173,15 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
                           className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-white/[0.05] text-left"
                         >
                           <code className="text-[11.5px] font-mono text-accent-200 bg-accent-500/10 px-1.5 py-0.5 rounded shrink-0">{h.syntax}</code>
-                          <span className="text-[11.5px] text-slate-400 truncate">{h.meaning}</span>
+                          <span className="text-[11.5px] text-slate-400 leading-snug">{h.meaning}</span>
                         </button>
                       ))}
                     </div>
                     <p className="text-[11px] text-slate-500 px-1 pt-2">Combine anything: <code className="text-slate-300">souls rating&gt;=8 -is:played</code></p>
+                    <label className="flex items-center gap-2 px-1 pt-3 mt-2 border-t border-white/[0.06] text-[12px] text-slate-300 cursor-pointer" onMouseDown={(e) => e.preventDefault()}>
+                      <input type="checkbox" checked={searchScope === "all"} onChange={() => setSearchScope(searchScope === "all" ? "name" : "all")} className="accent-[rgb(var(--accent-500))]" />
+                      Also search descriptions
+                    </label>
                   </>
                 )}
               </motion.div>
@@ -196,7 +192,7 @@ export default function PageSearch({ showSort = true, showViewToggle = true, sti
         <FilterPopover hideFavorite={hideFavoriteFilter} />
 
         <span className="text-[12px] text-slate-400 tabular-nums shrink-0">
-          {filteredCount === visibleTotal - collapsed ? `${filteredCount} games` : <><span className="text-white font-semibold">{filteredCount}</span> of {visibleTotal - collapsed}</>}
+          {hideFavoriteFilter || filteredCount === visibleTotal - collapsed ? `${filteredCount} ${filteredCount === 1 ? "game" : "games"}` : <><span className="text-white font-semibold">{filteredCount}</span> of {visibleTotal - collapsed}</>}
         </span>
 
         {collapsed > 0 && (

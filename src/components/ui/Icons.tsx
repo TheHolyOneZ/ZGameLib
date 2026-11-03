@@ -368,9 +368,10 @@ export function SpinIcon({ size = 16, className }: IconProps) {
 export function PinIcon({ size = 16, className, filled }: IconProps & { filled?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2L15 9H21L16 13.5L18 21L12 17L6 21L8 13.5L3 9H9L12 2Z"
+      <path d="M9 3.5h6l-1 5.5 3.2 3.2c.4.4.1 1.1-.4 1.1H7.2c-.5 0-.8-.7-.4-1.1L10 9l-1-5.5Z"
         fill={filled ? "currentColor" : "none"}
-        stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+      <path d="M12 13.3V21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
     </svg>
   );
 }

@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.3.2] — 2026-11-03
+
+### Changed
+
+- Covers are calmer: the store icon only shows on hover, "Not installed" moved under the title instead of on top of the artwork, and rating stars are always gold
+- Search box simplified to "Search games" with the syntax help behind `?`; "Also search descriptions" moved into that help
+- Top bar icons show short labels as soon as you hover; the duplicate Big Picture button there was removed (sidebar, Ctrl+B, controller Start and the command palette remain)
+- The "Related projects" panel no longer opens beside every game; it stays in Settings → About
+- All drop-downs share one dark style with a matching arrow
+- Pin uses a pushpin icon instead of a star
+- Recently Played groups the last 7 days together and no longer repeats the three games shown at the top
+- Settings → Data is split into Covers and Backup; Trash shows its contents straight away
+- Year in Review has no empty slot at the bottom; Statistics' Favorites tile has a subtitle and the ratings chart uses your theme color
+- About shows the Z logo; Add Game has a plain header; the library hero says "In progress" instead of "Playing now"; toolbar titles stay visible in small windows; the sidebar stop button is easier to hit
+
+### Fixed
+
+- The selection bar was not centered and ran off the right edge of the window
+- Notes showed raw markdown (`**bold**`) instead of formatted text
+- Big Picture → Collections printed the collection name on top of the cover art
+- What's New headlines and search help lines were cut off
+- Two floating bars had an invalid shadow value
+
 ## [1.3.1] — 2026-11-01
 
 ### Changed

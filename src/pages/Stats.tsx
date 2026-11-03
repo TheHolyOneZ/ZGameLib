@@ -158,7 +158,7 @@ export default function Stats() {
           <Kpi delay={0.03} tint="#38bdf8" icon={<ClockIcon size={14} />} label="Playtime" value={hoursLabel(s.totalMins)} sub={`${hoursLabel(Math.round(s.totalMins / Math.max(1, s.played)))} avg per played game`} onClick={goToLibrary(() => { useGameStore.getState().setSortKey("playtime_mins"); useGameStore.getState().setSortAsc(false); })} />
           <Kpi delay={0.06} tint="#a78bfa" icon={<TrophyIcon size={14} />} label="Completed" value={s.completed} sub={`${completionRate}% of library`} onClick={goToLibrary(() => useGameStore.getState().setFilter("status", "completed"))} />
           <Kpi delay={0.09} tint="#fbbf24" icon={<StarIcon size={14} filled />} label="Avg rating" value={s.avgRating !== null ? s.avgRating.toFixed(1) : "—"} sub={`${s.rated.length} rated games`} onClick={goToLibrary(() => { useGameStore.getState().setSortKey("rating"); useGameStore.getState().setSortAsc(false); })} />
-          <Kpi delay={0.12} tint="#ec4899" icon={<HeartIcon size={14} filled />} label="Favorites" value={games.filter((g) => g.is_favorite).length} onClick={() => navigate("/favorites")} />
+          <Kpi delay={0.12} tint="#ec4899" icon={<HeartIcon size={14} filled />} label="Favorites" value={games.filter((g) => g.is_favorite).length} sub={`${totalGames ? Math.round((games.filter((g) => g.is_favorite).length / totalGames) * 100) : 0}% of library`} onClick={() => navigate("/favorites")} />
           <Kpi delay={0.15} tint="#f97316" icon={<FireIcon size={14} />} label="Last 12 weeks" value={hoursLabel(weekTotal)} sub="tracked in ZGameLib" onClick={() => navigate("/recent")} />
         </div>
 
@@ -275,7 +275,7 @@ export default function Stats() {
                     animate={{ height: `${Math.max(count ? 6 : 2, (count / maxRating) * 100)}%` }}
                     transition={{ delay: 0.25 + i * 0.03, duration: 0.5 }}
                     className="w-full rounded-md"
-                    style={{ background: count ? `hsl(${(i / 9) * 120 + 0} 70% 55% / 0.85)` : "rgba(255,255,255,0.05)" }}
+                    style={{ background: count ? `rgb(var(--accent-500) / ${0.35 + (i / 9) * 0.65})` : "rgba(255,255,255,0.05)" }}
                   />
                 </div>
               ))}

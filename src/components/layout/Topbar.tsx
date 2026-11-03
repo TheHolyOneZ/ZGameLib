@@ -7,7 +7,7 @@ import { cleanTitle } from "@/lib/gameName";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/tauri";
-import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon, SearchIcon, TvIcon, DownloadIcon, ImageIcon } from "@/components/ui/Icons";
+import { TerminalIcon, PlusIcon, ScanIcon, LayersIcon, SparkleIcon, ChevronDownIcon, SearchIcon, DownloadIcon, ImageIcon } from "@/components/ui/Icons";
 
 export default function Topbar() {
   const logPanelOpen = useUIStore((s) => s.logPanelOpen);
@@ -16,7 +16,6 @@ export default function Topbar() {
   const setAddGameOpen = useUIStore((s) => s.setAddGameOpen);
   const addToast = useUIStore((s) => s.addToast);
   const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const setBigPicture = useUIStore((s) => s.setBigPicture);
   const { scan, isScanning } = useScan();
   const dupCount = useDuplicateGroups().length;
   const libraryGames = useLibraryGames();
@@ -104,7 +103,7 @@ export default function Topbar() {
           data-tour="log-btn"
           onClick={() => setLogPanelOpen(!logPanelOpen)}
           className={cn("btn-icon relative", logPanelOpen && "text-emerald-400 border-emerald-500/30")}
-          title="Scan log"
+          data-tip="Scan log"
           aria-label="Toggle scan log"
         >
           <TerminalIcon size={15} />
@@ -116,7 +115,7 @@ export default function Topbar() {
           data-tour="dedup-btn"
           onClick={() => useUIStore.getState().setDuplicatesOpen(true)}
           className="btn-icon relative"
-          title={dupCount ? `${dupCount} duplicated game${dupCount !== 1 ? "s" : ""} — open Duplicate Manager` : "Duplicate Manager"}
+          data-tip={dupCount ? `Duplicates · ${dupCount} found` : "Duplicates"}
           aria-label="Open duplicate manager"
         >
           <LayersIcon size={15} />
@@ -129,7 +128,7 @@ export default function Topbar() {
           onClick={handleIgdbScanAll}
           disabled={igdbScanning}
           className="btn-icon relative disabled:cursor-wait"
-          title={igdbScanning ? `Fetching IGDB metadata ${igdbProgress}/${igdbTotal}` : "Fetch IGDB metadata for all games without it"}
+          data-tip={igdbScanning ? `Fetching IGDB ${igdbProgress}/${igdbTotal}` : "Fetch IGDB info"}
           aria-label="Scan all games with IGDB"
         >
           <motion.span
@@ -149,21 +148,13 @@ export default function Topbar() {
           data-tour="cover-finder-btn"
           onClick={() => useUIStore.getState().openCoverFinder()}
           className="btn-icon relative"
-          title={missingCovers ? `${missingCovers} game${missingCovers !== 1 ? "s" : ""} without a cover — open Cover Art Finder` : "Cover Art Finder"}
+          data-tip={missingCovers ? `Find covers · ${missingCovers} missing` : "Find covers"}
           aria-label="Open cover art finder"
         >
           <ImageIcon size={15} />
           {missingCovers > 0 && (
             <span className="absolute -top-1.5 -right-1.5 min-w-[17px] h-[17px] px-1 rounded-full bg-accent-500 text-[9.5px] font-bold text-white flex items-center justify-center tabular-nums">{missingCovers > 99 ? "99+" : missingCovers}</span>
           )}
-        </button>
-        <button
-          onClick={() => setBigPicture(true)}
-          className="btn-icon"
-          title="Big Picture Mode (Ctrl+B)"
-          aria-label="Enter Big Picture mode"
-        >
-          <TvIcon size={16} />
         </button>
       </div>
 

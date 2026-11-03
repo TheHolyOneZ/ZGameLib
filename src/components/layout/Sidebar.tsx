@@ -87,7 +87,7 @@ function NowPlaying({ collapsed }: { collapsed: boolean }) {
           <p className="text-[12.5px] font-semibold text-white truncate mt-0.5">{displayName(game.name)}</p>
           <SessionClock className="block text-[11px] font-semibold tabular-nums text-emerald-200/75 leading-tight" />
         </div>
-        <button onClick={stop} title="Stop game" className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-red-500/30 transition-colors shrink-0">
+        <button onClick={stop} title="Stop game" className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-200 bg-white/[0.07] hover:text-white hover:bg-red-500/40 transition-colors shrink-0">
           <StopIcon size={12} />
         </button>
       </div>

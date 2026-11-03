@@ -23,6 +23,7 @@ import { getConnectedPads, detectControllerKind, prettyControllerName } from "@/
 import { open } from "@tauri-apps/plugin-dialog";
 import { cn } from "@/lib/utils";
 import { PromoCards } from "@/components/game/ModsPromoPanel";
+import Logo from "@/components/ui/Logo";
 import { useFilteredGames } from "@/hooks/useGames";
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -464,6 +465,10 @@ export default function Settings() {
       addToast(String(e), "error");
     }
   };
+
+  useEffect(() => {
+    api.getTrashedGames().then((g) => { setTrashedGames(g); setTrashLoaded(true); }).catch(() => {});
+  }, []);
 
   const handleRestore = async (id: string) => {
     try {
@@ -1471,71 +1476,37 @@ export default function Settings() {
 
           <div className="grid grid-cols-2 gap-5">
             <Section title="Data" description="Backup, import and export" icon={<DownloadIcon size={15} />} delay={0.2} dataTour="settings-data">
-              <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
-                Export your library as JSON or restore from a backup.
-              </p>
-              <div className="flex flex-col gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleExport}
-                  className="btn-ghost w-full justify-center text-[12px]"
-                >
-                  <DownloadIcon size={13} />
-                  Export
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleImport}
-                  className="btn-ghost w-full justify-center text-[12px]"
-                >
-                  <PlusIcon size={13} />
-                  Import
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleFetchCovers}
-                  disabled={fetchingCovers}
-                  className="btn-ghost w-full justify-center text-[12px] disabled:opacity-50"
-                >
-                  {fetchingCovers ? (
-                    <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-                      <DownloadIcon size={13} />
-                    </motion.span>
-                  ) : (
-                    <DownloadIcon size={13} />
-                  )}
-                  {fetchingCovers ? "Fetching covers…" : "Quick-fetch Missing Covers"}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => useUIStore.getState().openCoverFinder()}
-                  className="btn-primary w-full justify-center text-[12px]"
-                >
+              <p className="text-[12px] font-medium text-slate-400 mb-2">Covers</p>
+              <div className="grid grid-cols-2 gap-2 mb-5">
+                <button onClick={() => useUIStore.getState().openCoverFinder()} className="btn-primary w-full justify-center text-[12px]">
                   <ImageIcon size={13} />
                   Cover Art Finder
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleExportCsv}
-                  className="btn-ghost w-full justify-center text-[12px]"
-                >
+                </button>
+                <button onClick={handleFetchCovers} disabled={fetchingCovers} className="btn-ghost w-full justify-center text-[12px] disabled:opacity-50" title="Fetch Steam covers for every game that has none">
+                  <motion.span animate={fetchingCovers ? { rotate: 360 } : { rotate: 0 }} transition={fetchingCovers ? { duration: 1, repeat: Infinity, ease: "linear" } : { duration: 0 }} className="flex">
+                    <DownloadIcon size={13} />
+                  </motion.span>
+                  {fetchingCovers ? "Fetching…" : "Quick fetch"}
+                </button>
+              </div>
+              <p className="text-[12px] font-medium text-slate-400 mb-2">Backup</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={handleExport} className="btn-ghost w-full justify-center text-[12px]">
                   <DownloadIcon size={13} />
-                  Export as CSV
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleExportFiltered}
-                  className="btn-ghost w-full justify-center text-[12px]"
-                >
+                  Export JSON
+                </button>
+                <button onClick={handleImport} className="btn-ghost w-full justify-center text-[12px]">
+                  <PlusIcon size={13} />
+                  Import
+                </button>
+                <button onClick={handleExportCsv} className="btn-ghost w-full justify-center text-[12px]">
                   <DownloadIcon size={13} />
-                  Export Filtered ({filteredGames.length})
-                </motion.button>
+                  Export CSV
+                </button>
+                <button onClick={handleExportFiltered} className="btn-ghost w-full justify-center text-[12px]" title="Export only the games matching your current library filters">
+                  <DownloadIcon size={13} />
+                  Filtered ({filteredGames.length})
+                </button>
               </div>
             </Section>
 
@@ -1553,7 +1524,7 @@ export default function Settings() {
                   View Trash
                 </motion.button>
               ) : trashedGames.length === 0 ? (
-                <p className="text-[11px] text-slate-500 text-center py-3">Trash is empty</p>
+                <div className="flex flex-col items-center justify-center text-center py-8 text-slate-500"><TrashIcon size={22} className="mb-2 text-slate-600" /><p className="text-[12.5px]">Trash is empty</p><p className="text-[11.5px] text-slate-600 mt-0.5">Games you delete land here first.</p></div>
               ) : (
                 <>
                   <div className="max-h-[260px] overflow-y-auto mb-3">
@@ -1581,12 +1552,7 @@ export default function Settings() {
           <div className="col-span-2">
             <Section title="About" description="Version, updates and help" icon={<InfoIcon size={15} />} delay={0.22}>
               <div className="flex flex-col items-center text-center gap-3 py-1">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgb(var(--accent-500))", boxShadow: "none" }}
-                >
-                  <GamepadIcon size={16} className="text-white" />
-                </div>
+                <Logo size={52} />
                 <div>
                   <p className="text-[13px] font-bold text-white">ZGameLib</p>
                   <p className="text-[11px] text-slate-500">v{APP_VERSION}</p>
@@ -1690,12 +1656,12 @@ export default function Settings() {
       <AnimatePresence>
         {dirty && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30, pointerEvents: "none" }}
+            initial={{ opacity: 0, x: "-50%", y: 30 }}
+            animate={{ opacity: 1, x: "-50%", y: 0 }}
+            exit={{ opacity: 0, x: "-50%", y: 30, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 400, damping: 32 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 pl-5 pr-2 py-2 rounded-2xl glass-strong"
-            style={{ boxShadow: "0 20px 50px -10px rgba(0,0,0,0.8), 0 " }}
+            className="fixed bottom-6 left-1/2 z-40 flex items-center gap-4 pl-5 pr-2 py-2 rounded-2xl glass-strong"
+            style={{ boxShadow: "0 20px 50px -10px rgba(0,0,0,0.8)" }}
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-[13px] text-slate-200">You have unsaved changes</span>
