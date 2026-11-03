@@ -70,17 +70,9 @@ jobs:
           releaseBody: |
             ## ZGameLib v__VERSION__
 
-            A complete redesign of ZGameLib, plus a new **Big Picture mode** for Xbox, PlayStation and Nintendo controllers.
+            See [CHANGELOG.md](https://github.com/TheHolyOneZ/ZGameLib/blob/main/CHANGELOG.md) for everything in this release.
 
-            - Big Picture mode: open with Ctrl+B or Start/Options on a controller
-            - New look across every page, a cleaner sidebar and a command search (Ctrl+K)
-            - Library home with a Continue Playing hero, weekly goal and shelves
-            - Filters popover, card-size slider, redesigned game details, collections, stats and settings
-            - Many bug fixes
-
-            See [CHANGELOG.md](https://github.com/TheHolyOneZ/ZGameLib/blob/main/CHANGELOG.md) for the full list.
-
-            **Download:** the `.msi` or `-setup.exe` file below.
+            **Download:** the `.msi` (recommended) or `-setup.exe` file below.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
